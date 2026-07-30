@@ -10,6 +10,7 @@ import com.adavis.dto.auth.request.*;
 import com.adavis.dto.auth.response.AuthResponse;
 import com.adavis.dto.auth.response.LoginInitiateResponse;
 import com.adavis.dto.auth.response.SessionResponse;
+import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +18,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping({"/api/v1/auth", "/api/auth"})
 @RequiredArgsConstructor
 @Slf4j
 public class AuthenticationController {
@@ -112,6 +115,26 @@ public class AuthenticationController {
         String ipAddress = getClientIp(httpRequest);
         authService.logout(token, ipAddress, deviceInfo);
         return ResponseEntity.ok(ApiResponse.successMessage("Logged out successfully"));
+    }
+
+    @GetMapping({"/password-policy", "/password/policy"})
+    public ResponseEntity<ApiResponse<PasswordPolicyService.PasswordPolicyInfo>> getPasswordPolicy() {
+        return ResponseEntity.ok(ApiResponse.success(passwordPolicyService.getPolicyInfo()));
+    }
+
+    @PostMapping({"/password-policy/verify", "/password/policy/verify"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> verifyPasswordPolicy(
+            @Valid @RequestBody PasswordPolicyVerifyRequest request) {
+        List<String> errors = passwordPolicyService.validateAndCollectErrors(request.getPassword());
+        boolean valid = errors.isEmpty();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("valid", valid);
+        result.put("errors", errors);
+        result.put("policy", passwordPolicyService.getPolicyInfo());
+
+        String message = valid ? "Password satisfies policy" : "Password violates policy";
+        return ResponseEntity.ok(ApiResponse.success(message, result));
     }
 
     // ============================================

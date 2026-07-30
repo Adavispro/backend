@@ -19,6 +19,8 @@ public interface UserProfileRepository extends MongoRepository<UserProfile, Stri
 
     Page<UserProfile> findByIsActiveTrue(Pageable pageable);
 
+    long countByIsActiveTrueAndIsBlockedFalse();
+
     boolean existsByUserId(String userId);
 
     boolean existsByUserTrackId(String userTrackId);

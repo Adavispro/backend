@@ -9,7 +9,7 @@ spring:
         - id: auth-service
           uri: ${GATEWAY_AUTH_SERVICE_URI:http://auth-service:9081}
           predicates:
-            - Path=/api/v1/auth/**
+            - Path=/api/v1/auth/**,/api/auth/**
 
         - id: license-service
           uri: ${GATEWAY_LICENSE_SERVICE_URI:http://license-service:8082}

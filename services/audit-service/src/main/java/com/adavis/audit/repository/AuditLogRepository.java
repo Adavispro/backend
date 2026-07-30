@@ -19,6 +19,9 @@ public interface AuditLogRepository extends MongoRepository<AuditLog, String> {
 
     Page<AuditLog> findByActionAndTimestampBetween(String action, Instant from, Instant to, Pageable pageable);
 
+    @Query("{ 'action': ?0, 'status': ?1, 'timestamp': { $gte: ?2, $lt: ?3 } }")
+    List<AuditLog> findByActionAndStatusAndTimestampRangeOrderByTimestampAsc(String action, String status, Instant from, Instant to);
+
     @Query("{ 'userId': ?0, 'timestamp': { $gte: ?1, $lte: ?2 } }")
     List<AuditLog> findByUserIdAndDateRange(String userId, Instant from, Instant to);
 

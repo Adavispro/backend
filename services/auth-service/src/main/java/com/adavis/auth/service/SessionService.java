@@ -2,6 +2,7 @@ package com.adavis.auth.service;
 
 import com.adavis.auth.model.entity.Session;
 import com.adavis.auth.repository.SessionRepository;
+import com.adavis.auth.model.entity.User;
 import com.adavis.dto.auth.response.SessionResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,6 +31,9 @@ public class SessionService {
 
     @Value("${session.timeout-minutes:30}")
     private int sessionTimeoutMinutes;
+
+    @Value("${session.idle-threshold-minutes:10}")
+    private int idleThresholdMinutes;
 
     // ✅ This method exists and is used by AuthService
     public Session createSession(String userId, String tenantId, String refreshToken, String deviceInfo, String ipAddress) {
@@ -85,6 +92,51 @@ public class SessionService {
         return sessions.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSessionPresenceSummary(String tenantId) {
+        expireSessions();
+
+        List<Session> sessions = (tenantId != null && !tenantId.isBlank())
+                ? sessionRepository.findByTenantIdAndIsActiveTrue(tenantId)
+                : sessionRepository.findByIsActiveTrue();
+
+        Instant idleCutoff = Instant.now().minusSeconds(Math.max(1, idleThresholdMinutes) * 60L);
+
+        Map<String, Session> latestSessionByUser = new LinkedHashMap<>();
+        for (Session session : sessions) {
+            if (session == null || session.getUserId() == null || session.getUserId().isBlank()) {
+                continue;
+            }
+
+            Session existing = latestSessionByUser.get(session.getUserId());
+            if (existing == null) {
+                latestSessionByUser.put(session.getUserId(), session);
+                continue;
+            }
+
+            Instant existingActivity = existing.getLastActivity();
+            Instant currentActivity = session.getLastActivity();
+            if (existingActivity == null || (currentActivity != null && currentActivity.isAfter(existingActivity))) {
+                latestSessionByUser.put(session.getUserId(), session);
+            }
+        }
+
+        long activeUsersCount = latestSessionByUser.values().stream()
+                .filter(session -> session.getLastActivity() != null && !session.getLastActivity().isBefore(idleCutoff))
+                .count();
+
+        long idleUsersCount = latestSessionByUser.size() - activeUsersCount;
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("tenantId", tenantId);
+        response.put("idleThresholdMinutes", idleThresholdMinutes);
+        response.put("activeUsersCount", activeUsersCount);
+        response.put("idleUsersCount", idleUsersCount);
+        response.put("totalOnlineUsersCount", latestSessionByUser.size());
+        response.put("asOf", Instant.now().toString());
+        return response;
     }
 
     public void terminateSession(String sessionId) {

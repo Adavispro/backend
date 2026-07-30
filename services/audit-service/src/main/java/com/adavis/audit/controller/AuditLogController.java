@@ -1,5 +1,6 @@
 package com.adavis.audit.controller;
 
+import com.adavis.audit.model.dto.UserActivityTrendResponse;
 import com.adavis.audit.model.entity.AuditLog;
 import com.adavis.audit.service.AuditLogService;
 import com.adavis.common.dto.ApiResponse;
@@ -42,5 +43,14 @@ public class AuditLogController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
         Page<AuditLog> loginHistory = auditLogService.getAuditLogsByAction("LOGIN", effectiveFrom, effectiveTo, pageable);
         return ApiResponse.success(PageResponse.from(loginHistory));
+    }
+
+    @GetMapping("/user-activity-trend")
+    public ApiResponse<UserActivityTrendResponse> getUserActivityTrend(
+            @RequestParam String mode,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer quarter,
+            @RequestParam Integer year) {
+        return ApiResponse.success(auditLogService.getUserActivityTrend(mode, month, quarter, year));
     }
 }

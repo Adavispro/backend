@@ -1,8 +1,10 @@
 package com.adavis.audit.service;
 
 import com.adavis.audit.model.dto.AuditEvent;
+import com.adavis.audit.model.dto.UserActivityTrendResponse;
 import com.adavis.audit.model.entity.AuditLog;
 import com.adavis.audit.repository.AuditLogRepository;
+import com.adavis.common.exception.BusinessException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +14,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.HashSet;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -106,6 +113,79 @@ public class AuditLogService {
         return auditLogRepository.countByActionAndTimestampBetween(action, from, to);
     }
 
+    @Transactional(readOnly = true)
+    public UserActivityTrendResponse getUserActivityTrend(String mode, Integer month, Integer quarter, Integer year) {
+        if (mode == null || mode.isBlank()) {
+            throw new BusinessException("mode is required", "VALIDATION_ERROR");
+        }
+        if (year == null) {
+            throw new BusinessException("year is required", "VALIDATION_ERROR");
+        }
+
+        String normalizedMode = mode.trim().toLowerCase();
+        LocalDate periodStart;
+        LocalDate periodEnd;
+
+        switch (normalizedMode) {
+            case "monthly" -> {
+                if (month == null) {
+                    throw new BusinessException("month is required for monthly mode", "VALIDATION_ERROR");
+                }
+                YearMonth selectedMonth = YearMonth.of(year, month);
+                periodStart = selectedMonth.atDay(1);
+                periodEnd = selectedMonth.atEndOfMonth();
+            }
+            case "quarterly" -> {
+                if (quarter == null) {
+                    throw new BusinessException("quarter is required for quarterly mode", "VALIDATION_ERROR");
+                }
+                if (quarter < 1 || quarter > 4) {
+                    throw new BusinessException("quarter must be between 1 and 4", "VALIDATION_ERROR");
+                }
+                int startMonth = ((quarter - 1) * 3) + 1;
+                periodStart = LocalDate.of(year, startMonth, 1);
+                periodEnd = YearMonth.of(year, startMonth + 2).atEndOfMonth();
+            }
+            default -> throw new BusinessException("Unsupported mode: " + mode, "VALIDATION_ERROR");
+        }
+
+        Instant rangeStart = periodStart.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant rangeEndExclusive = periodEnd.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+
+        List<AuditLog> loginEvents = auditLogRepository
+                .findByActionAndStatusAndTimestampRangeOrderByTimestampAsc("LOGIN", "SUCCESS", rangeStart, rangeEndExclusive);
+
+        List<WeeklyBucketAccumulator> buckets = buildWeeklyBuckets(periodStart, periodEnd);
+        for (AuditLog loginEvent : loginEvents) {
+            Instant timestamp = loginEvent.getTimestamp();
+            if (timestamp == null) {
+                continue;
+            }
+
+            LocalDate eventDate = timestamp.atZone(ZoneOffset.UTC).toLocalDate();
+            if (eventDate.isBefore(periodStart) || eventDate.isAfter(periodEnd)) {
+                continue;
+            }
+
+            int bucketIndex = (int) (ChronoUnit.DAYS.between(periodStart, eventDate) / 7);
+            if (bucketIndex < 0 || bucketIndex >= buckets.size()) {
+                continue;
+            }
+
+            buckets.get(bucketIndex).addUser(loginEvent.getUserId(), loginEvent.getUsername());
+        }
+
+        return UserActivityTrendResponse.builder()
+                .mode(normalizedMode)
+                .year(year)
+                .month(month)
+                .quarter(quarter)
+                .rangeStart(periodStart.toString())
+                .rangeEnd(periodEnd.toString())
+                .weeks(buckets.stream().map(WeeklyBucketAccumulator::toDto).toList())
+                .build();
+    }
+
     @Transactional
     public AuditLog logUserAction(String userId, String username, String action, 
                                    String entity, String entityId, 
@@ -192,5 +272,60 @@ public class AuditLogService {
         }
 
         return sanitized;
+    }
+
+    private List<WeeklyBucketAccumulator> buildWeeklyBuckets(LocalDate periodStart, LocalDate periodEnd) {
+        List<WeeklyBucketAccumulator> buckets = new ArrayList<>();
+        LocalDate cursor = periodStart;
+
+        while (!cursor.isAfter(periodEnd)) {
+            LocalDate weekEnd = cursor.plusDays(6);
+            if (weekEnd.isAfter(periodEnd)) {
+                weekEnd = periodEnd;
+            }
+            buckets.add(new WeeklyBucketAccumulator(cursor, weekEnd));
+            cursor = weekEnd.plusDays(1);
+        }
+
+        return buckets;
+    }
+
+    private static class WeeklyBucketAccumulator {
+        private final LocalDate weekStart;
+        private final LocalDate weekEnd;
+        private final Map<String, UserActivityTrendResponse.UserSummary> users = new LinkedHashMap<>();
+
+        private WeeklyBucketAccumulator(LocalDate weekStart, LocalDate weekEnd) {
+            this.weekStart = weekStart;
+            this.weekEnd = weekEnd;
+        }
+
+        private void addUser(String userId, String username) {
+            if (userId == null || userId.isBlank()) {
+                return;
+            }
+
+            users.compute(userId, (key, existing) -> {
+                if (existing == null) {
+                    return UserActivityTrendResponse.UserSummary.builder()
+                            .userId(userId)
+                            .username(username)
+                            .build();
+                }
+                if ((existing.getUsername() == null || existing.getUsername().isBlank()) && username != null && !username.isBlank()) {
+                    existing.setUsername(username);
+                }
+                return existing;
+            });
+        }
+
+        private UserActivityTrendResponse.WeeklyBucket toDto() {
+            return UserActivityTrendResponse.WeeklyBucket.builder()
+                    .weekStart(weekStart.toString())
+                    .weekEnd(weekEnd.toString())
+                    .distinctUserCount(users.size())
+                    .users(new ArrayList<>(users.values()))
+                    .build();
+        }
     }
 }

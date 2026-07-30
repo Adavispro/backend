@@ -15,7 +15,13 @@ public interface SessionRepository extends MongoRepository<Session, String> {
 
     List<Session> findByUserIdAndIsActiveTrue(String userId);
 
+    List<Session> findByTenantIdAndIsActiveTrue(String tenantId);
+
+    List<Session> findByIsActiveTrue();
+
     List<Session> findByUserIdAndIpAddressAndIsActiveTrue(String userId, String ipAddress);
 
     List<Session> findByIsActiveTrueAndExpiresAtBefore(Instant expiresAt);
+
+    List<Session> findByTenantIdAndIsActiveTrueAndExpiresAtBefore(String tenantId, Instant expiresAt);
 }

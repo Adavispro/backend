@@ -3,6 +3,7 @@ package com.adavis.auth.controller;
 import com.adavis.auth.dto.request.UserProvisionRequest;
 import com.adavis.auth.dto.request.UserStatusUpdateRequest;
 import com.adavis.auth.service.AuthenticationService;
+import com.adavis.auth.service.SessionService;
 import com.adavis.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import java.util.Map;
 public class InternalAuthProvisionController {
 
     private final AuthenticationService authService;
+    private final SessionService sessionService;
 
     @PostMapping("/provision")
     public ResponseEntity<ApiResponse<Void>> provisionUser(@Valid @RequestBody UserProvisionRequest request) {
@@ -39,5 +41,11 @@ public class InternalAuthProvisionController {
     @GetMapping("/{userId}/lock-status")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUserLockStatus(@PathVariable String userId) {
         return ResponseEntity.ok(ApiResponse.success(authService.getUserLockStatus(userId)));
+    }
+
+    @GetMapping("/session-presence-summary")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSessionPresenceSummary(
+            @RequestParam(required = false) String tenantId) {
+        return ResponseEntity.ok(ApiResponse.success(sessionService.getSessionPresenceSummary(tenantId)));
     }
 }

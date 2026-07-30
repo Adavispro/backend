@@ -31,7 +31,7 @@ public class GatewayConfig {
         return builder.routes()
                 // Auth Service - Public
                 .route("auth-service", r -> r
-                        .path("/api/v1/auth/**")
+                        .path("/api/v1/auth/**", "/api/auth/**")
                         .uri(authServiceUri))
 
                 // License Service - Protected with JWT
