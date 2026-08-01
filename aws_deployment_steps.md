@@ -67,6 +67,9 @@ Reset and reseed MongoDB:
 ./scripts/seed-data.ps1
 ```
 
+Alternate command for Aws:
+pwsh -File "seed-data.ps1"
+
 Seed without dropping existing data:
 
 ```powershell
