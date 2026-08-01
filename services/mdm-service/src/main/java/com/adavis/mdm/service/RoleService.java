@@ -96,6 +96,12 @@ public class RoleService {
 
         String tenantId = StringUtils.hasText(updatedRole.getTenantId()) ? updatedRole.getTenantId() : existing.getTenantId();
         String roleCode = StringUtils.hasText(updatedRole.getRoleCode()) ? updatedRole.getRoleCode() : existing.getRoleCode();
+        String roleName = StringUtils.hasText(updatedRole.getRoleName())
+                ? updatedRole.getRoleName()
+                : (StringUtils.hasText(updatedRole.getName()) ? updatedRole.getName() : existing.getRoleName());
+        String name = StringUtils.hasText(updatedRole.getName())
+                ? updatedRole.getName()
+                : (StringUtils.hasText(updatedRole.getRoleName()) ? updatedRole.getRoleName() : existing.getName());
         if (!StringUtils.hasText(tenantId)) {
             throw new BusinessException("tenantId is required", "TENANT_ID_REQUIRED");
         }
@@ -110,15 +116,19 @@ public class RoleService {
             throw new BusinessException("roleCode already exists: " + roleCode, "DUPLICATE_RESOURCE");
         }
 
-        existing.setTenantId(updatedRole.getTenantId());
-        existing.setRoleCode(updatedRole.getRoleCode());
-        existing.setRoleName(StringUtils.hasText(updatedRole.getRoleName()) ? updatedRole.getRoleName() : updatedRole.getName());
-        existing.setName(updatedRole.getName());
+        existing.setTenantId(tenantId);
+        existing.setRoleCode(roleCode);
+        existing.setRoleName(roleName);
+        existing.setName(name);
         if (!StringUtils.hasText(existing.getName())) {
             existing.setName(existing.getRoleName());
         }
-        existing.setDescription(updatedRole.getDescription());
-        existing.setParentRoleId(updatedRole.getParentRoleId());
+        if (updatedRole.getDescription() != null) {
+            existing.setDescription(updatedRole.getDescription());
+        }
+        if (updatedRole.getParentRoleId() != null) {
+            existing.setParentRoleId(updatedRole.getParentRoleId());
+        }
         if (updatedRole.getIsActive() != null) {
             existing.setIsActive(updatedRole.getIsActive());
         }

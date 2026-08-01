@@ -440,6 +440,16 @@ public class UserService {
         String previousTenantId = existing.getTenantId();
         boolean wasSeatConsumer = Boolean.TRUE.equals(existing.getIsActive()) && !Boolean.TRUE.equals(existing.getIsBlocked());
 
+        if (StringUtils.hasText(updatedProfile.getEmail())) {
+            String updatedEmail = updatedProfile.getEmail().trim();
+            userProfileRepository.findByEmail(updatedEmail)
+                    .filter(found -> !userId.equalsIgnoreCase(found.getUserId()))
+                    .ifPresent(found -> {
+                        throw new BusinessException("Email already exists: " + updatedEmail, "DUPLICATE_EMAIL");
+                    });
+            existing.setEmail(updatedEmail);
+        }
+
         existing.setTenantId(updatedProfile.getTenantId());
         existing.setFirstName(updatedProfile.getFirstName());
         existing.setLastName(updatedProfile.getLastName());

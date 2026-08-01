@@ -23,6 +23,7 @@
       "deadband": 0.2,                                     // Reduce alarm chattering
       "hysteresis": 0.3                                    // Stabilize state transitions
     },
+    "alarmEnabled": true,
     "samplingIntervalSeconds": 1,
     "currentValueNumber": 37.02,                           // Sample FLOAT value
     "isActive": true,

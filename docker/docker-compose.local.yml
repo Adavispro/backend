@@ -17,6 +17,10 @@ services:
     volumes:
       - mongodb_data:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./seed_data_iiot_file.js:/docker-entrypoint-initdb.d/seed_data_iiot_file.js:ro
+      - ./seed_data_iiot_file.js:/seed/seed_data_iiot_file.js:ro
+      - ../sample_ingestion_data:/docker-entrypoint-initdb.d/sample_ingestion_data:ro
+      - ../sample_ingestion_data:/sample_ingestion_data:ro
     networks:
       - adavis-network
     command: ["mongod", "--bind_ip_all", "--port", "27017"]

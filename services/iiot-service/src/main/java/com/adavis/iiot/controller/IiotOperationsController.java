@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -180,8 +181,19 @@ public class IiotOperationsController {
     }
 
     @GetMapping("/equipment-live-status")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEquipmentLiveStatuses() {
-        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getEquipmentLiveStatuses()));
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEquipmentLiveStatuses(
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestParam(required = false) String blockId,
+            @RequestParam(required = false) String areaId,
+            @RequestParam(required = false) String roomNo) {
+        Map<String, Object> filter = Map.ofEntries(
+                Map.entry("tenantId", tenantId == null ? "" : tenantId),
+                Map.entry("plantId", plantId == null ? "" : plantId),
+                Map.entry("blockId", blockId == null ? "" : blockId),
+                Map.entry("areaId", areaId == null ? "" : areaId),
+                Map.entry("roomNo", roomNo == null ? "" : roomNo));
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getEquipmentLiveStatuses(filter)));
     }
 
     @GetMapping("/equipment-live-status/{equipmentId}")
@@ -259,5 +271,49 @@ public class IiotOperationsController {
                 Map.entry("toDate", toDate == null ? "" : toDate),
                 Map.entry("limit", limit == null ? 1000 : limit));
         return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getAlarmEventData(filter)));
+    }
+
+    @GetMapping("/oee/metric")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getOeeMetric(
+            @RequestParam String assetCode,
+            @RequestParam(required = false) LocalDate date) {
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getOeeMetric(assetCode, date)));
+    }
+
+    @GetMapping("/oee/report")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getOeeReport(
+            @RequestParam(required = false) LocalDate fromDate,
+            @RequestParam(required = false) LocalDate toDate,
+            @RequestParam(required = false) String assetCode) {
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getOeeReport(fromDate, toDate, assetCode)));
+    }
+
+    @GetMapping("/monitoring/equipment")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getEquipmentMonitoringView(
+            @RequestParam(required = false) String tenantId,
+            @RequestParam String equipmentId,
+            @RequestParam String batchNo) {
+        Map<String, Object> filter = Map.ofEntries(
+                Map.entry("tenantId", tenantId == null ? "" : tenantId),
+                Map.entry("equipmentId", equipmentId),
+                Map.entry("batchNo", batchNo));
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getEquipmentMonitoringView(filter)));
+    }
+
+    @PostMapping("/reports/alarm-events/{equipmentId}/{eventId}/acknowledge")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> acknowledgeAlarmEvent(
+            @PathVariable String equipmentId,
+            @PathVariable String eventId,
+            @RequestParam(required = false) String tenantId,
+            @RequestBody(required = false) Map<String, Object> request) {
+        Map<String, Object> payload = request == null ? new java.util.LinkedHashMap<>() : request;
+        Map<String, Object> filter = Map.ofEntries(
+                Map.entry("tenantId", tenantId == null ? "" : tenantId),
+                Map.entry("equipmentId", equipmentId));
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Alarm acknowledged",
+                        iiotOperationsService.acknowledgeAlarmEvent(filter, eventId, payload)));
     }
 }

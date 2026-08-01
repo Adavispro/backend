@@ -28,17 +28,38 @@ var TENANT_ID = "TNT-0001";
 // ============================================
 // HIERARCHY CONFIGURATION
 // ============================================
-var PLANT_IDS = ["PLNT-0001", "PLNT-0002", "PLNT-0003"];
+var PLANT_IDS = ["PLNT-0001", "PLNT-0002"];
 var BLOCK_IDS = ["BLK-0001", "BLK-0002", "BLK-0003", "BLK-0004"];
-var AREA_IDS = ["AREA-0001", "AREA-0002", "AREA-0003"];
-var ROOM_IDS = ["ROOM-0001", "ROOM-0002", "ROOM-0003", "ROOM-0004", "ROOM-0005"];
+var AREA_IDS = ["AREA-0001", "AREA-0002", "AREA-0012", "AREA-0013"];
+var ROOM_IDS = ["ROOM-0001", "ROOM-0002", "ROOM-0018", "ROOM-0019"];
+var PLANT_HIERARCHY = {
+    "PLNT-0001": {
+        blocks: ["BLK-0001", "BLK-0002"],
+        areas: ["AREA-0001", "AREA-0002"],
+        rooms: ["ROOM-0001", "ROOM-0002"]
+    },
+    "PLNT-0002": {
+        blocks: ["BLK-0003", "BLK-0004"],
+        areas: ["AREA-0012", "AREA-0013"],
+        rooms: ["ROOM-0018", "ROOM-0019"]
+    }
+};
+var EXPLICIT_EQUIPMENT_DEFS = [];
 
-var TOTAL_EQUIPMENT = PLANT_IDS.length * BLOCK_IDS.length * AREA_IDS.length * ROOM_IDS.length;
+var TOTAL_EQUIPMENT = PLANT_IDS.reduce(function(total, plantId) {
+    var config = PLANT_HIERARCHY[plantId] || {};
+    var blocks = config.blocks || BLOCK_IDS;
+    var areas = config.areas || AREA_IDS;
+    var rooms = config.rooms || ROOM_IDS;
+    return total + blocks.length * areas.length * rooms.length;
+}, 0) + EXPLICIT_EQUIPMENT_DEFS.length;
 
 // Data generation parameters
-var BATCHES_PER_EQUIPMENT = 5;
-var CPP_POINTS_PER_BATCH = 12;
-var ALARMS_PER_BATCH = 3;
+// Use all available hierarchy combinations and keep the generated data compact but representative.
+var BATCHES_PER_EQUIPMENT = 3;
+var CPP_POINTS_PER_BATCH = 6;
+var ALARMS_PER_BATCH = 2;
+var LIVE_STATES = ["RUNNING", "IDLE", "ERROR", "MAINTAINENCE", "OFFLINE"];
 
 // Real pharmaceutical equipment types
 var EQUIPMENT_TYPES = [
@@ -59,9 +80,9 @@ var PRODUCTS = [
     { code: "TRAMADOL HCL", name: "Tramadol HCl 50mg", category: "Tablets", plant: "PLNT-0002" },
     { code: "METFORMIN HCL", name: "Metformin HCl 500mg", category: "Tablets", plant: "PLNT-0002" },
     { code: "AMOXICILLIN", name: "Amoxicillin 250mg Capsules", category: "Capsules", plant: "PLNT-0002" },
-    { code: "ATORVASTATIN", name: "Atorvastatin 20mg", category: "Tablets", plant: "PLNT-0003" },
-    { code: "OMEPRAZOLE", name: "Omeprazole 40mg Capsules", category: "Capsules", plant: "PLNT-0003" },
-    { code: "LISINOPRIL", name: "Lisinopril 10mg", category: "Tablets", plant: "PLNT-0003" },
+    { code: "ATORVASTATIN", name: "Atorvastatin 20mg", category: "Tablets", plant: "PLNT-0002" },
+    { code: "OMEPRAZOLE", name: "Omeprazole 40mg Capsules", category: "Capsules", plant: "PLNT-0002" },
+    { code: "LISINOPRIL", name: "Lisinopril 10mg", category: "Tablets", plant: "PLNT-0002" },
     { code: "LEVOFLOXACIN", name: "Levofloxacin 500mg", category: "Tablets", plant: "PLNT-0001" }
 ];
 
@@ -186,11 +207,39 @@ function resetCollection(name) {
 function createEquipmentDefinitions() {
     var defs = [];
     var equipmentCounter = 0;
+
+    EXPLICIT_EQUIPMENT_DEFS.forEach(function(eq) {
+        defs.push({
+            equipmentId: eq.equipmentId,
+            equipmentCode: eq.equipmentCode,
+            equipmentName: eq.equipmentName,
+            plantId: eq.plantId,
+            blockId: eq.blockId,
+            areaId: eq.areaId,
+            roomId: eq.roomId,
+            make: eq.make,
+            model: eq.model,
+            equipmentType: eq.equipmentType,
+            equipmentTypeName: eq.equipmentTypeName,
+            hierarchy: {
+                plant: eq.hierarchy.plant,
+                block: eq.hierarchy.block,
+                area: eq.hierarchy.area,
+                room: eq.hierarchy.room,
+                fullPath: eq.hierarchy.fullPath
+            }
+        });
+    });
     
     PLANT_IDS.forEach(function(plantId, plantIdx) {
-        BLOCK_IDS.forEach(function(blockId, blockIdx) {
-            AREA_IDS.forEach(function(areaId, areaIdx) {
-                ROOM_IDS.forEach(function(roomId, roomIdx) {
+        var plantConfig = PLANT_HIERARCHY[plantId] || {};
+        var plantBlocks = plantConfig.blocks || BLOCK_IDS;
+        var plantAreas = plantConfig.areas || AREA_IDS;
+        var plantRooms = plantConfig.rooms || ROOM_IDS;
+
+        plantBlocks.forEach(function(blockId, blockIdx) {
+            plantAreas.forEach(function(areaId, areaIdx) {
+                plantRooms.forEach(function(roomId, roomIdx) {
                     equipmentCounter++;
                     var eqIdx = equipmentCounter;
                     var eqTypeObj = EQUIPMENT_TYPES[(eqIdx - 1) % EQUIPMENT_TYPES.length];
@@ -198,9 +247,10 @@ function createEquipmentDefinitions() {
                     var model = eqTypeObj.models[(eqIdx - 1) % eqTypeObj.models.length];
                     var make = MAKES[(eqIdx - 1) % MAKES.length];
                     
+                    var equipmentId = eqType + "-" + pad3(eqIdx) + "-PVII";
                     defs.push({
-                        equipmentId: eqType + "-" + pad3(eqIdx) + "-PVII",
-                        equipmentCode: eqType + pad3(eqIdx) + "PVII",
+                        equipmentId: equipmentId,
+                        equipmentCode: equipmentId,
                         equipmentName: eqTypeObj.name + " #" + eqIdx + " (" + make + " " + model + ")",
                         plantId: plantId,
                         blockId: blockId,
@@ -239,8 +289,7 @@ function getTimeSeriesAlarmCollection(equipmentId) {
 
 function getTimeSeriesCollections() {
     var names = [];
-    var maxEquipment = Math.min(EQUIPMENT_DEFS.length, 30);
-    for (var i = 0; i < maxEquipment; i++) {
+    for (var i = 0; i < EQUIPMENT_DEFS.length; i++) {
         var eq = EQUIPMENT_DEFS[i];
         names.push(getTimeSeriesCppCollection(eq.equipmentId));
         names.push(getTimeSeriesAlarmCollection(eq.equipmentId));
@@ -267,10 +316,9 @@ function createIndexes() {
         
         db.iiot_product_master.createIndex({ tenantId: 1, productId: 1 }, { unique: true });
         db.iiot_source_table_mapping.createIndex({ tenantId: 1, equipmentId: 1 }, { unique: true });
-        db.iiot_ingestion_checkpoint.createIndex({ tenantId: 1, equipmentId: 1, streamType: 1 }, { unique: true });
-        db.iiot_ingestion_job_run.createIndex({ tenantId: 1, equipmentId: 1, startedAt: -1 });
-        db.iiot_equipment_live_status.createIndex({ tenantId: 1, equipmentId: 1 }, { unique: true });
-        db.iiot_equipment_live_status.createIndex({ plantId: 1, blockId: 1, areaId: 1, roomId: 1 });
+        db.iiot_ingestion_checkpoint.createIndex({ equipmentId: 1, streamType: 1 }, { unique: true });
+        db.iiot_ingestion_job_run.createIndex({ equipmentId: 1, startedAt: -1 });
+        db.iiot_equipment_live_status.createIndex({ equipmentId: 1 }, { unique: true });
         db.iiot_batch_summary.createIndex({ tenantId: 1, plantId: 1, areaId: 1, equipmentId: 1, batchNo: 1 }, { unique: true });
         db.iiot_batch_summary.createIndex({ plantId: 1, blockId: 1, areaId: 1, roomId: 1 });
         
@@ -284,7 +332,8 @@ function getProductCatalog(ts) {
     var products = [];
     PRODUCTS.forEach(function(p, idx) {
         products.push({
-            productId: "PROD-" + p.code.replace(/[^A-Z0-9]/g, '') + "-" + pad2(idx + 1),
+            // Keep productId aligned with productCode to match current master UI behavior.
+            productId: p.code,
             productCode: p.code,
             productName: p.name,
             productCategory: p.category,
@@ -298,33 +347,33 @@ function getProductCatalog(ts) {
     return products;
 }
 
-function buildParameterDocs(equipmentId, equipmentIndex, ts) {
+function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
     var eqType = EQUIPMENT_TYPES[(equipmentIndex - 1) % EQUIPMENT_TYPES.length].type;
     var parameters = [];
     
-    // Common parameters for all equipment
+    // Common parameters for all equipment with pharma-oriented names and codes
     parameters.push(
         {
-            suffix: "IMP_A",
-            code: "impellerA",
-            name: "Impeller A",
+            suffix: "MIX_SPD",
+            code: "mixingSpeed",
+            name: "Mixing Speed",
             parameterType: "FLOAT",
             unitOfMeasure: "rpm",
             isCritical: true,
             baseValue: 6.1
         },
         {
-            suffix: "CHOP_A",
-            code: "chopperA",
-            name: "Chopper A",
+            suffix: "BLD_PRES",
+            code: "blendPressure",
+            name: "Blend Pressure",
             parameterType: "FLOAT",
-            unitOfMeasure: "rpm",
+            unitOfMeasure: "bar",
             isCritical: true,
             baseValue: 1.2
         },
         {
-            suffix: "BED_T",
-            code: "bedTemp",
+            suffix: "BED_TEMP",
+            code: "bedTemperature",
             name: "Bed Temperature",
             parameterType: "FLOAT",
             unitOfMeasure: "celsius",
@@ -337,16 +386,16 @@ function buildParameterDocs(equipmentId, equipmentIndex, ts) {
     if (eqType === "RMG") {
         parameters.push(
             {
-                suffix: "IMP_B",
-                code: "impellerB",
-                name: "Impeller B",
+                suffix: "GRAN_MIX",
+                code: "granulationMixing",
+                name: "Granulation Mixing",
                 parameterType: "FLOAT",
                 unitOfMeasure: "rpm",
                 isCritical: true,
                 baseValue: 11.99
             },
             {
-                suffix: "GRAN_T",
+                suffix: "GRAN_TIME",
                 code: "granulationTime",
                 name: "Granulation Time",
                 parameterType: "FLOAT",
@@ -358,17 +407,17 @@ function buildParameterDocs(equipmentId, equipmentIndex, ts) {
     } else if (eqType === "FBD") {
         parameters.push(
             {
-                suffix: "AIR_F",
-                code: "airFlow",
-                name: "Air Flow",
+                suffix: "AIR_FLOW",
+                code: "airFlowRate",
+                name: "Air Flow Rate",
                 parameterType: "FLOAT",
                 unitOfMeasure: "m3/hr",
                 isCritical: true,
                 baseValue: 500.0
             },
             {
-                suffix: "IN_T",
-                code: "inletTemp",
+                suffix: "INLET_TEMP",
+                code: "inletTemperature",
                 name: "Inlet Temperature",
                 parameterType: "FLOAT",
                 unitOfMeasure: "celsius",
@@ -379,16 +428,16 @@ function buildParameterDocs(equipmentId, equipmentIndex, ts) {
     } else if (eqType === "Comill") {
         parameters.push(
             {
-                suffix: "SPEED",
-                code: "impellerRPM",
-                name: "Impeller RPM",
+                suffix: "MILL_SPD",
+                code: "millSpeed",
+                name: "Mill Speed",
                 parameterType: "FLOAT",
                 unitOfMeasure: "rpm",
                 isCritical: true,
                 baseValue: 2000.0
             },
             {
-                suffix: "FEED_R",
+                suffix: "FEED_RATE",
                 code: "feedRate",
                 name: "Feed Rate",
                 parameterType: "FLOAT",
@@ -403,17 +452,22 @@ function buildParameterDocs(equipmentId, equipmentIndex, ts) {
     var limitDocs = [];
 
     parameters.forEach(function (p, idx) {
-        var parameterId = "PRM-" + p.suffix + "-" + pad3(equipmentIndex);
-        var parameterLimitId = "LMT-" + p.suffix + "-" + pad3(equipmentIndex) + "-20260101";
+        var parameterId = p.code + "_" + pad3(equipmentIndex);
+        var parameterCode = parameterId;
+        var parameterLimitCode = "LIM-" + p.suffix + "-" + pad3(equipmentIndex);
+        // Keep limit id and code aligned to match current code-first UI + API behavior.
+        var parameterLimitId = parameterLimitCode;
+        var parameterName = p.name + " #" + pad3(equipmentIndex);
         var base = p.baseValue + (equipmentIndex % 10) * 0.2 + idx * 0.15;
 
         paramDocs.push({
             parameterSeqId: 50000 + equipmentIndex * 10 + idx,
             tenantId: TENANT_ID,
+            plantId: plantId,
             equipmentId: equipmentId,
             parameterId: parameterId,
-            parameterCode: p.code,
-            parameterName: p.name,
+            parameterCode: parameterCode,
+            parameterName: parameterName,
             parameterType: p.parameterType,
             unitOfMeasure: p.unitOfMeasure,
             isCritical: p.isCritical,
@@ -424,10 +478,16 @@ function buildParameterDocs(equipmentId, equipmentIndex, ts) {
 
         limitDocs.push({
             parameterLimitId: parameterLimitId,
+            parameterLimitCode: parameterLimitCode,
             parameterLimitSeqId: 90000 + equipmentIndex * 10 + idx,
             tenantId: TENANT_ID,
+            plantId: plantId,
             equipmentId: equipmentId,
             parameterId: parameterId,
+            parameterCode: parameterCode,
+            parameterName: parameterName,
+            parameterType: p.parameterType,
+            floatValue: Number(base.toFixed(2)),
             lowCriticalValue: Number((base - 2.0).toFixed(2)),
             lowWarningValue: Number((base - 1.0).toFixed(2)),
             idealMinValue: Number((base - 0.5).toFixed(2)),
@@ -435,6 +495,9 @@ function buildParameterDocs(equipmentId, equipmentIndex, ts) {
             highWarningValue: Number((base + 1.0).toFixed(2)),
             highCriticalValue: Number((base + 2.0).toFixed(2)),
             alarmEnabled: true,
+            booleanValue: false,
+            enumValue: "",
+            stringValue: "",
             effectiveFrom: ISODate("2026-01-01T00:00:00Z"),
             effectiveTo: null,
             isActive: true,
@@ -444,6 +507,34 @@ function buildParameterDocs(equipmentId, equipmentIndex, ts) {
     });
 
     return { params: paramDocs, limits: limitDocs };
+}
+
+function ensureCriticalParameterLimitRecords(expectedDocs) {
+    var collection = db.getCollection("iiot_equipment_critical_parameters_limit");
+    var currentCount = collection.countDocuments({});
+    var expectedCount = expectedDocs && expectedDocs.length ? expectedDocs.length : 0;
+
+    if (currentCount >= expectedCount) {
+        logInfo("Critical parameter limits verified: " + currentCount + " records");
+        return currentCount;
+    }
+
+    logInfo("Critical parameter limits missing; re-seeding " + expectedCount + " records");
+    var docsToInsert = [];
+    expectedDocs.forEach(function(doc) {
+        var existing = collection.findOne({ parameterLimitId: doc.parameterLimitId });
+        if (!existing) {
+            docsToInsert.push(doc);
+        }
+    });
+
+    if (docsToInsert.length > 0) {
+        collection.insertMany(docsToInsert, { ordered: false });
+    }
+
+    var finalCount = collection.countDocuments({});
+    logInfo("Critical parameter limits after re-seed: " + finalCount);
+    return finalCount;
 }
 
 function seedMasterData() {
@@ -481,9 +572,16 @@ function seedMasterData() {
                 equipmentLocation: eq.hierarchy.fullPath
             });
 
-            var paramPayload = buildParameterDocs(eq.equipmentId, index + 1, ts);
+            var paramPayload = buildParameterDocs(eq.equipmentId, eq.plantId, index + 1, ts);
             parameterDocs = parameterDocs.concat(paramPayload.params);
             parameterLimitDocs = parameterLimitDocs.concat(paramPayload.limits);
+
+            var batchSourceTableName = eq.equipmentId === "RMG-100L-2-PVII"
+                ? "SKPharma::CDSSKPharma.B_UDA_RMG_100L_P7_2"
+                : "SKPharma::CDSSKPharma.B_UDA_" + eq.equipmentCode;
+            var alarmSourceTableName = eq.equipmentId === "RMG-100L-2-PVII"
+                ? "SKPharma::CDSSKPharma.AE_RMG100L_P7_2"
+                : "SKPharma::CDSSKPharma.AE_" + eq.equipmentCode;
 
             sourceMappings.push({
                 mappingId: "MAP-" + TENANT_ID + "-" + eq.equipmentCode,
@@ -492,14 +590,14 @@ function seedMasterData() {
                 batchSource: {
                     dbType: "SAP_HANA",
                     schemaName: "SKPharma",
-                    tableName: "SKPharma::CDSSKPharma.B_UDA_" + eq.equipmentCode,
+                    tableName: batchSourceTableName,
                     sequenceColumn: "SerialNumber",
                     timestampColumn: "LastModifiedTime"
                 },
                 alarmEventSource: {
                     dbType: "SAP_HANA",
                     schemaName: "SKPharma",
-                    tableName: "SKPharma::CDSSKPharma.AE_" + eq.equipmentCode,
+                    tableName: alarmSourceTableName,
                     sequenceColumn: "id",
                     timestampColumn: "LastModifiedTime"
                 },
@@ -523,6 +621,7 @@ function seedMasterData() {
         safeUpsert("iiot_product_master", productDocs, "productId");
         safeUpsert("iiot_equipment_critical_parameters", parameterDocs, "parameterId");
         safeUpsert("iiot_equipment_critical_parameters_limit", parameterLimitDocs, "parameterLimitId");
+        ensureCriticalParameterLimitRecords(parameterLimitDocs);
         safeUpsert("iiot_source_table_mapping", sourceMappings, "mappingId");
         
         logInfo("Master data seeded: " + equipmentDocs.length + " equipment");
@@ -541,9 +640,9 @@ function seedIngestionData() {
         }
         
         var baseDate = new Date("2026-07-01T00:00:00Z");
-        var maxEquipment = Math.min(EQUIPMENT_DEFS.length, 20);
+        var maxEquipment = EQUIPMENT_DEFS.length;
         
-        logInfo("Processing " + maxEquipment + " equipment");
+        logInfo("Processing all available equipment combinations: " + maxEquipment);
         
         var checkpointDocs = [];
         var jobRunDocs = [];
@@ -625,12 +724,7 @@ function seedIngestionData() {
                     var cppDoc = {
                         observedAt: toIsoDate(observedAt),
                         meta: {
-                            tenantId: TENANT_ID,
                             equipmentId: eq.equipmentId,
-                            plantId: eq.plantId,
-                            blockId: eq.blockId,
-                            areaId: eq.areaId,
-                            roomId: eq.roomId,
                             batchNo: batchNo,
                             lotNo: lotNo,
                             productName: product.productName,
@@ -641,7 +735,6 @@ function seedIngestionData() {
                             equipmentName: eq.equipmentName,
                             equipmentLocation: eq.hierarchy.fullPath,
                             status: metrics.status,
-                            hierarchy: eq.hierarchy,
                             // Time components for filtering
                             dateDay: observedAt.getDate(),
                             dayMonth: observedAt.getMonth() + 1,
@@ -676,12 +769,7 @@ function seedIngestionData() {
                     var alarmDoc = {
                         eventAt: toIsoDate(eventAt),
                         meta: {
-                            tenantId: TENANT_ID,
                             equipmentId: eq.equipmentId,
-                            plantId: eq.plantId,
-                            blockId: eq.blockId,
-                            areaId: eq.areaId,
-                            roomId: eq.roomId,
                             batchNo: batchNo,
                             lotNo: lotNo,
                             productName: product.productName,
@@ -692,7 +780,6 @@ function seedIngestionData() {
                             equipmentName: eq.equipmentName,
                             equipmentLocation: eq.hierarchy.fullPath,
                             status: "RUNNING",
-                            hierarchy: eq.hierarchy,
                             // Time components for filtering
                             dateDay: eventAt.getDate(),
                             dayMonth: eventAt.getMonth() + 1,
@@ -730,10 +817,6 @@ function seedIngestionData() {
                     lotNo: lotNo,
                     productName: product.productName,
                     productCode: product.productCode,
-                    plantId: eq.plantId,
-                    blockId: eq.blockId,
-                    areaId: eq.areaId,
-                    roomId: eq.roomId,
                     equipmentType: eq.equipmentType,
                     equipmentName: eq.equipmentName,
                     equipmentLocation: eq.hierarchy.fullPath,
@@ -757,34 +840,29 @@ function seedIngestionData() {
             safeInsert(alarmCollection, alarmEventDocs);
 
             checkpointDocs.push({
-                checkpointId: "CP-" + TENANT_ID + "-" + eq.equipmentId + "-BATCH_CPP",
-                tenantId: TENANT_ID,
+                checkpointId: "CP-" + eq.equipmentId + "-BATCH_CPP",
                 equipmentId: eq.equipmentId,
                 streamType: "BATCH_CPP",
                 sourceTable: "SKPharma::CDSSKPharma.B_UDA_" + eq.equipmentCode,
                 lastProcessedSeqId: cppSeq,
                 lastProcessedAt: now(),
                 status: "SUCCESS",
-                updatedAt: now(),
-                hierarchy: eq.hierarchy
+                updatedAt: now()
             });
 
             checkpointDocs.push({
-                checkpointId: "CP-" + TENANT_ID + "-" + eq.equipmentId + "-ALARM_EVENT",
-                tenantId: TENANT_ID,
+                checkpointId: "CP-" + eq.equipmentId + "-ALARM_EVENT",
                 equipmentId: eq.equipmentId,
                 streamType: "ALARM_EVENT",
                 sourceTable: "SKPharma::CDSSKPharma.AE_" + eq.equipmentCode,
                 lastProcessedSeqId: alarmSeq,
                 lastProcessedAt: now(),
                 status: "SUCCESS",
-                updatedAt: now(),
-                hierarchy: eq.hierarchy
+                updatedAt: now()
             });
 
             jobRunDocs.push({
                 jobRunId: "JOB-SEED-BATCH-" + pad3(eqIdx + 1),
-                tenantId: TENANT_ID,
                 equipmentId: eq.equipmentId,
                 streamType: "BATCH_CPP",
                 windowStartSeqId: cppSeq - (BATCHES_PER_EQUIPMENT * CPP_POINTS_PER_BATCH) + 1,
@@ -796,13 +874,11 @@ function seedIngestionData() {
                 startedAt: toIsoDate(addMinutes(baseDate, eqIdx * 25)),
                 completedAt: toIsoDate(addMinutes(baseDate, eqIdx * 25 + 5)),
                 createdAt: now(),
-                updatedAt: now(),
-                hierarchy: eq.hierarchy
+                updatedAt: now()
             });
 
             jobRunDocs.push({
                 jobRunId: "JOB-SEED-ALARM-" + pad3(eqIdx + 1),
-                tenantId: TENANT_ID,
                 equipmentId: eq.equipmentId,
                 streamType: "ALARM_EVENT",
                 windowStartSeqId: alarmSeq - (BATCHES_PER_EQUIPMENT * ALARMS_PER_BATCH) + 1,
@@ -814,26 +890,21 @@ function seedIngestionData() {
                 startedAt: toIsoDate(addMinutes(baseDate, eqIdx * 25 + 7)),
                 completedAt: toIsoDate(addMinutes(baseDate, eqIdx * 25 + 11)),
                 createdAt: now(),
-                updatedAt: now(),
-                hierarchy: eq.hierarchy
+                updatedAt: now()
             });
 
             if (latestCpp) {
+                var liveState = LIVE_STATES[eqIdx % LIVE_STATES.length];
                 db.iiot_equipment_live_status.updateOne(
-                    { tenantId: TENANT_ID, equipmentId: eq.equipmentId },
+                    { equipmentId: eq.equipmentId },
                     {
                         $set: {
-                            tenantId: TENANT_ID,
                             equipmentId: eq.equipmentId,
-                            plantId: eq.plantId,
-                            blockId: eq.blockId,
-                            areaId: eq.areaId,
-                            roomId: eq.roomId,
                             equipmentType: eq.equipmentType,
                             equipmentName: eq.equipmentName,
                             equipmentLocation: eq.hierarchy.fullPath,
-                            currentState: "RUNNING",
-                            stateReason: latestCpp.metrics.mode || "Running",
+                            currentState: liveState,
+                            stateReason: liveState,
                             lastBatchNo: latestCpp.meta.batchNo,
                             lastLotNo: latestCpp.meta.lotNo,
                             lastProductName: latestCpp.meta.productName,
@@ -841,8 +912,7 @@ function seedIngestionData() {
                             lastSourceSeqId: latestCpp.source.sourceSeqId,
                             lastEventAt: latestCpp.observedAt,
                             heartbeatAt: now(),
-                            updatedAt: now(),
-                            hierarchy: eq.hierarchy
+                            updatedAt: now()
                         },
                         $setOnInsert: { createdAt: now() }
                     },
@@ -864,6 +934,297 @@ function seedIngestionData() {
     }
 }
 
+function parseCsvLine(line) {
+    var values = [];
+    var current = "";
+    var inQuotes = false;
+    for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (ch === '"') {
+            if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (ch === ',' && !inQuotes) {
+            values.push(current.trim());
+            current = "";
+        } else {
+            current += ch;
+        }
+    }
+    values.push(current.trim());
+    return values.map(function(value) {
+        return value.replace(/^"(.*)"$/, "$1").trim();
+    });
+}
+
+function readTextFile(filePath) {
+    try {
+        if (typeof cat === "function") {
+            return cat(filePath);
+        }
+    } catch (e) {}
+
+    try {
+        if (typeof require === "function") {
+            var fs = require("fs");
+            if (fs && typeof fs.readFileSync === "function") {
+                return fs.readFileSync(filePath, "utf8");
+            }
+        }
+    } catch (e) {}
+
+    try {
+        if (typeof require === "function") {
+            var fs2 = require("fs");
+            if (fs2 && typeof fs2.readFileSync === "function") {
+                return fs2.readFileSync("/workspaces/" + filePath.replace(/^\.\//, ""), "utf8");
+            }
+        }
+    } catch (e2) {}
+
+    return null;
+}
+
+function parseSampleDate(value) {
+    if (!value) return null;
+    var cleaned = String(value).trim().replace(/\s+/, " ");
+    if (!cleaned) return null;
+    if (cleaned.indexOf("-") >= 0 && cleaned.indexOf(":") >= 0) {
+        try {
+            var isoCandidate = cleaned.replace(" ", "T");
+            var parsed = new Date(isoCandidate);
+            if (!isNaN(parsed.getTime())) {
+                return parsed;
+            }
+        } catch (e) {}
+    }
+    try {
+        return new Date(cleaned);
+    } catch (e) {
+        return null;
+    }
+}
+
+function toNumber(value) {
+    if (value === null || value === undefined || value === "") return null;
+    var cleaned = String(value).trim();
+    if (!cleaned) return null;
+    var parsed = Number(cleaned.replace(/[^0-9.+-]/g, ""));
+    return isNaN(parsed) ? null : parsed;
+}
+
+function seedSampleCsvIngestionData() {
+    return;
+}
+
+function seedLegacySampleCsvIngestionData() {
+    var targetEquipmentId = "RMG-100L-2-PVII";
+    var targetEquipment = EQUIPMENT_DEFS.find(function(eq) {
+        return eq.equipmentId === targetEquipmentId;
+    });
+    if (!targetEquipment) {
+        logInfo("Skipping CSV ingestion because target equipment was not mapped: " + targetEquipmentId);
+        return;
+    }
+
+    var candidates = [
+        "sample_ingestion_data/Batch_Report_Ingestion/data.csv",
+        "/docker-entrypoint-initdb.d/sample_ingestion_data/Batch_Report_Ingestion/data.csv",
+        "/seed/sample_ingestion_data/Batch_Report_Ingestion/data.csv"
+    ];
+    var batchCsvContent = null;
+    for (var i = 0; i < candidates.length; i++) {
+        batchCsvContent = readTextFile(candidates[i]);
+        if (batchCsvContent) {
+            break;
+        }
+    }
+    if (!batchCsvContent) {
+        logInfo("Batch CSV not found; skipping sample ingestion load for " + targetEquipmentId);
+        return;
+    }
+
+    var alarmCandidates = [
+        "sample_ingestion_data/Alarms and Events - Ingestion/data__.csv",
+        "/docker-entrypoint-initdb.d/sample_ingestion_data/Alarms and Events - Ingestion/data__.csv",
+        "/seed/sample_ingestion_data/Alarms and Events - Ingestion/data__.csv"
+    ];
+    var alarmCsvContent = null;
+    for (var j = 0; j < alarmCandidates.length; j++) {
+        alarmCsvContent = readTextFile(alarmCandidates[j]);
+        if (alarmCsvContent) {
+            break;
+        }
+    }
+    if (!alarmCsvContent) {
+        logInfo("Alarm CSV not found; skipping sample ingestion load for " + targetEquipmentId);
+        return;
+    }
+
+    var cppCollection = getTimeSeriesCppCollection(targetEquipmentId);
+    var alarmCollection = getTimeSeriesAlarmCollection(targetEquipmentId);
+    ensureCollection(cppCollection);
+    ensureCollection(alarmCollection);
+
+    var cppDocs = [];
+    batchCsvContent.split(/\r?\n/).forEach(function(line) {
+        if (!line || line.trim() === "") return;
+        var values = parseCsvLine(line);
+        if (values.length < 23) return;
+        var equipmentIdValue = values[1] || values[10] || "";
+        if (equipmentIdValue !== targetEquipmentId) return;
+        var lastModifiedTime = values[16] || values[17] || values[18] || "";
+        var observedAt = parseSampleDate(lastModifiedTime);
+        if (!observedAt) return;
+        var batchNo = values[2] || "";
+        var lotNo = values[4] || "";
+        var operatorName = values[5] || "";
+        var productName = values[6] || "";
+        var supervisorName = values[12] || "";
+        var mode = values[17] || "";
+        var machineDate = values[18] || "";
+        var status = values[22] || "START";
+        var timeHH = values[13] || "00";
+        var timeMM = values[14] || "00";
+        var timeSS = values[15] || "00";
+        var cppDoc = {
+            observedAt: toIsoDate(observedAt),
+            meta: {
+                tenantId: TENANT_ID,
+                equipmentId: targetEquipmentId,
+                batchNo: batchNo,
+                lotNo: lotNo,
+                productName: productName,
+                productCode: productName,
+                operatorName: operatorName,
+                supervisorName: supervisorName,
+                equipmentType: targetEquipment.equipmentType,
+                equipmentName: targetEquipment.equipmentName,
+                equipmentLocation: targetEquipment.hierarchy.fullPath,
+                status: status,
+                dateDay: parseInt(values[7] || "0", 10),
+                dayMonth: parseInt(values[8] || "0", 10),
+                dayYear: parseInt(values[9] || "0", 10),
+                timeHH: pad2(parseInt(timeHH, 10) || 0),
+                timeMM: pad2(parseInt(timeMM, 10) || 0),
+                timeSS: pad2(parseInt(timeSS, 10) || 0)
+            },
+            source: {
+                tableName: "SKPharma::CDSSKPharma.B_UDA_RMG_100L_P7_2",
+                sourceSeqId: parseInt(values[0] || "0", 10),
+                lastModifiedTime: toIsoDate(observedAt),
+                machineDate: machineDate
+            },
+            metrics: {
+                impellerA: toNumber(values[19]),
+                chopperA: toNumber(values[20]),
+                cycle: values[21] || "",
+                mode: mode,
+                batchSize: values[3] || "",
+                status: status
+            },
+            ingestedAt: now()
+        };
+        cppDocs.push(cppDoc);
+    });
+
+    if (cppDocs.length > 0) {
+        safeInsert(cppCollection, cppDocs);
+    }
+
+    var alarmDocs = [];
+    alarmCsvContent.split(/\r?\n/).forEach(function(line) {
+        if (!line || line.trim() === "") return;
+        var values = parseCsvLine(line);
+        if (values.length < 22) return;
+        var equipmentIdValue = values[14] || values[15] || "";
+        if (equipmentIdValue !== targetEquipmentId) return;
+        var lastModifiedTime = values[16] || "";
+        var eventAt = parseSampleDate(lastModifiedTime);
+        if (!eventAt) return;
+        var eventText = values[7] || values[8] || "";
+        if (eventText.indexOf(";") === 0) {
+            eventText = eventText.substring(1);
+        }
+        var eventCategory = /error|alarm|pressure|air|temp/i.test(eventText) ? "ALARM" : "EVENT";
+        var alarmDoc = {
+            eventAt: toIsoDate(eventAt),
+            meta: {
+                tenantId: TENANT_ID,
+                equipmentId: targetEquipmentId,
+                batchNo: values[9] || "",
+                lotNo: values[11] || "",
+                productName: values[13] || "",
+                productCode: values[13] || "",
+                operatorName: values[12] || "",
+                supervisorName: values[20] || "",
+                equipmentType: targetEquipment.equipmentType,
+                equipmentName: targetEquipment.equipmentName,
+                equipmentLocation: targetEquipment.hierarchy.fullPath,
+                status: values[17] || "RUNNING",
+                dateDay: parseInt(values[1] || "0", 10),
+                dayMonth: parseInt(values[2] || "0", 10),
+                dayYear: parseInt(values[3] || "0", 10),
+                timeHH: pad2(parseInt(values[4] || "0", 10) || 0),
+                timeMM: pad2(parseInt(values[5] || "0", 10) || 0),
+                timeSS: pad2(parseInt(values[6] || "0", 10) || 0)
+            },
+            source: {
+                tableName: "SKPharma::CDSSKPharma.AE_RMG100L_P7_2",
+                sourceSeqId: parseInt(values[0] || "0", 10),
+                lastModifiedTime: toIsoDate(eventAt),
+                machineDate: values[21] || ""
+            },
+            event: {
+                eventCategory: eventCategory,
+                eventCode: eventText,
+                eventText: eventText,
+                severity: eventCategory === "ALARM" ? "HIGH" : "LOW",
+                eventState: eventCategory === "ALARM" ? "OPEN" : "INFO",
+                alarmAll: eventCategory === "ALARM" ? ";" + eventText + ";" : "",
+                eventAll: eventCategory === "EVENT" ? ";" + eventText + ";" : ""
+            },
+            ingestedAt: now()
+        };
+        alarmDocs.push(alarmDoc);
+    });
+
+    if (alarmDocs.length > 0) {
+        safeInsert(alarmCollection, alarmDocs);
+    }
+
+    var summaryDoc = {
+        tenantId: TENANT_ID,
+        equipmentId: targetEquipmentId,
+        batchNo: "CSV-LOAD",
+        lotNo: "",
+        productName: "",
+        productCode: "",
+        equipmentType: targetEquipment.equipmentType,
+        equipmentName: targetEquipment.equipmentName,
+        equipmentLocation: targetEquipment.hierarchy.fullPath,
+        batchSize: "",
+        operatorName: "",
+        supervisorName: "",
+        batchStartAt: now(),
+        batchEndAt: now(),
+        batchStatus: "COMPLETED",
+        cppRecordCount: cppDocs.length,
+        alarmCount: alarmDocs.length,
+        eventCount: alarmDocs.length,
+        productionCount: 0,
+        createdAt: now(),
+        updatedAt: now(),
+        hierarchy: targetEquipment.hierarchy
+    };
+    safeInsert("iiot_batch_summary", [summaryDoc]);
+
+    logInfo("Loaded " + cppDocs.length + " CPP rows and " + alarmDocs.length + " alarm rows from sample CSVs for " + targetEquipmentId);
+}
+
 function validateHierarchy() {
     logInfo("=== HIERARCHY VALIDATION ===");
     logInfo("Total Equipment: " + EQUIPMENT_DEFS.length);
@@ -871,7 +1232,8 @@ function validateHierarchy() {
     
     PLANT_IDS.forEach(function(plantId) {
         var count = EQUIPMENT_DEFS.filter(function(eq) { return eq.plantId === plantId; }).length;
-        logInfo("  " + plantId + ": " + count + " equipment");
+        var config = PLANT_HIERARCHY[plantId] || {};
+        logInfo("  " + plantId + ": " + count + " equipment (blocks=" + (config.blocks || BLOCK_IDS).length + ", areas=" + (config.areas || AREA_IDS).length + ", rooms=" + (config.rooms || ROOM_IDS).length + ")");
     });
     
     logInfo("=== SAMPLE HIERARCHY ===");
@@ -918,6 +1280,7 @@ function runSeed() {
         createIndexes();
         seedMasterData();
         seedIngestionData();
+        seedLegacySampleCsvIngestionData();
         
         logInfo("=== SEED COMPLETED ===");
         logInfo("Database: " + databaseName);
@@ -953,4 +1316,3 @@ function runSeed() {
 
 runSeed();
 print("[IIOT-SEED] Script completed.");
-quit(0);

@@ -378,14 +378,22 @@ public class IiotOperationsService {
     }
 
     public Map<String, Object> createCriticalParameterLimit(Map<String, Object> request) {
-        String parameterLimitId = requireText(request, "parameterLimitId");
+        String parameterLimitCode = firstNonBlank(
+            stringValue(request.get("parameterLimitCode")),
+            stringValue(request.get("parameterLimitId")));
+        if (parameterLimitCode == null || parameterLimitCode.isBlank()) {
+            throw new BusinessException("parameterLimitCode is required");
+        }
+        String parameterLimitId = firstNonBlank(stringValue(request.get("parameterLimitId")), parameterLimitCode);
         String parameterId = requireText(request, "parameterId");
+        String parameterType = requireText(request, "parameterType");
         String equipmentId = requireText(request, "equipmentId");
         String tenantId = firstNonBlank(stringValue(request.get("tenantId")), DEFAULT_TENANT_ID);
         String plantId = firstNonBlank(stringValue(request.get("plantId")), DEFAULT_PLANT_ID);
 
         Query query = new Query(new Criteria().orOperator(
                 Criteria.where("parameterLimitId").is(parameterLimitId),
+            Criteria.where("parameterLimitCode").is(parameterLimitCode),
                 Criteria.where("tenantId").is(tenantId)
                         .and("plantId").is(plantId)
                         .and("equipmentId").is(equipmentId)
@@ -396,11 +404,14 @@ public class IiotOperationsService {
 
         Document doc = new Document(request);
         doc.put("parameterLimitId", parameterLimitId);
+        doc.put("parameterLimitCode", parameterLimitCode);
         doc.put("parameterId", parameterId);
+        doc.put("parameterType", parameterType);
         doc.put("equipmentId", equipmentId);
         doc.put("tenantId", tenantId);
         doc.put("plantId", plantId);
         doc.put("isActive", request.getOrDefault("isActive", true));
+        doc.put("alarmEnabled", request.getOrDefault("alarmEnabled", false));
         doc.put("createdAt", Date.from(Instant.now()));
         doc.put("updatedAt", Date.from(Instant.now()));
         return insertDocument(doc, CRITICAL_PARAMETER_LIMITS_COLLECTION,
@@ -426,6 +437,13 @@ public class IiotOperationsService {
                 existing.put(k, v);
             }
         });
+        if (!existing.containsKey("parameterLimitCode") || stringValue(existing.get("parameterLimitCode")) == null
+                || stringValue(existing.get("parameterLimitCode")).isBlank()) {
+            existing.put("parameterLimitCode", existing.get("parameterLimitId"));
+        }
+        if (!request.containsKey("alarmEnabled")) {
+            existing.put("alarmEnabled", existing.getOrDefault("alarmEnabled", false));
+        }
         existing.put("updatedAt", Date.from(Instant.now()));
         return toMap(mongoTemplate.save(existing, CRITICAL_PARAMETER_LIMITS_COLLECTION));
     }
@@ -442,8 +460,8 @@ public class IiotOperationsService {
     }
 
     public Map<String, Object> createProductMaster(Map<String, Object> request) {
-        String productId = requireText(request, "productId");
         String productCode = requireText(request, "productCode");
+        String productId = firstNonBlank(stringValue(request.get("productId")), productCode);
         String tenantId = firstNonBlank(stringValue(request.get("tenantId")), DEFAULT_TENANT_ID);
         String plantId = firstNonBlank(stringValue(request.get("plantId")), DEFAULT_PLANT_ID);
 
@@ -547,7 +565,6 @@ public class IiotOperationsService {
         String equipmentId = requireFilterText(filter, "equipmentId");
         String collection = buildPerEquipmentCollectionName(CPP_TS_PREFIX, tenantId, equipmentId);
         Query query = new Query();
-        applyMetaCriteria(query, "meta.tenantId", tenantId);
         applyMetaCriteria(query, "meta.equipmentId", equipmentId);
         applyMetaCriteria(query, "meta.batchNo", stringValue(filter.get("batchNo")));
         applyMetaCriteria(query, "meta.lotNo", stringValue(filter.get("lotNo")));
@@ -563,7 +580,6 @@ public class IiotOperationsService {
         String equipmentId = requireFilterText(filter, "equipmentId");
         String collection = buildPerEquipmentCollectionName(ALARM_TS_PREFIX, tenantId, equipmentId);
         Query query = new Query();
-        applyMetaCriteria(query, "meta.tenantId", tenantId);
         applyMetaCriteria(query, "meta.equipmentId", equipmentId);
         applyMetaCriteria(query, "meta.batchNo", stringValue(filter.get("batchNo")));
         applyMetaCriteria(query, "meta.lotNo", stringValue(filter.get("lotNo")));
@@ -578,10 +594,87 @@ public class IiotOperationsService {
         return mongoTemplate.find(query, Document.class, collection).stream().map(this::toMap).toList();
     }
 
+    public Map<String, Object> getEquipmentMonitoringView(Map<String, Object> filter) {
+        String tenantId = firstNonBlank(stringValue(filter.get("tenantId")), DEFAULT_TENANT_ID);
+        String equipmentId = requireFilterText(filter, "equipmentId");
+        String batchNo = stringValue(filter.get("batchNo"));
+        if (batchNo == null || batchNo.isBlank()) {
+            throw new BusinessException("batchNo is required");
+        }
+
+        Document equipmentMaster = loadEquipmentMasterByEquipmentId(equipmentId);
+        if (equipmentMaster == null) {
+            throw new BusinessException("Equipment not found: " + equipmentId);
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("tenantId", tenantId);
+        response.put("equipmentId", equipmentId);
+        response.put("batchNo", batchNo);
+        response.put("equipment", toMap(equipmentMaster));
+
+        String cppCollection = buildPerEquipmentCollectionName(CPP_TS_PREFIX, tenantId, equipmentId);
+        Query cppQuery = new Query();
+        cppQuery.addCriteria(Criteria.where("meta.equipmentId").is(equipmentId));
+        cppQuery.addCriteria(Criteria.where("meta.batchNo").is(batchNo));
+        cppQuery.with(Sort.by(Sort.Direction.ASC, "observedAt"));
+        List<Map<String, Object>> cppData = mongoTemplate.find(cppQuery, Document.class, cppCollection)
+                .stream()
+                .map(this::toMap)
+                .toList();
+
+        String alarmCollection = buildPerEquipmentCollectionName(ALARM_TS_PREFIX, tenantId, equipmentId);
+        Query alarmQuery = new Query();
+        alarmQuery.addCriteria(Criteria.where("meta.equipmentId").is(equipmentId));
+        alarmQuery.addCriteria(Criteria.where("meta.batchNo").is(batchNo));
+        alarmQuery.with(Sort.by(Sort.Direction.ASC, "eventAt"));
+        List<Map<String, Object>> alarmData = mongoTemplate.find(alarmQuery, Document.class, alarmCollection)
+                .stream()
+                .map(this::toMap)
+                .toList();
+
+        response.put("cppData", cppData);
+        response.put("alarmData", alarmData);
+
+        Query liveStatusQuery = new Query(Criteria.where("equipmentId").is(equipmentId));
+        Document liveStatus = mongoTemplate.findOne(liveStatusQuery, Document.class, EQUIPMENT_LIVE_STATUS_COLLECTION);
+        if (liveStatus != null) {
+            response.put("liveStatus", toMap(liveStatus));
+        }
+
+        return response;
+    }
+
+    public Map<String, Object> acknowledgeAlarmEvent(Map<String, Object> filter, String eventId, Map<String, Object> request) {
+        String tenantId = firstNonBlank(stringValue(filter.get("tenantId")), DEFAULT_TENANT_ID);
+        String equipmentId = requireFilterText(filter, "equipmentId");
+        String collection = buildPerEquipmentCollectionName(ALARM_TS_PREFIX, tenantId, equipmentId);
+
+        Document eventDoc = findDocumentById(collection, eventId);
+        if (eventDoc == null) {
+            throw new BusinessException("Alarm event not found: " + eventId);
+        }
+
+        Map<String, Object> eventData = asMap(eventDoc.get("event"));
+        eventData.put("eventState", "ACKNOWLEDGED");
+        eventData.put("acknowledgedBy", request.getOrDefault("acknowledgedBy", "SYSTEM"));
+        if (request.containsKey("comment")) {
+            eventData.put("ackComment", request.get("comment"));
+        }
+        if (request.containsKey("reason")) {
+            eventData.put("ackReason", request.get("reason"));
+        }
+        eventData.put("acknowledgedAt", Instant.now().toString());
+
+        eventDoc.put("event", new Document(eventData));
+        eventDoc.put("updatedAt", Date.from(Instant.now()));
+
+        return toMap(mongoTemplate.save(eventDoc, collection));
+    }
+
     public Map<String, Object> getIngestionStatus(String equipmentId, String streamType) {
         String normalizedStream = normalizeStreamType(streamType);
-        Document checkpoint = findCheckpoint(firstNonBlank(equipmentId, "ALL"), normalizedStream,
-                firstNonBlank(stringValue(null), DEFAULT_TENANT_ID));
+        Document checkpoint = findCheckpoint(firstNonBlank(equipmentId, "ALL"), normalizedStream);
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("equipmentId", equipmentId);
         response.put("streamType", normalizedStream);
@@ -611,12 +704,27 @@ public class IiotOperationsService {
         return toMap(doc);
     }
 
-    public List<Map<String, Object>> getEquipmentLiveStatuses() {
+    public List<Map<String, Object>> getEquipmentLiveStatuses(Map<String, Object> filter) {
         Query query = new Query();
+        List<String> filteredEquipmentIds = resolveEquipmentIdsForHierarchyFilter(filter);
+        if (filteredEquipmentIds != null) {
+            if (filteredEquipmentIds.isEmpty()) {
+                return List.of();
+            }
+            query.addCriteria(Criteria.where("equipmentId").in(filteredEquipmentIds));
+        }
         query.with(Sort.by(Sort.Direction.DESC, "updatedAt", "equipmentId"));
-        return mongoTemplate.find(query, Document.class, EQUIPMENT_LIVE_STATUS_COLLECTION)
-                .stream()
+        List<Document> statusDocs = mongoTemplate.find(query, Document.class, EQUIPMENT_LIVE_STATUS_COLLECTION);
+
+        List<String> equipmentIds = statusDocs.stream()
+                .map(doc -> stringValue(doc.get("equipmentId")))
+                .filter(Objects::nonNull)
+                .toList();
+        Map<String, Document> equipmentMasterById = loadEquipmentMasterByIds(equipmentIds);
+
+        return statusDocs.stream()
                 .map(this::toMap)
+                .map(status -> enrichLiveStatusWithHierarchy(status, equipmentMasterById.get(stringValue(status.get("equipmentId")))))
                 .toList();
     }
 
@@ -627,7 +735,9 @@ public class IiotOperationsService {
         if (doc == null) {
             throw new BusinessException("Equipment live status not found for equipmentId: " + equipmentId);
         }
-        return toMap(doc);
+        Map<String, Object> status = toMap(doc);
+        Document equipmentMaster = loadEquipmentMasterByEquipmentId(equipmentId);
+        return enrichLiveStatusWithHierarchy(status, equipmentMaster);
     }
 
     private void ingestEquipmentStreams(Document mapping) {
@@ -659,7 +769,7 @@ public class IiotOperationsService {
         String timestampColumn = requireFilterText(sourceConfig, "timestampColumn");
         String sql = "SELECT * FROM " + sourceTable + " WHERE " + sequenceColumn + " > ? ORDER BY " + sequenceColumn + " ASC";
 
-        Document checkpoint = findCheckpoint(equipmentId, streamType, tenantId);
+        Document checkpoint = findCheckpoint(equipmentId, streamType);
         long lastSeq = checkpoint == null ? 0L : toLong(checkpoint.get("lastProcessedSeqId"));
 
         List<Map<String, Object>> rows = fetchSourceRows(mapping, sql, lastSeq, batchSize);
@@ -707,8 +817,8 @@ public class IiotOperationsService {
             }
         }
 
-        upsertCheckpoint(tenantId, equipmentId, streamType, sourceTable, maxSeq, rows.isEmpty() ? "NO_DATA" : "SUCCESS");
-        writeJobRun(tenantId, equipmentId, streamType, lastSeq, maxSeq, rows.size(), written, skipped, startedAt, Instant.now(), null);
+        upsertCheckpoint(equipmentId, streamType, sourceTable, maxSeq, rows.isEmpty() ? "NO_DATA" : "SUCCESS");
+        writeJobRun(equipmentId, streamType, lastSeq, maxSeq, rows.size(), written, skipped, startedAt, Instant.now(), null);
         lastRunAtByStream.put(runKey, now);
     }
 
@@ -778,12 +888,7 @@ public class IiotOperationsService {
         }
 
         Map<String, Object> meta = new LinkedHashMap<>();
-        meta.put("tenantId", tenantId);
         meta.put("equipmentId", equipmentId);
-        meta.put("plantId", firstNonBlank(stringValue(row.get("PlantId")), stringValue(row.get("Plant_ID"))));
-        meta.put("areaId", firstNonBlank(stringValue(row.get("AreaId")), stringValue(row.get("Area_ID"))));
-        meta.put("blockId", firstNonBlank(stringValue(row.get("BlockId")), stringValue(row.get("Block_ID"))));
-        meta.put("roomId", firstNonBlank(stringValue(row.get("RoomId")), stringValue(row.get("Room_ID"))));
         meta.put("batchNo", firstNonBlank(stringValue(row.get("Batch_Number")), stringValue(row.get("BatchNo"))));
         meta.put("lotNo", firstNonBlank(stringValue(row.get("LotNumber")), stringValue(row.get("Lot_No"))));
         meta.put("productName", firstNonBlank(stringValue(row.get("Product_Name")), stringValue(row.get("ProductName"))));
@@ -828,7 +933,6 @@ public class IiotOperationsService {
         }
 
         Map<String, Object> baseMeta = new LinkedHashMap<>();
-        baseMeta.put("tenantId", tenantId);
         baseMeta.put("equipmentId", equipmentId);
         baseMeta.put("batchNo", firstNonBlank(stringValue(row.get("Batch_Number")), stringValue(row.get("BatchNo"))));
         baseMeta.put("lotNo", firstNonBlank(stringValue(row.get("LotNumber")), stringValue(row.get("Lot_No"))));
@@ -879,24 +983,23 @@ public class IiotOperationsService {
         }
     }
 
-    private void upsertCheckpoint(String tenantId,
-                                  String equipmentId,
+    private void upsertCheckpoint(String equipmentId,
                                   String streamType,
                                   String sourceTable,
                                   long lastProcessedSeqId,
                                   String status) {
-        Query query = new Query(Criteria.where("tenantId").is(tenantId)
-                .and("equipmentId").is(equipmentId)
+        Query query = new Query(Criteria.where("equipmentId").is(equipmentId)
                 .and("streamType").is(streamType));
         Document doc = mongoTemplate.findOne(query, Document.class, CHECKPOINT_COLLECTION);
         if (doc == null) {
             doc = new Document();
-            doc.put("checkpointId", "CP-" + tenantId + "-" + equipmentId + "-" + streamType);
-            doc.put("tenantId", tenantId);
+            doc.put("checkpointId", "CP-" + equipmentId + "-" + streamType);
             doc.put("equipmentId", equipmentId);
             doc.put("streamType", streamType);
             doc.put("createdAt", Date.from(Instant.now()));
         }
+        doc.remove("tenantId");
+        doc.remove("hierarchy");
         doc.put("sourceTable", sourceTable);
         doc.put("lastProcessedSeqId", lastProcessedSeqId);
         doc.put("lastProcessedAt", Date.from(Instant.now()));
@@ -905,8 +1008,7 @@ public class IiotOperationsService {
         mongoTemplate.save(doc, CHECKPOINT_COLLECTION);
     }
 
-    private void writeJobRun(String tenantId,
-                             String equipmentId,
+    private void writeJobRun(String equipmentId,
                              String streamType,
                              long windowStartSeqId,
                              long windowEndSeqId,
@@ -918,9 +1020,10 @@ public class IiotOperationsService {
                              String errorSummary) {
         Document doc = new Document();
         doc.put("jobRunId", "JOB-" + Instant.now().toEpochMilli());
-        doc.put("tenantId", tenantId);
         doc.put("equipmentId", equipmentId);
         doc.put("streamType", streamType);
+                    doc.remove("tenantId");
+                    doc.remove("hierarchy");
         doc.put("windowStartSeqId", windowStartSeqId);
         doc.put("windowEndSeqId", windowEndSeqId);
         doc.put("recordsRead", recordsRead);
@@ -937,19 +1040,22 @@ public class IiotOperationsService {
 
     private void upsertEquipmentLiveStatusFromTs(Map<String, Object> tsDoc, String streamType) {
         Map<String, Object> meta = asMap(tsDoc.get("meta"));
-        String tenantId = firstNonBlank(stringValue(meta.get("tenantId")), DEFAULT_TENANT_ID);
         String equipmentId = stringValue(meta.get("equipmentId"));
         if (equipmentId == null || equipmentId.isBlank()) {
             return;
         }
 
-        Query query = new Query(Criteria.where("tenantId").is(tenantId).and("equipmentId").is(equipmentId));
+        Query query = new Query(Criteria.where("equipmentId").is(equipmentId));
         Document current = mongoTemplate.findOne(query, Document.class, EQUIPMENT_LIVE_STATUS_COLLECTION);
         Document doc = current == null ? new Document() : current;
-        doc.put("tenantId", tenantId);
         doc.put("equipmentId", equipmentId);
-        doc.put("plantId", meta.get("plantId"));
-        doc.put("areaId", meta.get("areaId"));
+        doc.remove("tenantId");
+        doc.remove("plantId");
+        doc.remove("blockId");
+        doc.remove("areaId");
+        doc.remove("roomId");
+        doc.remove("roomNo");
+        doc.remove("hierarchy");
         doc.put("lastBatchNo", meta.get("batchNo"));
         doc.put("lastLotNo", meta.get("lotNo"));
         doc.put("lastEventAt", tsDoc.get("observedAt") != null ? tsDoc.get("observedAt") : tsDoc.get("eventAt"));
@@ -966,6 +1072,88 @@ public class IiotOperationsService {
             doc.put("createdAt", Date.from(Instant.now()));
         }
         mongoTemplate.save(doc, EQUIPMENT_LIVE_STATUS_COLLECTION);
+    }
+
+    private List<String> resolveEquipmentIdsForHierarchyFilter(Map<String, Object> filter) {
+        String tenantId = stringValue(filter.get("tenantId"));
+        String plantId = stringValue(filter.get("plantId"));
+        String blockId = stringValue(filter.get("blockId"));
+        String areaId = stringValue(filter.get("areaId"));
+        String roomNo = stringValue(filter.get("roomNo"));
+
+        boolean hasHierarchyFilter = (tenantId != null && !tenantId.isBlank())
+                || (plantId != null && !plantId.isBlank())
+                || (blockId != null && !blockId.isBlank())
+                || (areaId != null && !areaId.isBlank())
+                || (roomNo != null && !roomNo.isBlank());
+
+        if (!hasHierarchyFilter) {
+            return null;
+        }
+
+        Query equipmentQuery = new Query();
+        if (tenantId != null && !tenantId.isBlank()) {
+            equipmentQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
+        }
+        if (plantId != null && !plantId.isBlank()) {
+            equipmentQuery.addCriteria(Criteria.where("plantId").is(plantId));
+        }
+        if (blockId != null && !blockId.isBlank()) {
+            equipmentQuery.addCriteria(Criteria.where("blockId").is(blockId));
+        }
+        if (areaId != null && !areaId.isBlank()) {
+            equipmentQuery.addCriteria(Criteria.where("areaId").is(areaId));
+        }
+        if (roomNo != null && !roomNo.isBlank()) {
+            equipmentQuery.addCriteria(new Criteria().orOperator(
+                    Criteria.where("roomId").is(roomNo),
+                    Criteria.where("roomNo").is(roomNo)));
+        }
+
+        List<Document> equipmentDocs = mongoTemplate.find(equipmentQuery, Document.class, EQUIPMENT_MASTER_COLLECTION);
+        return equipmentDocs.stream()
+                .map(doc -> stringValue(doc.get("equipmentId")))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private Document loadEquipmentMasterByEquipmentId(String equipmentId) {
+        Query query = new Query(Criteria.where("equipmentId").is(equipmentId));
+        query.with(Sort.by(Sort.Direction.DESC, "updatedAt"));
+        return mongoTemplate.findOne(query, Document.class, EQUIPMENT_MASTER_COLLECTION);
+    }
+
+    private Map<String, Document> loadEquipmentMasterByIds(List<String> equipmentIds) {
+        if (equipmentIds == null || equipmentIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Query query = new Query(Criteria.where("equipmentId").in(equipmentIds));
+        List<Document> equipmentDocs = mongoTemplate.find(query, Document.class, EQUIPMENT_MASTER_COLLECTION);
+        Map<String, Document> lookup = new HashMap<>();
+        for (Document equipmentDoc : equipmentDocs) {
+            String equipmentId = stringValue(equipmentDoc.get("equipmentId"));
+            if (equipmentId != null && !equipmentId.isBlank() && !lookup.containsKey(equipmentId)) {
+                lookup.put(equipmentId, equipmentDoc);
+            }
+        }
+        return lookup;
+    }
+
+    private Map<String, Object> enrichLiveStatusWithHierarchy(Map<String, Object> status, Document equipmentMaster) {
+        if (equipmentMaster == null) {
+            return status;
+        }
+
+        status.put("tenantId", equipmentMaster.get("tenantId"));
+        status.put("plantId", equipmentMaster.get("plantId"));
+        status.put("blockId", equipmentMaster.get("blockId"));
+        status.put("areaId", equipmentMaster.get("areaId"));
+
+        String roomId = stringValue(equipmentMaster.get("roomId"));
+        status.put("roomId", roomId);
+        status.put("roomNo", firstNonBlank(stringValue(equipmentMaster.get("roomNo")), roomId));
+        return status;
     }
 
     private void upsertBatchSummaryFromCpp(Map<String, Object> cppDoc) {
@@ -994,8 +1182,6 @@ public class IiotOperationsService {
 
         summary.put("lotNo", meta.get("lotNo"));
         summary.put("productName", meta.get("productName"));
-        summary.put("plantId", meta.get("plantId"));
-        summary.put("areaId", meta.get("areaId"));
         summary.put("batchStatus", meta.get("status"));
         summary.put("batchStartAt", summary.getOrDefault("batchStartAt", cppDoc.get("observedAt")));
         summary.put("batchEndAt", cppDoc.get("observedAt"));
@@ -1012,9 +1198,8 @@ public class IiotOperationsService {
         return normalized;
     }
 
-    private Document findCheckpoint(String equipmentId, String streamType, String tenantId) {
-        Query query = new Query(Criteria.where("tenantId").is(tenantId)
-                .and("equipmentId").is(equipmentId)
+    private Document findCheckpoint(String equipmentId, String streamType) {
+        Query query = new Query(Criteria.where("equipmentId").is(equipmentId)
                 .and("streamType").is(streamType));
         return mongoTemplate.findOne(query, Document.class, CHECKPOINT_COLLECTION);
     }
@@ -1358,12 +1543,12 @@ public class IiotOperationsService {
         Query existingQuery = new Query(Criteria.where("assetCode").is(assetCode).and("date").is(effectiveDate.toString()));
         Document existing = mongoTemplate.findOne(existingQuery, Document.class, OEE_METRICS_COLLECTION);
         if (existing != null) {
-            return toMap(existing);
+            return enrichOeePayload(toMap(existing), assetCode, effectiveDate);
         }
 
         Map<String, Object> computed = computeOee(assetCode, effectiveDate);
         mongoTemplate.save(new Document(computed), OEE_METRICS_COLLECTION);
-        return computed;
+        return enrichOeePayload(computed, assetCode, effectiveDate);
     }
 
     public List<Map<String, Object>> getOeeReport(LocalDate fromDate, LocalDate toDate, String assetCode) {
@@ -1454,6 +1639,27 @@ public class IiotOperationsService {
         return toMap(mongoTemplate.save(doc, ALARM_EVENTS_COLLECTION));
     }
 
+    private Map<String, Object> enrichOeePayload(Map<String, Object> metric, String assetCode, LocalDate date) {
+        Map<String, Object> dashboard = new LinkedHashMap<>();
+        dashboard.put("status", ((Number) metric.getOrDefault("oee", 0d)).doubleValue() >= 0.8 ? "ON_TRACK" : "ATTENTION");
+        dashboard.put("trend", ((Number) metric.getOrDefault("oee", 0d)).doubleValue() >= 0.8 ? "IMPROVING" : "DECLINING");
+        dashboard.put("targetOee", 0.85);
+        dashboard.put("currentOee", round4(((Number) metric.getOrDefault("oee", 0d)).doubleValue()));
+
+        Map<String, Object> details = new LinkedHashMap<>();
+        details.put("runningSeconds", metric.getOrDefault("runningSeconds", 0d));
+        details.put("downtimeSeconds", metric.getOrDefault("downtimeSeconds", 0d));
+        details.put("goodUnits", metric.getOrDefault("goodUnits", 0d));
+        details.put("totalUnits", metric.getOrDefault("totalUnits", 0d));
+        details.put("assetCode", assetCode);
+        details.put("date", date.toString());
+
+        Map<String, Object> enriched = new LinkedHashMap<>(metric);
+        enriched.put("dashboard", dashboard);
+        enriched.put("details", details);
+        return enriched;
+    }
+
     private Map<String, Object> computeOee(String assetCode, LocalDate date) {
         Instant dayStart = date.atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant dayEnd = dayStart.plus(1, ChronoUnit.DAYS);
@@ -1490,6 +1696,7 @@ public class IiotOperationsService {
         }
 
         double availability = clamp(runningSeconds / plannedProductionTime);
+        double downtimeSeconds = Math.max(plannedProductionTime - runningSeconds, 0d);
 
         Query rpmQuery = new Query(Criteria.where("assetCode").is(assetCode)
                 .and("tagCode").is("RPM")
@@ -1514,6 +1721,11 @@ public class IiotOperationsService {
                 : 0.97d;
 
         double oee = clamp(availability * performance * quality);
+        double targetUnitsPerHour = toDouble(config != null ? config.get("targetUnitsPerHour") : null) != null
+                ? Objects.requireNonNull(toDouble(config.get("targetUnitsPerHour")))
+                : 1200d;
+        double totalUnits = Math.max(runningSeconds / 3600d * targetUnitsPerHour, 0d);
+        double goodUnits = totalUnits * quality;
 
         Map<String, Object> metric = new LinkedHashMap<>();
         metric.put("assetCode", assetCode);
@@ -1522,6 +1734,10 @@ public class IiotOperationsService {
         metric.put("performance", round4(performance));
         metric.put("quality", round4(quality));
         metric.put("oee", round4(oee));
+        metric.put("runningSeconds", round4(runningSeconds));
+        metric.put("downtimeSeconds", round4(downtimeSeconds));
+        metric.put("goodUnits", round4(goodUnits));
+        metric.put("totalUnits", round4(totalUnits));
         metric.put("createdAt", Date.from(Instant.now()));
         metric.put("updatedAt", Date.from(Instant.now()));
         return metric;
@@ -1686,6 +1902,20 @@ public class IiotOperationsService {
 
         Query byString = new Query(Criteria.where("_id").is(id));
         return mongoTemplate.findOne(byString, Document.class, ALARM_EVENTS_COLLECTION);
+    }
+
+    private Document findDocumentById(String collection, String id) {
+        Query byObjectId = new Query();
+        if (ObjectId.isValid(id)) {
+            byObjectId.addCriteria(Criteria.where("_id").is(new ObjectId(id)));
+            Document doc = mongoTemplate.findOne(byObjectId, Document.class, collection);
+            if (doc != null) {
+                return doc;
+            }
+        }
+
+        Query byString = new Query(Criteria.where("_id").is(id));
+        return mongoTemplate.findOne(byString, Document.class, collection);
     }
 
     private Document requireActiveDocumentByBusinessKey(String collection, String key, String value) {

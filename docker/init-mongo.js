@@ -74,6 +74,29 @@ function buildCollectionOptions(defaultOptions, overrideOptions) {
     return merged;
 }
 
+function runIiotSeedScript() {
+    var seedScriptPaths = [
+        '/seed/seed_data_iiot_file.js',
+        '/docker-entrypoint-initdb.d/seed_data_iiot_file.js',
+        './docker/seed_data_iiot_file.js'
+    ];
+
+    for (var i = 0; i < seedScriptPaths.length; i++) {
+        try {
+            var seedScriptPath = seedScriptPaths[i];
+            load(seedScriptPath);
+            logInfo('Loaded IIOT seed script from ' + seedScriptPath);
+            return true;
+        } catch (e) {
+            if (i === seedScriptPaths.length - 1) {
+                logInfo('IIOT seed script is not available or failed to load: ' + e.message);
+            }
+        }
+    }
+
+    return false;
+}
+
 function applyCollectionValidation(name, options) {
     if (!options || !options.validator) {
         return;
@@ -1056,6 +1079,57 @@ var chemicalTestingAreaId = "AREA-0008";
 var microbiologyAreaId = "AREA-0009";
 var assetObjectId = "AREA-0010";
 var tagObjectId = "AREA-0011";
+
+var plantHierarchyConfig = {
+    'PLNT-0001': {
+        blocks: [
+            {
+                blockId: manufacturingBlockId,
+                blockCode: 'BLK-MFG',
+                blockName: 'Manufacturing Block',
+                displayOrder: 1
+            },
+            {
+                blockId: warehouseBlockId,
+                blockCode: 'BLK-WH',
+                blockName: 'Warehouse Block',
+                displayOrder: 2
+            }
+        ],
+        areas: [
+            { areaId: dispensingAreaId, blockId: manufacturingBlockId, areaCode: 'AREA-DISP', areaName: 'Dispensing Area', displayOrder: 1 },
+            { areaId: compressionAreaId, blockId: warehouseBlockId, areaCode: 'AREA-COMP', areaName: 'Compression Area', displayOrder: 2 }
+        ],
+        rooms: [
+            { roomId: 'ROOM-0001', areaId: dispensingAreaId, roomCode: 'RM-DISP-01', roomName: 'Dispensing Room 01', classification: 'ISO_8' },
+            { roomId: 'ROOM-0002', areaId: compressionAreaId, roomCode: 'RM-COMP-101', roomName: 'Compression Room 101', classification: 'ISO_7' }
+        ]
+    },
+    'PLNT-0002': {
+        blocks: [
+            {
+                blockId: 'BLK-0003',
+                blockCode: 'BLK-API-MFG',
+                blockName: 'API Manufacturing Block',
+                displayOrder: 1
+            },
+            {
+                blockId: 'BLK-0004',
+                blockCode: 'BLK-API-QC',
+                blockName: 'API QC Block',
+                displayOrder: 2
+            }
+        ],
+        areas: [
+            { areaId: 'AREA-0012', blockId: 'BLK-0003', areaCode: 'AREA-API-MIX', areaName: 'API Mixing Area', displayOrder: 1 },
+            { areaId: 'AREA-0013', blockId: 'BLK-0004', areaCode: 'AREA-API-QC', areaName: 'API QC Area', displayOrder: 2 }
+        ],
+        rooms: [
+            { roomId: 'ROOM-0018', areaId: 'AREA-0012', roomCode: 'RM-API-MIX-101', roomName: 'API Mixing Room 101', classification: 'ISO_7' },
+            { roomId: 'ROOM-0019', areaId: 'AREA-0013', roomCode: 'RM-API-QC-01', roomName: 'API QC Room 01', classification: 'LAB' }
+        ]
+    }
+};
 db.mdm_tenants.updateOne(
     {
         tenantId: 'TNT-0001'
@@ -1306,7 +1380,7 @@ upsertManyWithAutoId('mdm_departments', [
         parentDepartmentId: 'DEP-0014',
         path: 'DEP-0014/DEP-0015',
         isActive: true
-    },
+    },  
     {
         departmentId: 'DEP-0016',
         tenantId: 'TNT-0001',
@@ -1320,310 +1394,54 @@ upsertManyWithAutoId('mdm_departments', [
     }
 ], 'departmentId', { sequenceName: 'departmentId', prefix: 'DEP', padLength: 4 });
 
-upsertMany('mdm_blocks', [
-    {
-        blockId: manufacturingBlockId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockCode: 'BLK-MFG',
-        blockName: 'Manufacturing Block',
-        displayOrder: 1,
-        isActive: true
-    },
-    {
-        blockId: warehouseBlockId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockCode: 'BLK-WH',
-        blockName: 'Warehouse Block',
-        displayOrder: 2,
-        isActive: true
-    },
-    {
-        blockId: utilityBlockId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockCode: 'BLK-UTIL',
-        blockName: 'Utility Block',
-        displayOrder: 3,
-        isActive: true
-    },
-    {
-        blockId: qualityControlBlockId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockCode: 'BLK-QC',
-        blockName: 'Quality Control Block',
-        displayOrder: 4,
-        isActive: true
-    }
-], 'blockCode');
+var allBlockDocs = [];
+var allAreaDocs = [];
+var allRoomDocs = [];
 
-upsertMany('mdm_areas', [
-    {
-        areaId: dispensingAreaId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockId: manufacturingBlockId,
-        areaCode: 'AREA-DISP',
-        areaName: 'Dispensing Area',
-        displayOrder: 1,
-        isActive: true
-    },
-    {
-        areaId: compressionAreaId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockId: manufacturingBlockId,
-        areaCode: 'AREA-COMP',
-        areaName: 'Compression Area',
-        displayOrder: 2,
-        isActive: true
-    },
-    {
-        areaId: packingAreaId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockId: manufacturingBlockId,
-        areaCode: 'AREA-PACK',
-        areaName: 'Packing Area',
-        displayOrder: 3,
-        isActive: true
-    },
-    {
-        areaId: rawMaterialAreaId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockId: warehouseBlockId,
-        areaCode: 'AREA-RM',
-        areaName: 'Raw Material Area',
-        displayOrder: 1,
-        isActive: true
-    },
-    {
-        areaId: finishedGoodsAreaId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockId: warehouseBlockId,
-        areaCode: 'AREA-FG',
-        areaName: 'Finished Goods Area',
-        displayOrder: 2,
-        isActive: true
-    },
-    {
-        areaId: purifiedWaterAreaId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockId: utilityBlockId,
-        areaCode: 'AREA-PW',
-        areaName: 'Purified Water Area',
-        displayOrder: 1,
-        isActive: true
-    },
-    {
-        areaId: hvacAreaId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockId: utilityBlockId,
-        areaCode: 'AREA-HVAC',
-        areaName: 'HVAC Area',
-        displayOrder: 2,
-        isActive: true
-    },
-    {
-        areaId: chemicalTestingAreaId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockId: qualityControlBlockId,
-        areaCode: 'AREA-CHEM',
-        areaName: 'Chemical Testing Area',
-        displayOrder: 1,
-        isActive: true
-    },
-    {
-        areaId: microbiologyAreaId,
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        blockId: qualityControlBlockId,
-        areaCode: 'AREA-MICRO',
-        areaName: 'Microbiology Area',
-        displayOrder: 2,
-        isActive: true
-    }
-], 'areaCode');
+Object.keys(plantHierarchyConfig).forEach(function(plantId) {
+    var plantConfig = plantHierarchyConfig[plantId] || {};
+    (plantConfig.blocks || []).forEach(function(block) {
+        allBlockDocs.push({
+            blockId: block.blockId,
+            tenantId: 'TNT-0001',
+            plantId: plantId,
+            blockCode: block.blockCode,
+            blockName: block.blockName,
+            displayOrder: block.displayOrder,
+            isActive: true
+        });
+    });
 
-upsertManyWithAutoId('mdm_rooms', [
-    {
-        roomId: 'ROOM-0001',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: compressionAreaId,
-        roomCode: 'RM-COMP-101',
-        roomName: 'Compression Room 101',
-        classification: 'ISO_7',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0002',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: purifiedWaterAreaId,
-        roomCode: 'RM-PW-201',
-        roomName: 'Purified Water Plant Room',
-        classification: 'CNC',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0003',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: dispensingAreaId,
-        roomCode: 'RM-DISP-01',
-        roomName: 'Dispensing Room 01',
-        classification: 'ISO_8',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0004',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: dispensingAreaId,
-        roomCode: 'RM-MATL-AIRLOCK',
-        roomName: 'Material Airlock',
-        classification: 'CNC',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0005',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: compressionAreaId,
-        roomCode: 'RM-COMP-102',
-        roomName: 'Compression Room 102',
-        classification: 'ISO_7',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0006',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: packingAreaId,
-        roomCode: 'RM-PACK-PRI',
-        roomName: 'Primary Packing Room',
-        classification: 'ISO_8',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0007',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: packingAreaId,
-        roomCode: 'RM-PACK-SEC',
-        roomName: 'Secondary Packing Room',
-        classification: 'CNC',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0008',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: rawMaterialAreaId,
-        roomCode: 'RM-RM-STORE',
-        roomName: 'Raw Material Store',
-        classification: 'WAREHOUSE',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0009',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: rawMaterialAreaId,
-        roomCode: 'RM-SAMPLING',
-        roomName: 'Sampling Room',
-        classification: 'ISO_8',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0010',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: finishedGoodsAreaId,
-        roomCode: 'RM-FG-STAGE',
-        roomName: 'FG Staging Room',
-        classification: 'WAREHOUSE',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0011',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: finishedGoodsAreaId,
-        roomCode: 'RM-DISPATCH',
-        roomName: 'Dispatch Holding Room',
-        classification: 'WAREHOUSE',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0012',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: purifiedWaterAreaId,
-        roomCode: 'RM-PW-GEN',
-        roomName: 'PW Generation Room',
-        classification: 'UTILITY',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0013',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: hvacAreaId,
-        roomCode: 'RM-AHU',
-        roomName: 'AHU Room',
-        classification: 'UTILITY',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0014',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: chemicalTestingAreaId,
-        roomCode: 'RM-HPLC',
-        roomName: 'HPLC Room',
-        classification: 'LAB',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0015',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: chemicalTestingAreaId,
-        roomCode: 'RM-WETLAB',
-        roomName: 'Wet Lab',
-        classification: 'LAB',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0016',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: microbiologyAreaId,
-        roomCode: 'RM-MICRO',
-        roomName: 'Micro Lab',
-        classification: 'LAB',
-        isActive: true
-    },
-    {
-        roomId: 'ROOM-0017',
-        tenantId: 'TNT-0001',
-        plantId: 'PLNT-0001',
-        areaId: microbiologyAreaId,
-        roomCode: 'RM-INCUB',
-        roomName: 'Incubation Room',
-        classification: 'LAB',
-        isActive: true
-    }
-], 'roomId', { sequenceName: 'roomId', prefix: 'ROOM', padLength: 4 });
+    (plantConfig.areas || []).forEach(function(area) {
+        allAreaDocs.push({
+            areaId: area.areaId,
+            tenantId: 'TNT-0001',
+            plantId: plantId,
+            blockId: area.blockId,
+            areaCode: area.areaCode,
+            areaName: area.areaName,
+            displayOrder: area.displayOrder,
+            isActive: true
+        });
+    });
+
+    (plantConfig.rooms || []).forEach(function(room) {
+        allRoomDocs.push({
+            roomId: room.roomId,
+            tenantId: 'TNT-0001',
+            plantId: plantId,
+            areaId: room.areaId,
+            roomCode: room.roomCode,
+            roomName: room.roomName,
+            classification: room.classification,
+            isActive: true
+        });
+    });
+});
+
+upsertMany('mdm_blocks', allBlockDocs, 'blockCode');
+upsertMany('mdm_areas', allAreaDocs, 'areaCode');
+upsertManyWithAutoId('mdm_rooms', allRoomDocs, 'roomId', { sequenceName: 'roomId', prefix: 'ROOM', padLength: 4 });
 
 // ============================================
 // Seed - SUPER_ADMIN
@@ -2295,7 +2113,7 @@ upsertOne('mdm_licenses', { tenantId: 'TNT-0001' }, {
     },
     startDate: now(),
     expiryDate: new Date(now().getTime() + 365 * 24 * 60 * 60 * 1000),
-    encryptedLicenseToken: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbnRJZCI6IlROVC0wMDAxIiwicGxhbiI6eyJwbGFuSWQiOiJQTEFOX0VOVEVSUFJJU0UiLCJwbGFuTmFtZSI6IkVudGVycHJpc2UiLCJwbGFuVHlwZSI6IlBBSUQifSwibW9kdWxlcyI6WyJNRE0iLCJJSU9UIl0sIm1heFVzZXJzIjoyMDAsInN0YXJ0RGF0ZSI6IjIwMjYtMDctMDEiLCJleHBpcnlEYXRlIjoiMjAyNy0wNy0zMCIsInZlcnNpb24iOjEsImlzcyI6IkFEQVZJUyIsImlhdCI6MTc4MzA1OTcyOSwiZXhwIjoxODE0NTk1NzI5fQ.mpBG-_rFCqUavoqfKSdYi2XJllKZotryn3IgsNqYieOJKgGfK6rWEER1ctJcfbTCbtIqyYNNhqR0Xb-7owPr81fJDZn-B_LaJ0BxunYWmRakrKmhWIBPEVN-Nw9NoO8nZ6NYEni1PFc1JTO0D9s1pc-Jd98EftaSTnYpAveBE4pQj2i6W_fILM_kXJEIMLJOj9OyJ-tFIUvDaOiMu73so6MK3euPw6eji_5UcjNpYGvMwliXE8lhdPXgCs5rFZum4wQ2gOzRTXRSom6UJgxWK_gkcy9QeLf3kf7y5iCVBl5E382iKD3fb7N8uaEyK1ldIF0E8UqwlK-muX2E2BsqaQ',
+    encryptedLicenseToken: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbnRJZCI6IlROVC0wMDA0IiwibGljZW5jZUtleSI6IkxJQy0wMDAxIiwicGxhbiI6eyJwbGFuSWQiOiJQTEFOX0VOVEVSUFJJU0UiLCJwbGFuTmFtZSI6IkVudGVycHJpc2UiLCJwbGFuVHlwZSI6IlBBSUQifSwibW9kdWxlcyI6WyJNRE0iLCJJSU9UIl0sIm1heFVzZXJzIjo1MDAsInN0YXJ0RGF0ZSI6IjIwMjYtMDctMDEiLCJleHBpcnlEYXRlIjoiMjAyNy0wOS0zMCIsInZlcnNpb24iOjEsImlzcyI6IkFEQVZJUyIsImlhdCI6MTc4NTUxODM2OCwiZXhwIjoxODE3MDU0MzY4fQ.DX3oEbyCa2_yVINBy5wE4vIv6-QpXRDeSTGgd_xSv40C_d9TktTRT6C5KCSuuuQQ1IqO2k7A-onq2CIqQv0wir0bkz7g1AQxTODAeltaxelDDhJCoQ-fUDcldIRAPivgeDN2I93k909lpbjSTQFVs66yB8_olcWMRZWZLf31bVkaO424BzBUAzZzATGo3c3Bhu4X0zT2nwGNidY1YriojXNsH47CnCg1DJusu7NLDd_iD2fjKXm6HpWdfCTPL9b9dKsNkGSGjsaDAZtfjCwh8u9aCLob83EN9LXCet6NhEZF4713D1a6mBseS7fJ6RVD0pWTycOWEcNoYNKx9BxQgg',
     isDeleted: false
 });
 
@@ -2326,6 +2144,9 @@ var sequenceDefinitions = [
 for (var s = 0; s < sequenceDefinitions.length; s++) {
     initializeSequence(sequenceDefinitions[s]);
 }
+
+logInfo('Loading IIOT seed data...');
+runIiotSeedScript();
 
 print('========================================');
 print('Database initialization complete');

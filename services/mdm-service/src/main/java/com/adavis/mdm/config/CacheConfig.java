@@ -5,9 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -20,6 +23,7 @@ import java.time.Duration;
 
 @Configuration
 @EnableCaching
+@Slf4j
 public class CacheConfig extends CachingConfigurerSupport {
 
     @Bean
@@ -43,4 +47,30 @@ public class CacheConfig extends CachingConfigurerSupport {
                 .cacheDefaults(defaults)
                 .build();
     }
+
+        @Override
+        @Bean
+        public CacheErrorHandler errorHandler() {
+                return new CacheErrorHandler() {
+                        @Override
+                        public void handleCacheGetError(RuntimeException exception, Cache cache, Object key) {
+                                log.warn("Ignoring cache GET error for cache='{}', key='{}': {}", cache != null ? cache.getName() : "unknown", key, exception.getMessage());
+                        }
+
+                        @Override
+                        public void handleCachePutError(RuntimeException exception, Cache cache, Object key, Object value) {
+                                log.warn("Ignoring cache PUT error for cache='{}', key='{}': {}", cache != null ? cache.getName() : "unknown", key, exception.getMessage());
+                        }
+
+                        @Override
+                        public void handleCacheEvictError(RuntimeException exception, Cache cache, Object key) {
+                                log.warn("Ignoring cache EVICT error for cache='{}', key='{}': {}", cache != null ? cache.getName() : "unknown", key, exception.getMessage());
+                        }
+
+                        @Override
+                        public void handleCacheClearError(RuntimeException exception, Cache cache) {
+                                log.warn("Ignoring cache CLEAR error for cache='{}': {}", cache != null ? cache.getName() : "unknown", exception.getMessage());
+                        }
+                };
+        }
 }

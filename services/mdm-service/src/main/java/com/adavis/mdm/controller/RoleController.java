@@ -42,6 +42,16 @@ public class RoleController {
         return ResponseEntity.ok(ApiResponse.success(roles));
     }
 
+    @PutMapping("/{roleId}")
+    public ResponseEntity<ApiResponse<Role>> updateRole(
+            @PathVariable String roleId,
+            @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
+            @Valid @RequestBody Role role) {
+        internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        Role updated = roleService.updateRole(roleId, role);
+        return ResponseEntity.ok(ApiResponse.success("Role updated successfully", updated));
+    }
+
     @DeleteMapping("/{roleId}")
     public ResponseEntity<ApiResponse<Void>> deleteRole(
             @PathVariable String roleId,
