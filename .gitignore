@@ -45,7 +45,7 @@ logs/
 **/terraform.tfvars
 
 # Helm
-**/charts/
+**/helm/charts/
 **/Chart.lock
 
 # Node modules
