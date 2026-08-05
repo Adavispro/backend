@@ -12,6 +12,13 @@ export const AUTH_COOKIE_NAMES = {
   refreshToken: "adavis_refresh_token",
 } as const;
 
+const resolveSecureCookieFlag = () => {
+  const override = process.env.AUTH_COOKIE_SECURE?.trim().toLowerCase();
+  if (override === "true") return true;
+  if (override === "false") return false;
+  return process.env.NODE_ENV === "production";
+};
+
 export const requestAuthService = <TData, TBody = unknown>(
   path: string,
   options: {
@@ -38,7 +45,7 @@ export const authServiceEndpoints = API_ENDPOINTS.auth;
 
 const cookieOptions = (maxAge: number) => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: resolveSecureCookieFlag(),
   sameSite: "lax" as const,
   path: "/",
   maxAge,
