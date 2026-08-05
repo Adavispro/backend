@@ -12,13 +12,35 @@ const requiredUrl = (name: string, value: string | undefined) => {
   }
 };
 
+const readEnv = (name: string) => {
+  const value = process.env[name];
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
 const optionalServiceUrl = (name: string, value: string | undefined, fallback: string) =>
   requiredUrl(name, value ?? fallback);
 
-const gatewayUrl = requiredUrl(
-  "API_GATEWAY_URL",
-  process.env.API_GATEWAY_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL,
-);
+const resolveGatewayUrl = () => {
+  const configuredGatewayUrl =
+    readEnv("API_GATEWAY_URL") ?? readEnv("NEXT_PUBLIC_API_BASE_URL");
+
+  if (configuredGatewayUrl) {
+    return requiredUrl("API_GATEWAY_URL", configuredGatewayUrl);
+  }
+
+  // Build-time rendering can execute API route modules before env files are provided.
+  // Use host-local defaults so build succeeds, while allowing runtime env overrides.
+  const fallbackUrl =
+    process.env.NODE_ENV === "production"
+      ? "http://127.0.0.1"
+      : "http://localhost:9080";
+
+  return requiredUrl("API_GATEWAY_URL", fallbackUrl);
+};
+
+const gatewayUrl = resolveGatewayUrl();
 
 export const SERVER_API_CONFIG = {
   gatewayUrl,
