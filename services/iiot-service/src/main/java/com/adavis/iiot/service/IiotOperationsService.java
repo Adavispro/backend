@@ -556,6 +556,10 @@ public class IiotOperationsService {
         applyDateRangeCriteria(query, filter, "batchStartAt", "fromDate", "toDate");
         query.with(Sort.by(Sort.Direction.DESC, "batchStartAt", "updatedAt"));
         int limit = toInteger(filter.get("limit"), 500, 5000);
+        int offset = toNonNegativeInteger(filter.get("offset"));
+        if (offset > 0) {
+            query.skip(offset);
+        }
         query.limit(limit);
         return mongoTemplate.find(query, Document.class, BATCH_SUMMARY_COLLECTION).stream().map(this::toMap).toList();
     }
@@ -571,6 +575,10 @@ public class IiotOperationsService {
         applyMetaCriteria(query, "meta.productName", stringValue(filter.get("productName")));
         applyDateRangeCriteria(query, filter, "observedAt", "fromDate", "toDate");
         int limit = toInteger(filter.get("limit"), 1000, 10000);
+        int offset = toNonNegativeInteger(filter.get("offset"));
+        if (offset > 0) {
+            query.skip(offset);
+        }
         query.with(Sort.by(Sort.Direction.DESC, "observedAt")).limit(limit);
         return mongoTemplate.find(query, Document.class, collection).stream().map(this::toMap).toList();
     }
@@ -590,6 +598,10 @@ public class IiotOperationsService {
         }
         applyDateRangeCriteria(query, filter, "eventAt", "fromDate", "toDate");
         int limit = toInteger(filter.get("limit"), 1000, 10000);
+        int offset = toNonNegativeInteger(filter.get("offset"));
+        if (offset > 0) {
+            query.skip(offset);
+        }
         query.with(Sort.by(Sort.Direction.DESC, "eventAt")).limit(limit);
         return mongoTemplate.find(query, Document.class, collection).stream().map(this::toMap).toList();
     }
@@ -1283,6 +1295,18 @@ public class IiotOperationsService {
             return Math.min(parsed, maxValue);
         } catch (NumberFormatException ex) {
             return defaultValue;
+        }
+    }
+
+    private int toNonNegativeInteger(Object value) {
+        if (value == null) {
+            return 0;
+        }
+        try {
+            int parsed = Integer.parseInt(String.valueOf(value));
+            return Math.max(parsed, 0);
+        } catch (NumberFormatException ex) {
+            return 0;
         }
     }
 

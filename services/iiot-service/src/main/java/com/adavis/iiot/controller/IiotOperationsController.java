@@ -212,7 +212,8 @@ public class IiotOperationsController {
             @RequestParam(required = false) String lotNo,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) Integer offset) {
         Map<String, Object> filter = Map.ofEntries(
                 Map.entry("tenantId", tenantId == null ? "" : tenantId),
                 Map.entry("plantId", plantId == null ? "" : plantId),
@@ -223,7 +224,8 @@ public class IiotOperationsController {
                 Map.entry("lotNo", lotNo == null ? "" : lotNo),
                 Map.entry("fromDate", fromDate == null ? "" : fromDate),
                 Map.entry("toDate", toDate == null ? "" : toDate),
-                Map.entry("limit", limit == null ? 500 : limit));
+                Map.entry("limit", limit == null ? 500 : limit),
+                Map.entry("offset", offset == null ? 0 : offset));
         return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getBatchSummary(filter)));
     }
 
@@ -236,7 +238,8 @@ public class IiotOperationsController {
             @RequestParam(required = false) String lotNo,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) Integer offset) {
         Map<String, Object> filter = Map.ofEntries(
                 Map.entry("tenantId", tenantId == null ? "" : tenantId),
                 Map.entry("equipmentId", equipmentId),
@@ -245,7 +248,8 @@ public class IiotOperationsController {
                 Map.entry("lotNo", lotNo == null ? "" : lotNo),
                 Map.entry("fromDate", fromDate == null ? "" : fromDate),
                 Map.entry("toDate", toDate == null ? "" : toDate),
-                Map.entry("limit", limit == null ? 1000 : limit));
+                Map.entry("limit", limit == null ? 1000 : limit),
+                Map.entry("offset", offset == null ? 0 : offset));
         return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getCppData(filter)));
     }
 
@@ -259,7 +263,8 @@ public class IiotOperationsController {
             @RequestParam(required = false) String lotNo,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) Integer offset) {
         Map<String, Object> filter = Map.ofEntries(
                 Map.entry("tenantId", tenantId == null ? "" : tenantId),
                 Map.entry("equipmentId", equipmentId),
@@ -269,7 +274,8 @@ public class IiotOperationsController {
                 Map.entry("lotNo", lotNo == null ? "" : lotNo),
                 Map.entry("fromDate", fromDate == null ? "" : fromDate),
                 Map.entry("toDate", toDate == null ? "" : toDate),
-                Map.entry("limit", limit == null ? 1000 : limit));
+                Map.entry("limit", limit == null ? 1000 : limit),
+                Map.entry("offset", offset == null ? 0 : offset));
         return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getAlarmEventData(filter)));
     }
 

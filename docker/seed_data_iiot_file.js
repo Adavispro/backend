@@ -28,23 +28,61 @@ var TENANT_ID = "TNT-0001";
 // ============================================
 // HIERARCHY CONFIGURATION
 // ============================================
-var PLANT_IDS = ["PLNT-0001", "PLNT-0002"];
-var BLOCK_IDS = ["BLK-0001", "BLK-0002", "BLK-0003", "BLK-0004"];
-var AREA_IDS = ["AREA-0001", "AREA-0002", "AREA-0012", "AREA-0013"];
-var ROOM_IDS = ["ROOM-0001", "ROOM-0002", "ROOM-0018", "ROOM-0019"];
+var PLANT_IDS = ["PLNT-0001"];
+var BLOCK_IDS = ["BLK-0001"];
+var AREA_IDS = ["AREA-0001"];
+var ROOM_IDS = ["ROOM-0001"];
 var PLANT_HIERARCHY = {
     "PLNT-0001": {
-        blocks: ["BLK-0001", "BLK-0002"],
-        areas: ["AREA-0001", "AREA-0002"],
-        rooms: ["ROOM-0001", "ROOM-0002"]
-    },
-    "PLNT-0002": {
-        blocks: ["BLK-0003", "BLK-0004"],
-        areas: ["AREA-0012", "AREA-0013"],
-        rooms: ["ROOM-0018", "ROOM-0019"]
+        blocks: ["BLK-0001"],
+        areas: ["AREA-0001"],
+        rooms: ["ROOM-0001"]
     }
 };
-var EXPLICIT_EQUIPMENT_DEFS = [];
+var EXPLICIT_EQUIPMENT_DEFS = [
+    {
+        equipmentId: "WEG-003-PVII",
+        equipmentCode: "WEG-003-PVII",
+        equipmentName: "Wet Granulator #WEG-003",
+        plantId: "PLNT-0001",
+        blockId: "BLK-0001",
+        areaId: "AREA-0001",
+        roomId: "ROOM-0001",
+        make: "GEA Pharma",
+        model: "WEG-003",
+        equipmentType: "WEG",
+        equipmentTypeName: "Wet Granulator",
+        stageOrder: 1
+    },
+    {
+        equipmentId: "FBD-004-PVII",
+        equipmentCode: "FBD-004-PVII",
+        equipmentName: "Fluid Bed Dryer #FBD-004",
+        plantId: "PLNT-0001",
+        blockId: "BLK-0001",
+        areaId: "AREA-0001",
+        roomId: "ROOM-0001",
+        make: "Glatt",
+        model: "FBD-004",
+        equipmentType: "FBD",
+        equipmentTypeName: "Fluid Bed Dryer",
+        stageOrder: 2
+    },
+    {
+        equipmentId: "BLE-003-PVII",
+        equipmentCode: "BLE-003-PVII",
+        equipmentName: "Bin Blender #BLE-003",
+        plantId: "PLNT-0001",
+        blockId: "BLK-0001",
+        areaId: "AREA-0001",
+        roomId: "ROOM-0001",
+        make: "Bohle",
+        model: "BLE-003",
+        equipmentType: "BLE",
+        equipmentTypeName: "Bin Blender",
+        stageOrder: 3
+    }
+];
 
 var TOTAL_EQUIPMENT = PLANT_IDS.reduce(function(total, plantId) {
     var config = PLANT_HIERARCHY[plantId] || {};
@@ -53,6 +91,9 @@ var TOTAL_EQUIPMENT = PLANT_IDS.reduce(function(total, plantId) {
     var rooms = config.rooms || ROOM_IDS;
     return total + blocks.length * areas.length * rooms.length;
 }, 0) + EXPLICIT_EQUIPMENT_DEFS.length;
+if (EXPLICIT_EQUIPMENT_DEFS.length > 0) {
+    TOTAL_EQUIPMENT = EXPLICIT_EQUIPMENT_DEFS.length;
+}
 
 // Data generation parameters
 // Use all available hierarchy combinations and keep the generated data compact but representative.
@@ -63,28 +104,188 @@ var LIVE_STATES = ["RUNNING", "IDLE", "ERROR", "MAINTAINENCE", "OFFLINE"];
 
 // Real pharmaceutical equipment types
 var EQUIPMENT_TYPES = [
-    { type: "RMG", name: "Rapid Mixer Granulator", models: ["RMG-100L", "RMG-200L", "RMG-300L"] },
-    { type: "FBD", name: "Fluid Bed Dryer", models: ["FBD-60", "FBD-120", "FBD-200"] },
-    { type: "Comill", name: "Comill", models: ["Comill-197", "Comill-197S", "Comill-197U"] },
-    { type: "Blender", name: "Blender", models: ["Blender-500", "Blender-1000", "Blender-2000"] },
-    { type: "Compression", name: "Compression Machine", models: ["CM-36", "CM-45", "CM-55"] }
+    { type: "WEG", name: "Wet Granulator", models: ["WEG-003"] },
+    { type: "FBD", name: "Fluid Bed Dryer", models: ["FBD-004"] },
+    { type: "BLE", name: "Bin Blender", models: ["BLE-003"] }
 ];
+
+// TNT-0001, PLNT-0001, BLK-0001, ROOM-0001 - Based on the realtime_sample_data 
+
+var BATCH_CATALOG = [
+    {
+        batchNo: "AMR0026001",
+        lotNo: "LOT1",
+        recipeName: "CelecoxibCaps100mg200mgCB",
+        plantId: "PLNT-0001"
+    },
+    {
+        batchNo: "AMR0026002",
+        lotNo: "LOT2",
+        recipeName: "MirtazapineTablets15mg30mg45mgCB",
+        plantId: "PLNT-0001"
+    },
+    {
+        batchNo: "AMR0026003",
+        lotNo: "LOT3",
+        recipeName: "MirtazapineTablets15mg30mg45mgCB",
+        plantId: "PLNT-0001"
+    },
+    {
+        batchNo: "AMR0026004",
+        lotNo: "LOT4",
+        recipeName: "MirtazapineTablets15mg30mg45mgCB",
+        plantId: "PLNT-0001"
+    },
+    {
+        batchNo: "AMR0026005",
+        lotNo: "LOT5",
+        recipeName: "MirtazapineTablets15mg30mg45mgCB",
+        plantId: "PLNT-0001"
+    },
+    {
+        batchNo: "AMR0026006",
+        lotNo: "LOT6",
+        recipeName: "MirtazapineTablets15mg30mg45mgCB",
+        plantId: "PLNT-0001"
+    },
+    {
+        batchNo: "AMR0026007",
+        lotNo: "LOT7",
+        recipeName: "MirtazapineTablets15mg30mg45mgCB",
+        plantId: "PLNT-0001"
+    }
+];
+
+var RECIPE_PRODUCT_MAP = {
+    "MirtazapineTablets15mg30mg45mgCB": {
+        productCode: "MIRTAZAPINE_TAB_15_30_45_CB",
+        productName: "Mirtazapine Tablets 15mg/30mg/45mg CB",
+        productCategory: "Tablets"
+    },
+    "CelecoxibCaps100mg200mgCB": {
+        productCode: "CELECOXIB_CAP_100_200_CB",
+        productName: "Celecoxib Capsules 100mg/200mg CB",
+        productCategory: "Capsules"
+    }
+};
+
+var STAGE_SEQUENCE = ["WEG", "FBD", "BLE"];
+var EQUIPMENT_TYPE_DEFAULT_LOT = {
+    WEG: "LOT1",
+    FBD: "LOT2",
+    BLE: "LOT3"
+};
+
+function normalizeBatchIdentity(rawBatchNo, rawLotNo) {
+    var batchNo = (rawBatchNo || "").trim();
+    var lotNo = (rawLotNo || "").trim();
+
+    if (!batchNo) {
+        return { batchNo: "", lotNo: "" };
+    }
+
+    if (!lotNo && batchNo.indexOf("-LOT") > 0) {
+        var parts = batchNo.split("-LOT");
+        if (parts.length === 2) {
+            batchNo = parts[0];
+            lotNo = "LOT" + parts[1];
+        }
+    }
+
+    return {
+        batchNo: batchNo,
+        lotNo: lotNo
+    };
+}
+
+function getBatchCatalogEntry(batchNo) {
+    var normalizedBatchNo = (batchNo || "").trim();
+    for (var i = 0; i < BATCH_CATALOG.length; i++) {
+        if (BATCH_CATALOG[i].batchNo === normalizedBatchNo) {
+            return BATCH_CATALOG[i];
+        }
+    }
+    return null;
+}
+
+function getRecipeForBatch(batchNo, fallbackRecipeName) {
+    var entry = getBatchCatalogEntry(batchNo);
+    if (entry && entry.recipeName) {
+        return entry.recipeName;
+    }
+    return fallbackRecipeName || "";
+}
+
+function getLotNoForEquipmentType(eqType, fallbackLotNo) {
+    var mapped = EQUIPMENT_TYPE_DEFAULT_LOT[eqType];
+    if (mapped) {
+        return mapped;
+    }
+    return fallbackLotNo || "LOT1";
+}
+
+function parseObservedAt(rawObservedAt) {
+    if (!rawObservedAt) return null;
+    try {
+        var dt = new Date(rawObservedAt);
+        if (!isNaN(dt.getTime())) {
+            return dt;
+        }
+    } catch (e) {}
+    return null;
+}
+
+function normalizeStatus(rawStatus) {
+    var status = (rawStatus || "").toString().trim().toUpperCase();
+    if (!status) return "RUNNING";
+    if (status.indexOf("STOP") >= 0 || status.indexOf("COMP") >= 0) return "STOP";
+    if (status.indexOf("IDLE") >= 0) return "IDLE";
+    if (status.indexOf("HOLD") >= 0) return "IDLE";
+    return "RUNNING";
+}
+
+function normalizeRecipeName(rawRecipeName) {
+    return (rawRecipeName || "").trim().replace(/\s+/g, "");
+}
+
+function recipeNameToFallbackTitle(recipeName) {
+    var compact = normalizeRecipeName(recipeName);
+    if (!compact) return "Unknown Product";
+
+    var title = compact
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/(\d+mg)/g, " $1")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    return title;
+}
+
+function getProductFromRecipe(recipeName) {
+    var normalized = normalizeRecipeName(recipeName);
+    var mapped = RECIPE_PRODUCT_MAP[normalized];
+    if (mapped) {
+        return {
+            recipeName: normalized,
+            productCode: mapped.productCode,
+            productName: mapped.productName,
+            productCategory: mapped.productCategory
+        };
+    }
+
+    var category = /caps/i.test(normalized) ? "Capsules" : "Tablets";
+    return {
+        recipeName: normalized,
+        productCode: normalized ? normalized.replace(/[^A-Za-z0-9]+/g, "_").toUpperCase() : "UNKNOWN_PRODUCT",
+        productName: recipeNameToFallbackTitle(normalized),
+        productCategory: category
+    };
+}
 
 var MAKES = ["GEA Pharma", "Glatt", "Fette", "Korsch", "Bohle", "SKPharma", "Apex Pharma Tech"];
 
 // Real pharmaceutical products with hierarchy assignment
-var PRODUCTS = [
-    { code: "KRISOMCB-90%", name: "Krisom CB 90%", category: "API", plant: "PLNT-0001" },
-    { code: "IBUPROFEN 200 MG", name: "Ibuprofen 200 MG Tablets", category: "Tablets", plant: "PLNT-0001" },
-    { code: "PSEUDOEPHEDRINE HCL", name: "Pseudoephedrine HCl", category: "API", plant: "PLNT-0001" },
-    { code: "TRAMADOL HCL", name: "Tramadol HCl 50mg", category: "Tablets", plant: "PLNT-0002" },
-    { code: "METFORMIN HCL", name: "Metformin HCl 500mg", category: "Tablets", plant: "PLNT-0002" },
-    { code: "AMOXICILLIN", name: "Amoxicillin 250mg Capsules", category: "Capsules", plant: "PLNT-0002" },
-    { code: "ATORVASTATIN", name: "Atorvastatin 20mg", category: "Tablets", plant: "PLNT-0002" },
-    { code: "OMEPRAZOLE", name: "Omeprazole 40mg Capsules", category: "Capsules", plant: "PLNT-0002" },
-    { code: "LISINOPRIL", name: "Lisinopril 10mg", category: "Tablets", plant: "PLNT-0002" },
-    { code: "LEVOFLOXACIN", name: "Levofloxacin 500mg", category: "Tablets", plant: "PLNT-0001" }
-];
+var PRODUCTS = [];
 
 // Real alarm/events with categories
 var ALARM_EVENTS = [
@@ -206,73 +407,35 @@ function resetCollection(name) {
 
 function createEquipmentDefinitions() {
     var defs = [];
-    var equipmentCounter = 0;
-
-    EXPLICIT_EQUIPMENT_DEFS.forEach(function(eq) {
-        defs.push({
-            equipmentId: eq.equipmentId,
-            equipmentCode: eq.equipmentCode,
-            equipmentName: eq.equipmentName,
-            plantId: eq.plantId,
-            blockId: eq.blockId,
-            areaId: eq.areaId,
-            roomId: eq.roomId,
-            make: eq.make,
-            model: eq.model,
-            equipmentType: eq.equipmentType,
-            equipmentTypeName: eq.equipmentTypeName,
-            hierarchy: {
-                plant: eq.hierarchy.plant,
-                block: eq.hierarchy.block,
-                area: eq.hierarchy.area,
-                room: eq.hierarchy.room,
-                fullPath: eq.hierarchy.fullPath
-            }
-        });
-    });
-    
-    PLANT_IDS.forEach(function(plantId, plantIdx) {
-        var plantConfig = PLANT_HIERARCHY[plantId] || {};
-        var plantBlocks = plantConfig.blocks || BLOCK_IDS;
-        var plantAreas = plantConfig.areas || AREA_IDS;
-        var plantRooms = plantConfig.rooms || ROOM_IDS;
-
-        plantBlocks.forEach(function(blockId, blockIdx) {
-            plantAreas.forEach(function(areaId, areaIdx) {
-                plantRooms.forEach(function(roomId, roomIdx) {
-                    equipmentCounter++;
-                    var eqIdx = equipmentCounter;
-                    var eqTypeObj = EQUIPMENT_TYPES[(eqIdx - 1) % EQUIPMENT_TYPES.length];
-                    var eqType = eqTypeObj.type;
-                    var model = eqTypeObj.models[(eqIdx - 1) % eqTypeObj.models.length];
-                    var make = MAKES[(eqIdx - 1) % MAKES.length];
-                    
-                    var equipmentId = eqType + "-" + pad3(eqIdx) + "-PVII";
-                    defs.push({
-                        equipmentId: equipmentId,
-                        equipmentCode: equipmentId,
-                        equipmentName: eqTypeObj.name + " #" + eqIdx + " (" + make + " " + model + ")",
-                        plantId: plantId,
-                        blockId: blockId,
-                        areaId: areaId,
-                        roomId: roomId,
-                        make: make,
-                        model: model,
-                        equipmentType: eqType,
-                        equipmentTypeName: eqTypeObj.name,
-                        hierarchy: {
-                            plant: plantId,
-                            block: blockId,
-                            area: areaId,
-                            room: roomId,
-                            fullPath: plantId + "/" + blockId + "/" + areaId + "/" + roomId + "/" + eqType + pad3(eqIdx)
-                        }
-                    });
-                });
+    if (EXPLICIT_EQUIPMENT_DEFS.length > 0) {
+        EXPLICIT_EQUIPMENT_DEFS.forEach(function(eq) {
+            defs.push({
+                equipmentId: eq.equipmentId,
+                equipmentCode: eq.equipmentCode,
+                equipmentName: eq.equipmentName,
+                plantId: eq.plantId,
+                blockId: eq.blockId,
+                areaId: eq.areaId,
+                roomId: eq.roomId,
+                make: eq.make,
+                model: eq.model,
+                equipmentType: eq.equipmentType,
+                equipmentTypeName: eq.equipmentTypeName,
+                stageOrder: eq.stageOrder || 99,
+                hierarchy: {
+                    plant: eq.plantId,
+                    block: eq.blockId,
+                    area: eq.areaId,
+                    room: eq.roomId,
+                    fullPath: eq.plantId + "/" + eq.blockId + "/" + eq.areaId + "/" + eq.roomId + "/" + eq.equipmentCode
+                }
             });
         });
-    });
-    
+        defs.sort(function(a, b) { return (a.stageOrder || 99) - (b.stageOrder || 99); });
+        logInfo("Created " + defs.length + " explicit stage equipment definitions");
+        return defs;
+    }
+
     logInfo("Created " + defs.length + " equipment definitions");
     return defs;
 }
@@ -330,122 +493,53 @@ function createIndexes() {
 
 function getProductCatalog(ts) {
     var products = [];
-    PRODUCTS.forEach(function(p, idx) {
+    var seen = {};
+
+    BATCH_CATALOG.forEach(function(batch) {
+        var derivedProduct = getProductFromRecipe(batch.recipeName || batch.recipeCode);
+        var key = derivedProduct.productCode;
+        if (seen[key]) return;
+        seen[key] = true;
         products.push({
-            // Keep productId aligned with productCode to match current master UI behavior.
-            productId: p.code,
-            productCode: p.code,
-            productName: p.name,
-            productCategory: p.category,
+            productId: key,
+            productCode: key,
+            productName: derivedProduct.productName,
+            productCategory: derivedProduct.productCategory,
             tenantId: TENANT_ID,
-            plantId: p.plant,
+            plantId: batch.plantId || "PLNT-0001",
             isActive: true,
             createdAt: ts,
             updatedAt: ts
         });
     });
+
     return products;
 }
 
 function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
-    var eqType = EQUIPMENT_TYPES[(equipmentIndex - 1) % EQUIPMENT_TYPES.length].type;
+    var eqType = (equipmentId || "").split("-")[0];
     var parameters = [];
-    
-    // Common parameters for all equipment with pharma-oriented names and codes
-    parameters.push(
-        {
-            suffix: "MIX_SPD",
-            code: "mixingSpeed",
-            name: "Mixing Speed",
-            parameterType: "FLOAT",
-            unitOfMeasure: "rpm",
-            isCritical: true,
-            baseValue: 6.1
-        },
-        {
-            suffix: "BLD_PRES",
-            code: "blendPressure",
-            name: "Blend Pressure",
-            parameterType: "FLOAT",
-            unitOfMeasure: "bar",
-            isCritical: true,
-            baseValue: 1.2
-        },
-        {
-            suffix: "BED_TEMP",
-            code: "bedTemperature",
-            name: "Bed Temperature",
-            parameterType: "FLOAT",
-            unitOfMeasure: "celsius",
-            isCritical: false,
-            baseValue: 24.0
-        }
-    );
-    
-    // Equipment-specific parameters
-    if (eqType === "RMG") {
-        parameters.push(
-            {
-                suffix: "GRAN_MIX",
-                code: "granulationMixing",
-                name: "Granulation Mixing",
-                parameterType: "FLOAT",
-                unitOfMeasure: "rpm",
-                isCritical: true,
-                baseValue: 11.99
-            },
-            {
-                suffix: "GRAN_TIME",
-                code: "granulationTime",
-                name: "Granulation Time",
-                parameterType: "FLOAT",
-                unitOfMeasure: "minutes",
-                isCritical: true,
-                baseValue: 10.0
-            }
-        );
+
+    if (eqType === "WEG") {
+        parameters = [
+            { suffix: "AGI_SPD", code: "agitatorSpeed", name: "Agitator Speed", unitOfMeasure: "rpm", isCritical: true, baseValue: 8.0, lowWarn: 1.0, lowCrit: 2.0, highWarn: 2.0, highCrit: 4.0 },
+            { suffix: "AGI_TOR", code: "agitatorTorque", name: "Agitator Torque", unitOfMeasure: "%", isCritical: true, baseValue: 10.0, lowWarn: 2.0, lowCrit: 4.0, highWarn: 6.0, highCrit: 10.0 },
+            { suffix: "CHP_SPD", code: "chopperSpeed", name: "Chopper Speed", unitOfMeasure: "rpm", isCritical: true, baseValue: 1200.0, lowWarn: 150.0, lowCrit: 300.0, highWarn: 250.0, highCrit: 400.0 },
+            { suffix: "PRC_TIME", code: "processTime", name: "Process Time", unitOfMeasure: "sec", isCritical: false, baseValue: 900.0, lowWarn: 120.0, lowCrit: 240.0, highWarn: 180.0, highCrit: 300.0 }
+        ];
     } else if (eqType === "FBD") {
-        parameters.push(
-            {
-                suffix: "AIR_FLOW",
-                code: "airFlowRate",
-                name: "Air Flow Rate",
-                parameterType: "FLOAT",
-                unitOfMeasure: "m3/hr",
-                isCritical: true,
-                baseValue: 500.0
-            },
-            {
-                suffix: "INLET_TEMP",
-                code: "inletTemperature",
-                name: "Inlet Temperature",
-                parameterType: "FLOAT",
-                unitOfMeasure: "celsius",
-                isCritical: true,
-                baseValue: 70.0
-            }
-        );
-    } else if (eqType === "Comill") {
-        parameters.push(
-            {
-                suffix: "MILL_SPD",
-                code: "millSpeed",
-                name: "Mill Speed",
-                parameterType: "FLOAT",
-                unitOfMeasure: "rpm",
-                isCritical: true,
-                baseValue: 2000.0
-            },
-            {
-                suffix: "FEED_RATE",
-                code: "feedRate",
-                name: "Feed Rate",
-                parameterType: "FLOAT",
-                unitOfMeasure: "kg/hr",
-                isCritical: false,
-                baseValue: 50.0
-            }
-        );
+        parameters = [
+            { suffix: "IN_AIR_TEMP", code: "inletAirTemperature", name: "Inlet Air Temperature", unitOfMeasure: "celsius", isCritical: true, baseValue: 65.0, lowWarn: 3.0, lowCrit: 6.0, highWarn: 5.0, highCrit: 8.0 },
+            { suffix: "PRD_TEMP", code: "productTemperature", name: "Product Temperature", unitOfMeasure: "celsius", isCritical: true, baseValue: 45.0, lowWarn: 2.0, lowCrit: 4.0, highWarn: 4.0, highCrit: 6.0 },
+            { suffix: "AIR_FLOW", code: "inletAirFlow", name: "Inlet Air Flow", unitOfMeasure: "m3/hr", isCritical: true, baseValue: 220.0, lowWarn: 20.0, lowCrit: 40.0, highWarn: 40.0, highCrit: 70.0 },
+            { suffix: "EXH_TEMP", code: "exhaustAirTemperature", name: "Exhaust Air Temperature", unitOfMeasure: "celsius", isCritical: false, baseValue: 28.0, lowWarn: 3.0, lowCrit: 6.0, highWarn: 5.0, highCrit: 8.0 }
+        ];
+    } else if (eqType === "BLE") {
+        parameters = [
+            { suffix: "BLD_SPD", code: "blendingSpeed", name: "Blending Speed", unitOfMeasure: "rpm", isCritical: true, baseValue: 10.0, lowWarn: 1.0, lowCrit: 2.0, highWarn: 2.0, highCrit: 4.0 },
+            { suffix: "BLD_TIME", code: "blendingTime", name: "Blending Time", unitOfMeasure: "min", isCritical: true, baseValue: 15.0, lowWarn: 2.0, lowCrit: 4.0, highWarn: 3.0, highCrit: 5.0 },
+            { suffix: "BLD_REM", code: "blendingRemainingTime", name: "Blending Remaining Time", unitOfMeasure: "min", isCritical: false, baseValue: 8.0, lowWarn: 2.0, lowCrit: 3.0, highWarn: 2.0, highCrit: 4.0 }
+        ];
     }
 
     var paramDocs = [];
@@ -458,7 +552,11 @@ function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
         // Keep limit id and code aligned to match current code-first UI + API behavior.
         var parameterLimitId = parameterLimitCode;
         var parameterName = p.name + " #" + pad3(equipmentIndex);
-        var base = p.baseValue + (equipmentIndex % 10) * 0.2 + idx * 0.15;
+        var base = p.baseValue;
+        var lowWarnDelta = p.lowWarn || 1.0;
+        var lowCritDelta = p.lowCrit || 2.0;
+        var highWarnDelta = p.highWarn || 1.0;
+        var highCritDelta = p.highCrit || 2.0;
 
         paramDocs.push({
             parameterSeqId: 50000 + equipmentIndex * 10 + idx,
@@ -468,7 +566,7 @@ function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
             parameterId: parameterId,
             parameterCode: parameterCode,
             parameterName: parameterName,
-            parameterType: p.parameterType,
+            parameterType: "FLOAT",
             unitOfMeasure: p.unitOfMeasure,
             isCritical: p.isCritical,
             isActive: true,
@@ -486,14 +584,14 @@ function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
             parameterId: parameterId,
             parameterCode: parameterCode,
             parameterName: parameterName,
-            parameterType: p.parameterType,
+            parameterType: "FLOAT",
             floatValue: Number(base.toFixed(2)),
-            lowCriticalValue: Number((base - 2.0).toFixed(2)),
-            lowWarningValue: Number((base - 1.0).toFixed(2)),
-            idealMinValue: Number((base - 0.5).toFixed(2)),
-            idealMaxValue: Number((base + 0.5).toFixed(2)),
-            highWarningValue: Number((base + 1.0).toFixed(2)),
-            highCriticalValue: Number((base + 2.0).toFixed(2)),
+            lowCriticalValue: Number((base - lowCritDelta).toFixed(2)),
+            lowWarningValue: Number((base - lowWarnDelta).toFixed(2)),
+            idealMinValue: Number((base - lowWarnDelta / 2).toFixed(2)),
+            idealMaxValue: Number((base + highWarnDelta / 2).toFixed(2)),
+            highWarningValue: Number((base + highWarnDelta).toFixed(2)),
+            highCriticalValue: Number((base + highCritDelta).toFixed(2)),
             alarmEnabled: true,
             booleanValue: false,
             enumValue: "",
@@ -630,96 +728,650 @@ function seedMasterData() {
     }
 }
 
+function loadRealtimeSheetRecords() {
+    var candidates = [
+        "/tmp/realtime_sample_data_json",
+        "realtime_sample_data/json",
+        "/seed/realtime_sample_data/json",
+        "/docker-entrypoint-initdb.d/realtime_sample_data/json"
+    ];
+
+    var eqTypes = ["weg", "fbd", "ble"];
+    var allRecords = [];
+
+    for (var c = 0; c < candidates.length; c++) {
+        var basePath = candidates[c];
+        var loadedAny = false;
+
+        for (var i = 0; i < eqTypes.length; i++) {
+            var p = basePath + "/" + eqTypes[i] + ".json";
+            var content = readTextFile(p);
+            if (!content) {
+                continue;
+            }
+
+            try {
+                var parsed = JSON.parse(content);
+                if (parsed && parsed.length) {
+                    for (var r = 0; r < parsed.length; r++) {
+                        allRecords.push(parsed[r]);
+                    }
+                    loadedAny = true;
+                }
+            } catch (e) {
+                logInfo("Failed to parse realtime JSON file: " + p + " => " + e.message);
+            }
+        }
+
+        if (loadedAny) {
+            logInfo("Loaded realtime sheet payloads from: " + basePath + " (records=" + allRecords.length + ")");
+            return allRecords;
+        }
+    }
+
+    return [];
+}
+
+function seedRealtimeSheetIngestionData() {
+    var realtimeRecords = loadRealtimeSheetRecords();
+    if (!realtimeRecords || realtimeRecords.length === 0) {
+        logInfo("Realtime sheet payloads not found. Falling back to synthetic ingestion data.");
+        return false;
+    }
+
+    var productCatalog = db.iiot_product_master.find({ tenantId: TENANT_ID, isActive: true }).toArray();
+    if (productCatalog.length === 0) {
+        logInfo("No products found. Skipping realtime ingestion.");
+        return false;
+    }
+
+    var productByCode = {};
+    productCatalog.forEach(function(p) { productByCode[p.productCode] = p; });
+
+    var eqByType = {};
+    EQUIPMENT_DEFS.forEach(function(eq) {
+        eqByType[eq.equipmentType] = eq;
+    });
+
+    var grouped = {};
+    realtimeRecords.forEach(function(rec) {
+        if (!rec || !rec.equipmentType) return;
+        var eqType = (rec.equipmentType || "").toString().trim().toUpperCase();
+        if (!eqByType[eqType]) return;
+        if (!grouped[eqType]) grouped[eqType] = [];
+        grouped[eqType].push(rec);
+    });
+
+    var checkpointDocs = [];
+    var jobRunDocs = [];
+    var batchSummaryDocs = [];
+    var totalCppRecords = 0;
+    var totalAlarmRecords = 0;
+    var totalEventRecords = 0;
+
+    Object.keys(grouped).forEach(function(eqType) {
+        var eq = eqByType[eqType];
+        var records = grouped[eqType];
+        if (!records || records.length === 0) return;
+
+        records.sort(function(a, b) {
+            var da = parseObservedAt(a.observedAt);
+            var dbv = parseObservedAt(b.observedAt);
+            return (da ? da.getTime() : 0) - (dbv ? dbv.getTime() : 0);
+        });
+
+        var cppCollection = getTimeSeriesCppCollection(eq.equipmentId);
+        var alarmCollection = getTimeSeriesAlarmCollection(eq.equipmentId);
+        ensureCollection(cppCollection);
+        ensureCollection(alarmCollection);
+
+        var cppDocs = [];
+        var alarmDocs = [];
+        var batchStats = {};
+        var seqBase = 100000 + (eq.stageOrder || 1) * 1000000;
+        var alarmSeqBase = 200000 + (eq.stageOrder || 1) * 1000000;
+
+        for (var idx = 0; idx < records.length; idx++) {
+            var rec = records[idx];
+            var observedAt = parseObservedAt(rec.observedAt);
+            if (!observedAt) continue;
+
+            var normalizedBatch = normalizeBatchIdentity(rec.batchNo || "", "");
+            var batchNo = normalizedBatch.batchNo;
+            if (!batchNo) continue;
+
+            var lotNo = getLotNoForEquipmentType(eqType, normalizedBatch.lotNo);
+            var recipeName = getRecipeForBatch(batchNo, rec.recipeNameRaw);
+            var recipeProduct = getProductFromRecipe(recipeName);
+            var product = productByCode[recipeProduct.productCode] || {
+                productCode: recipeProduct.productCode,
+                productName: recipeProduct.productName,
+                productCategory: recipeProduct.productCategory
+            };
+
+            var status = normalizeStatus(rec.statusRaw || (rec.metrics && rec.metrics.batchStatus) || (rec.metrics && rec.metrics.processManualAutoStatus));
+            var sourceSeqId = seqBase + idx + 1;
+            var operatorName = (rec.operatorNameRaw || "").toString().trim() || "SYSTEM";
+            var metrics = rec.metrics || {};
+            metrics.status = status;
+
+            cppDocs.push({
+                observedAt: toIsoDate(observedAt),
+                meta: {
+                    tenantId: TENANT_ID,
+                    equipmentId: eq.equipmentId,
+                    batchNo: batchNo,
+                    lotNo: lotNo,
+                    productName: product.productName,
+                    productCode: product.productCode,
+                    productCategory: product.productCategory,
+                    recipeName: recipeProduct.recipeName,
+                    operatorName: operatorName,
+                    supervisorName: operatorName,
+                    equipmentType: eq.equipmentType,
+                    equipmentName: eq.equipmentName,
+                    equipmentLocation: eq.hierarchy.fullPath,
+                    status: status,
+                    dateDay: observedAt.getDate(),
+                    dayMonth: observedAt.getMonth() + 1,
+                    dayYear: observedAt.getFullYear(),
+                    timeHH: pad2(observedAt.getHours()),
+                    timeMM: pad2(observedAt.getMinutes()),
+                    timeSS: pad2(observedAt.getSeconds())
+                },
+                source: {
+                    tableName: "SKPharma::CDSSKPharma.B_UDA_" + eq.equipmentCode,
+                    sourceSeqId: sourceSeqId,
+                    lastModifiedTime: toIsoDate(observedAt),
+                    machineDate: observedAt.toISOString().slice(0, 19).replace("T", " ")
+                },
+                metrics: metrics,
+                ingestedAt: now()
+            });
+            totalCppRecords++;
+
+            if (!batchStats[batchNo]) {
+                batchStats[batchNo] = {
+                    minAt: observedAt,
+                    maxAt: observedAt,
+                    cppCount: 0,
+                    alarmCount: 0,
+                    eventCount: 0,
+                    operatorName: operatorName,
+                    product: product,
+                    recipeProduct: recipeProduct,
+                    lotNo: lotNo
+                };
+            }
+            batchStats[batchNo].cppCount++;
+            if (observedAt < batchStats[batchNo].minAt) batchStats[batchNo].minAt = observedAt;
+            if (observedAt > batchStats[batchNo].maxAt) batchStats[batchNo].maxAt = observedAt;
+
+            // Alarm/Event fallback when realtime alarm feed is not available.
+            if (idx === 0 || (idx > 0 && records[idx - 1].batchNo !== batchNo)) {
+                alarmSeqBase++;
+                alarmDocs.push({
+                    eventAt: toIsoDate(observedAt),
+                    meta: {
+                        equipmentId: eq.equipmentId,
+                        batchNo: batchNo,
+                        lotNo: lotNo,
+                        productName: product.productName,
+                        productCode: product.productCode,
+                        operatorName: operatorName,
+                        supervisorName: operatorName,
+                        equipmentType: eq.equipmentType,
+                        equipmentName: eq.equipmentName,
+                        equipmentLocation: eq.hierarchy.fullPath,
+                        status: "RUNNING",
+                        dateDay: observedAt.getDate(),
+                        dayMonth: observedAt.getMonth() + 1,
+                        dayYear: observedAt.getFullYear(),
+                        timeHH: pad2(observedAt.getHours()),
+                        timeMM: pad2(observedAt.getMinutes()),
+                        timeSS: pad2(observedAt.getSeconds())
+                    },
+                    source: {
+                        tableName: "SKPharma::CDSSKPharma.AE_" + eq.equipmentCode,
+                        sourceSeqId: alarmSeqBase,
+                        lastModifiedTime: toIsoDate(observedAt),
+                        machineDate: observedAt.toISOString().slice(0, 19).replace("T", " ")
+                    },
+                    event: {
+                        eventCategory: "EVENT",
+                        eventCode: "BATCH_START",
+                        eventText: "Batch started from realtime sheet ingestion",
+                        severity: "LOW",
+                        eventState: "INFO",
+                        alarmAll: "",
+                        eventAll: ";BATCH_START;"
+                    },
+                    ingestedAt: now()
+                });
+                batchStats[batchNo].eventCount++;
+                totalEventRecords++;
+            }
+        }
+
+        // Close each batch with a completion event.
+        Object.keys(batchStats).forEach(function(batchNo) {
+            var stat = batchStats[batchNo];
+            var endAt = stat.maxAt || now();
+            alarmSeqBase++;
+            alarmDocs.push({
+                eventAt: toIsoDate(endAt),
+                meta: {
+                    equipmentId: eq.equipmentId,
+                    batchNo: batchNo,
+                    lotNo: stat.lotNo,
+                    productName: stat.product.productName,
+                    productCode: stat.product.productCode,
+                    operatorName: stat.operatorName,
+                    supervisorName: stat.operatorName,
+                    equipmentType: eq.equipmentType,
+                    equipmentName: eq.equipmentName,
+                    equipmentLocation: eq.hierarchy.fullPath,
+                    status: "STOP",
+                    dateDay: endAt.getDate(),
+                    dayMonth: endAt.getMonth() + 1,
+                    dayYear: endAt.getFullYear(),
+                    timeHH: pad2(endAt.getHours()),
+                    timeMM: pad2(endAt.getMinutes()),
+                    timeSS: pad2(endAt.getSeconds())
+                },
+                source: {
+                    tableName: "SKPharma::CDSSKPharma.AE_" + eq.equipmentCode,
+                    sourceSeqId: alarmSeqBase,
+                    lastModifiedTime: toIsoDate(endAt),
+                    machineDate: endAt.toISOString().slice(0, 19).replace("T", " ")
+                },
+                event: {
+                    eventCategory: "EVENT",
+                    eventCode: "BATCH_COMPLETE",
+                    eventText: "Batch completed from realtime sheet ingestion",
+                    severity: "LOW",
+                    eventState: "INFO",
+                    alarmAll: "",
+                    eventAll: ";BATCH_COMPLETE;"
+                },
+                ingestedAt: now()
+            });
+            stat.eventCount++;
+            totalEventRecords++;
+
+            batchSummaryDocs.push({
+                tenantId: TENANT_ID,
+                plantId: eq.plantId,
+                blockId: eq.blockId,
+                areaId: eq.areaId,
+                roomId: eq.roomId,
+                equipmentId: eq.equipmentId,
+                batchNo: batchNo,
+                lotNo: stat.lotNo,
+                productName: stat.product.productName,
+                productCode: stat.product.productCode,
+                equipmentType: eq.equipmentType,
+                equipmentName: eq.equipmentName,
+                equipmentLocation: eq.hierarchy.fullPath,
+                batchSize: "",
+                operatorName: stat.operatorName,
+                supervisorName: stat.operatorName,
+                batchStartAt: toIsoDate(stat.minAt || now()),
+                batchEndAt: toIsoDate(stat.maxAt || now()),
+                batchStatus: "COMPLETED",
+                cppRecordCount: stat.cppCount,
+                alarmCount: stat.alarmCount,
+                eventCount: stat.eventCount,
+                productionCount: randomInt(1000, 5000),
+                createdAt: now(),
+                updatedAt: now(),
+                hierarchy: eq.hierarchy
+            });
+        });
+
+        safeInsert(cppCollection, cppDocs);
+        safeInsert(alarmCollection, alarmDocs);
+
+        checkpointDocs.push({
+            checkpointId: "CP-" + eq.equipmentId + "-BATCH_CPP",
+            equipmentId: eq.equipmentId,
+            streamType: "BATCH_CPP",
+            sourceTable: "SKPharma::CDSSKPharma.B_UDA_" + eq.equipmentCode,
+            lastProcessedSeqId: seqBase + records.length,
+            lastProcessedAt: now(),
+            status: "SUCCESS",
+            updatedAt: now()
+        });
+
+        checkpointDocs.push({
+            checkpointId: "CP-" + eq.equipmentId + "-ALARM_EVENT",
+            equipmentId: eq.equipmentId,
+            streamType: "ALARM_EVENT",
+            sourceTable: "SKPharma::CDSSKPharma.AE_" + eq.equipmentCode,
+            lastProcessedSeqId: alarmSeqBase,
+            lastProcessedAt: now(),
+            status: "SUCCESS",
+            updatedAt: now()
+        });
+
+        jobRunDocs.push({
+            jobRunId: "JOB-REALTIME-" + eq.equipmentType + "-CPP",
+            equipmentId: eq.equipmentId,
+            streamType: "BATCH_CPP",
+            windowStartSeqId: seqBase + 1,
+            windowEndSeqId: seqBase + records.length,
+            recordsRead: records.length,
+            recordsWritten: records.length,
+            recordsSkipped: 0,
+            status: "SUCCESS",
+            startedAt: toIsoDate(now()),
+            completedAt: toIsoDate(now()),
+            createdAt: now(),
+            updatedAt: now()
+        });
+
+        jobRunDocs.push({
+            jobRunId: "JOB-REALTIME-" + eq.equipmentType + "-ALARM",
+            equipmentId: eq.equipmentId,
+            streamType: "ALARM_EVENT",
+            windowStartSeqId: 1,
+            windowEndSeqId: alarmSeqBase,
+            recordsRead: alarmDocs.length,
+            recordsWritten: alarmDocs.length,
+            recordsSkipped: 0,
+            status: "SUCCESS",
+            startedAt: toIsoDate(now()),
+            completedAt: toIsoDate(now()),
+            createdAt: now(),
+            updatedAt: now()
+        });
+    });
+
+    // Pipeline summaries expect shared batch number and lot per equipment type.
+    var perBatchPipeline = {};
+    batchSummaryDocs.forEach(function(doc) {
+        if (!doc.batchNo) return;
+        if (!perBatchPipeline[doc.batchNo]) {
+            perBatchPipeline[doc.batchNo] = {
+                startAt: doc.batchStartAt,
+                endAt: doc.batchEndAt,
+                productName: doc.productName,
+                productCode: doc.productCode,
+                operatorName: doc.operatorName,
+                supervisorName: doc.supervisorName,
+                cppCount: 0,
+                alarmCount: 0,
+                eventCount: 0,
+                stageStatus: {}
+            };
+        }
+
+        var agg = perBatchPipeline[doc.batchNo];
+        if (doc.batchStartAt < agg.startAt) agg.startAt = doc.batchStartAt;
+        if (doc.batchEndAt > agg.endAt) agg.endAt = doc.batchEndAt;
+        agg.cppCount += doc.cppRecordCount || 0;
+        agg.alarmCount += doc.alarmCount || 0;
+        agg.eventCount += doc.eventCount || 0;
+        agg.stageStatus[doc.equipmentType] = "COMPLETED";
+    });
+
+    Object.keys(perBatchPipeline).forEach(function(batchNo) {
+        var agg = perBatchPipeline[batchNo];
+        batchSummaryDocs.push({
+            tenantId: TENANT_ID,
+            plantId: "PLNT-0001",
+            blockId: "BLK-0001",
+            areaId: "AREA-0001",
+            roomId: "ROOM-0001",
+            equipmentId: "PIPELINE-" + batchNo,
+            batchNo: batchNo,
+            lotNo: "LOT-PIPELINE",
+            productName: agg.productName,
+            productCode: agg.productCode,
+            equipmentType: "PIPELINE",
+            equipmentName: "WEG->FBD->BLE Pipeline",
+            equipmentLocation: "PLNT-0001/BLK-0001/AREA-0001/ROOM-0001/PIPELINE",
+            batchSize: "",
+            operatorName: agg.operatorName,
+            supervisorName: agg.supervisorName,
+            batchStartAt: agg.startAt,
+            batchEndAt: agg.endAt,
+            batchStatus: "COMPLETED",
+            cppRecordCount: agg.cppCount,
+            alarmCount: agg.alarmCount,
+            eventCount: agg.eventCount,
+            productionCount: randomInt(1000, 5000),
+            stageStatus: {
+                WEG: agg.stageStatus.WEG || "PENDING",
+                FBD: agg.stageStatus.FBD || "PENDING",
+                BLE: agg.stageStatus.BLE || "PENDING"
+            },
+            createdAt: now(),
+            updatedAt: now(),
+            hierarchy: {
+                plant: "PLNT-0001",
+                block: "BLK-0001",
+                area: "AREA-0001",
+                room: "ROOM-0001",
+                fullPath: "PLNT-0001/BLK-0001/AREA-0001/ROOM-0001/PIPELINE"
+            }
+        });
+    });
+
+    safeInsert("iiot_ingestion_checkpoint", checkpointDocs);
+    safeInsert("iiot_ingestion_job_run", jobRunDocs);
+    safeInsert("iiot_batch_summary", batchSummaryDocs);
+
+    logInfo("Realtime ingestion from sheets completed!");
+    logInfo("  Total CPP records: " + totalCppRecords);
+    logInfo("  Synthetic Alarm records: " + totalAlarmRecords);
+    logInfo("  Synthetic Event records: " + totalEventRecords);
+    logInfo("  Total Batch Summaries: " + batchSummaryDocs.length);
+    return true;
+}
+
 function seedIngestionData() {
     logInfo("Seeding ingestion data...");
     try {
-        var allProducts = db.iiot_product_master.find({ tenantId: TENANT_ID, isActive: true }).toArray();
-        if (allProducts.length === 0) {
+        var productCatalog = db.iiot_product_master.find({ tenantId: TENANT_ID, isActive: true }).toArray();
+        if (productCatalog.length === 0) {
             logInfo("No products found. Skipping ingestion data.");
             return;
         }
-        
+
+        var productByCode = {};
+        productCatalog.forEach(function(p) { productByCode[p.productCode] = p; });
+
         var baseDate = new Date("2026-07-01T00:00:00Z");
-        var maxEquipment = EQUIPMENT_DEFS.length;
-        
-        logInfo("Processing all available equipment combinations: " + maxEquipment);
-        
+        logInfo("Processing " + BATCH_CATALOG.length + " batches across " + EQUIPMENT_DEFS.length + " stages");
+
         var checkpointDocs = [];
         var jobRunDocs = [];
         var batchSummaryDocs = [];
         var totalCppRecords = 0;
         var totalAlarmRecords = 0;
+        function getTelemetryMetrics(eqType, pointIdx, recipeProduct, batchNo, lotNo, operatorName) {
+            var isRunning = pointIdx < CPP_POINTS_PER_BATCH - 1;
+            var status = isRunning ? "RUNNING" : "STOP";
+            var stepCounter = pointIdx + 1;
 
-        for (var eqIdx = 0; eqIdx < maxEquipment; eqIdx++) {
-            var eq = EQUIPMENT_DEFS[eqIdx];
-            
-            if (eqIdx % 5 === 0 && eqIdx > 0) {
-                logInfo("  Processing equipment " + eqIdx + "/" + maxEquipment);
+            if (eqType === "WEG") {
+                var wetStepName = isRunning ? (pointIdx < 2 ? "DRY_MIXING" : (pointIdx < 4 ? "WET_MIXING" : "DISCHARGE_PREP")) : "COMPLETE";
+                return {
+                    batchNo: batchNo,
+                    lotNo: lotNo,
+                    recipeName: recipeProduct.recipeName,
+                    recipeNameWIP: recipeProduct.recipeName,
+                    userId: operatorName,
+                    agitatorCurrent: randomFloat(5.0, 9.0, 2),
+                    agitatorPauseTimePV: randomInt(2, 8),
+                    agitatorPauseTimeSV: 5,
+                    agitatorRunTimePV: randomInt(20, 90),
+                    agitatorRunTimeSV: 60,
+                    agitatorSpeedPV: randomFloat(7.2, 9.5, 2),
+                    agitatorSpeedSV: 8.5,
+                    agitatorTorque: randomFloat(8.0, 16.0, 2),
+                    agitatorTorqueDlyMaxPV: randomFloat(12.0, 18.0, 2),
+                    agitatorTorqueDlyMaxSV: 16.0,
+                    agitatorTorqueMax: randomFloat(16.0, 20.0, 2),
+                    agitatorTorqueMin: randomFloat(3.0, 7.0, 2),
+                    chopperCurrent: randomFloat(0.3, 1.9, 2),
+                    chopperSpeedPV: randomFloat(1000, 1400, 0),
+                    chopperSpeedSV: 1200,
+                    operationTimeProcessPV: pointIdx * 90,
+                    processManualAutoCSD: "AUTO",
+                    processManualAutoStatus: "AUTO",
+                    processTimePV: pointIdx * 90,
+                    rotorSieveCurrent: randomFloat(0.6, 2.2, 2),
+                    rotorSieveSpeedPV: randomFloat(200, 380, 0),
+                    rotorSieveSpeedSV: 300,
+                    sprayPausePV: randomInt(2, 12),
+                    sprayPauseSV: 5,
+                    sprayTimePV: randomInt(30, 120),
+                    sprayTimeSV: 90,
+                    stepCounterProcess: stepCounter,
+                    stepCounterWIP: stepCounter,
+                    stepNameProcess: wetStepName,
+                    stepNameWIP: wetStepName,
+                    operationTime: pointIdx * 90,
+                    processTime: pointIdx * 90,
+                    status: status
+                };
             }
-            
-            var cppCollection = getTimeSeriesCppCollection(eq.equipmentId);
-            var alarmCollection = getTimeSeriesAlarmCollection(eq.equipmentId);
-            
-            ensureCollection(cppCollection);
-            ensureCollection(alarmCollection);
+            if (eqType === "FBD") {
+                var fbdPhaseName = isRunning ? (pointIdx < 2 ? "PREHEAT" : (pointIdx < 4 ? "DRYING" : "COOLING")) : "COMPLETE";
+                return {
+                    batchEnable: 1,
+                    batchNumber: batchNo + "-" + lotNo,
+                    batchNumberWIP: batchNo + "-" + lotNo,
+                    batchRequest: 1,
+                    batchStatus: status,
+                    dehumidificationTempPV: randomFloat(20, 30, 1),
+                    dehumidificationTempSV: 25,
+                    ecfActProdPhaseNamePTX: fbdPhaseName,
+                    ecfActProdPhaseNumberSET: stepCounter,
+                    ecfActProdPhaseStatusSTA: status,
+                    ecfActProdPhaseTypeSET: "PROD",
+                    ecwActWipPhaseNamePTX: fbdPhaseName,
+                    ecwActWipPhaseNumberSET: stepCounter,
+                    ecwActWipPhaseStatusSTA: status,
+                    ecwActWipPhaseTypeSET: "WIP",
+                    epfProdProcEnable: 1,
+                    epfProdProcEnableCSD: 1,
+                    epwWipPhaseNumberRequest: stepCounter,
+                    exhaustAirFanSpeedPV: randomFloat(40, 75, 1),
+                    exhaustAirTempPV: randomFloat(24, 34, 1),
+                    inletAirTemperaturePV: randomFloat(62, 72, 1),
+                    inletAirTemperatureSV: 68,
+                    productTemperaturePV: randomFloat(42, 50, 1),
+                    productTemperatureMaxSET: 52,
+                    productTemperatureMinSET: 40,
+                    inletAirFlowPV: randomFloat(190, 260, 1),
+                    inletAirFlowSV: 230,
+                    inletAirHumidityRelativePV: randomFloat(25, 45, 1),
+                    inletAirModulatingFlapPV: randomFloat(30, 70, 1),
+                    inletAirModulatingFlapSV: 55,
+                    p01PreheaterTempSET: 70,
+                    recipeName: recipeProduct.recipeName,
+                    recipeNameWIP: recipeProduct.recipeName,
+                    recipeState: status,
+                    user: operatorName,
+                    operationTime: pointIdx * 120,
+                    exhaustAirTempMaxSET: 38,
+                    exhaustAirTempMinSET: 22,
+                    inletAirTemperatureMaxSET: 74,
+                    inletAirTemperatureMinSET: 60,
+                    status: status
+                };
+            }
 
-            var cppDocs = [];
-            var alarmEventDocs = [];
-            var latestCpp = null;
+            var blendingRemainingMin = Math.max(0, 15 - pointIdx * 2);
+            var blendingRemainingSec = Math.max(0, 60 - pointIdx * 8);
+            return {
+                batchNumber: batchNo,
+                blendingSpeedPV: randomFloat(8.5, 11.0, 2),
+                blendingSpeedSV: 10.0,
+                recipeName: recipeProduct.recipeName,
+                stepName: isRunning ? (pointIdx < 2 ? "LOADING" : (pointIdx < 4 ? "BLENDING" : "UNLOADING")) : "COMPLETE",
+                stepNo: stepCounter,
+                userId: operatorName,
+                blendingSetTime: 15,
+                blendingSetTimeMin: 15,
+                blendingRemainingTimeMin: blendingRemainingMin,
+                blendingRemainingTimeSec: blendingRemainingSec,
+                blendingStart: pointIdx === 0 ? 1 : 0,
+                blendingAbort: 0,
+                blendingResume: 0,
+                status: status
+            };
+        }
 
-            var cppSeq = 100000 + eqIdx * 10000;
-            var alarmSeq = 200000 + eqIdx * 10000;
+        function getIndustryEventTemplates(eqType) {
+            if (eqType === "WEG") {
+                return [
+                    { code: "BATCH_START", category: "EVENT", severity: "LOW", text: "Granulation started" },
+                    { code: "AGITATOR_TORQUE_HIGH", category: "ALARM", severity: "MEDIUM", text: "Agitator torque above warning" },
+                    { code: "CHOPPER_SPEED_DEVIATION", category: "ALARM", severity: "HIGH", text: "Chopper speed deviation beyond limit" },
+                    { code: "BATCH_COMPLETE", category: "EVENT", severity: "LOW", text: "Granulation completed" }
+                ];
+            }
+            if (eqType === "FBD") {
+                return [
+                    { code: "BATCH_START", category: "EVENT", severity: "LOW", text: "Drying started" },
+                    { code: "INLET_TEMP_HIGH", category: "ALARM", severity: "HIGH", text: "Inlet temperature above threshold" },
+                    { code: "AIR_FLOW_LOW", category: "ALARM", severity: "MEDIUM", text: "Inlet air flow below setpoint" },
+                    { code: "BATCH_COMPLETE", category: "EVENT", severity: "LOW", text: "Drying completed" }
+                ];
+            }
+            return [
+                { code: "BATCH_START", category: "EVENT", severity: "LOW", text: "Blending started" },
+                { code: "BLEND_SPEED_DEVIATION", category: "ALARM", severity: "MEDIUM", text: "Blend speed outside control band" },
+                { code: "BLEND_TIME_OVER", category: "ALARM", severity: "LOW", text: "Blend cycle exceeded planned duration" },
+                { code: "BATCH_COMPLETE", category: "EVENT", severity: "LOW", text: "Blending completed" }
+            ];
+        }
 
-            for (var batchIdx = 1; batchIdx <= BATCHES_PER_EQUIPMENT; batchIdx++) {
-                // Select product based on plant
-                var plantProducts = allProducts.filter(function(p) { return p.plantId === eq.plantId; });
-                if (plantProducts.length === 0) {
-                    plantProducts = allProducts;
-                }
-                var product = plantProducts[(eqIdx + batchIdx) % plantProducts.length];
-                
-                var batchNo = "B" + pad3(batchIdx) + "-" + (2026 - (eqIdx % 2));
-                var lotNo = "L" + pad2(batchIdx) + "-" + pad2(eqIdx + 1);
-                
-                var batchStart = addMinutes(baseDate, eqIdx * 45 + batchIdx * 35 + randomInt(-5, 5));
-                
-                var operators = ["KRISHNA", "PRATIK", "RAJESH", "SURESH", "AMIT", "VIKAS"];
-                var operatorName = operators[(eqIdx + batchIdx) % operators.length];
-                var supervisorName = operators[(eqIdx + batchIdx + 3) % operators.length];
-                
-                var batchSizes = ["23.000KG", "35.70KG", "18.000KG", "42.50KG", "25.000KG", "38.20KG"];
-                var batchSize = batchSizes[(eqIdx + batchIdx) % batchSizes.length];
+        for (var batchIdx = 0; batchIdx < BATCH_CATALOG.length; batchIdx++) {
+            var batch = BATCH_CATALOG[batchIdx];
+            var normalizedBatch = normalizeBatchIdentity(batch.batchNo, batch.lotNo);
+            var batchNo = normalizedBatch.batchNo;
+            var lotNo = normalizedBatch.lotNo;
+            var recipeProduct = getProductFromRecipe(batch.recipeName || batch.recipeCode);
+            var productCode = recipeProduct.productCode;
+            var product = productByCode[productCode] || {
+                productCode: recipeProduct.productCode,
+                productName: recipeProduct.productName,
+                productCategory: recipeProduct.productCategory
+            };
+            var operators = ["KRISHNA", "PRATIK", "RAJESH", "SURESH", "AMIT", "VIKAS"];
+            var operatorName = operators[batchIdx % operators.length];
+            var supervisorName = operators[(batchIdx + 2) % operators.length];
+            var batchSize = (22 + batchIdx * 3) + ".000KG";
+            var pipelineStageStatus = {};
+            var pipelineStartAt = null;
+            var pipelineEndAt = null;
+            var pipelineAlarmCount = 0;
+            var pipelineEventCount = 0;
+            var pipelineCppCount = 0;
 
+            for (var eqIdx = 0; eqIdx < EQUIPMENT_DEFS.length; eqIdx++) {
+                var eq = EQUIPMENT_DEFS[eqIdx];
+                var cppCollection = getTimeSeriesCppCollection(eq.equipmentId);
+                var alarmCollection = getTimeSeriesAlarmCollection(eq.equipmentId);
+                ensureCollection(cppCollection);
+                ensureCollection(alarmCollection);
+
+                var cppDocs = [];
+                var alarmEventDocs = [];
+                var latestCpp = null;
+                var cppSeq = 100000 + batchIdx * 10000 + eqIdx * 1000;
+                var alarmSeq = 200000 + batchIdx * 10000 + eqIdx * 1000;
+
+                var batchStart = addMinutes(baseDate, batchIdx * 120 + eqIdx * 35);
                 for (var pointIdx = 0; pointIdx < CPP_POINTS_PER_BATCH; pointIdx++) {
                     cppSeq += 1;
                     var observedAt = addMinutes(batchStart, pointIdx * 2 + randomInt(0, 1));
-                    
-                    // Realistic metrics
-                    var impellerA = randomFloat(5.0, 15.0, 2);
-                    var chopperA = randomFloat(0, 2.0, 2);
-                    var bedTemp = randomFloat(22.0, 28.0, 1);
-                    
-                    var metrics = {
-                        impellerA: impellerA,
-                        chopperA: chopperA,
-                        bedTemp: bedTemp,
-                        batchSize: batchSize,
-                        mode: pointIdx < CPP_POINTS_PER_BATCH / 2 ? "DRY MIXING - " + (randomInt(1, 2)) + " RUNNING" : "WET MIXING - " + (randomInt(1, 2)) + " RUNNING",
-                        status: pointIdx < CPP_POINTS_PER_BATCH - 1 ? "START" : "STOP",
-                        cycle: pointIdx < CPP_POINTS_PER_BATCH / 2 ? "DRY MIXING" : "WET MIXING"
-                    };
-                    
-                    var eqType = eq.equipmentType;
-                    if (eqType === "RMG") {
-                        metrics.impellerB = randomFloat(8.0, 15.0, 2);
-                        metrics.granulationTime = randomInt(5, 15);
-                    } else if (eqType === "FBD") {
-                        metrics.airFlow = randomFloat(400, 650, 1);
-                        metrics.inletTemp = randomFloat(60, 80, 1);
-                    } else if (eqType === "Comill") {
-                        metrics.impellerRPM = randomFloat(1500, 2500, 0);
-                        metrics.feedRate = randomFloat(40, 65, 1);
-                    }
+                    var metrics = getTelemetryMetrics(eq.equipmentType, pointIdx, recipeProduct, batchNo, lotNo, operatorName);
 
                     var cppDoc = {
                         observedAt: toIsoDate(observedAt),
@@ -729,13 +1381,14 @@ function seedIngestionData() {
                             lotNo: lotNo,
                             productName: product.productName,
                             productCode: product.productCode,
+                            productCategory: product.productCategory,
+                            recipeName: recipeProduct.recipeName,
                             operatorName: operatorName,
                             supervisorName: supervisorName,
                             equipmentType: eq.equipmentType,
                             equipmentName: eq.equipmentName,
                             equipmentLocation: eq.hierarchy.fullPath,
                             status: metrics.status,
-                            // Time components for filtering
                             dateDay: observedAt.getDate(),
                             dayMonth: observedAt.getMonth() + 1,
                             dayYear: observedAt.getFullYear(),
@@ -752,21 +1405,19 @@ function seedIngestionData() {
                         metrics: metrics,
                         ingestedAt: now()
                     };
-
                     cppDocs.push(cppDoc);
                     latestCpp = cppDoc;
                     totalCppRecords++;
                 }
 
-                // Generate alarms with room context
-                for (var alarmIdx = 0; alarmIdx < ALARMS_PER_BATCH; alarmIdx++) {
+                var stageEvents = getIndustryEventTemplates(eq.equipmentType);
+                for (var alarmIdx = 0; alarmIdx < stageEvents.length; alarmIdx++) {
                     alarmSeq += 1;
-                    var eventAt = addMinutes(batchStart, 3 + alarmIdx * 8 + randomInt(0, 3));
-                    
-                    var alarmEvent = ALARM_EVENTS[(eqIdx + batchIdx + alarmIdx) % ALARM_EVENTS.length];
-                    var isAlarm = alarmEvent.category === "ALARM";
-                    
-                    var alarmDoc = {
+                    var eventAt = addMinutes(batchStart, 2 + alarmIdx * 4 + randomInt(0, 1));
+                    var stageEvent = stageEvents[alarmIdx];
+                    var isAlarm = stageEvent.category === "ALARM";
+
+                    alarmEventDocs.push({
                         eventAt: toIsoDate(eventAt),
                         meta: {
                             equipmentId: eq.equipmentId,
@@ -774,13 +1425,14 @@ function seedIngestionData() {
                             lotNo: lotNo,
                             productName: product.productName,
                             productCode: product.productCode,
+                            productCategory: product.productCategory,
+                            recipeName: recipeProduct.recipeName,
                             operatorName: operatorName,
                             supervisorName: supervisorName,
                             equipmentType: eq.equipmentType,
                             equipmentName: eq.equipmentName,
                             equipmentLocation: eq.hierarchy.fullPath,
                             status: "RUNNING",
-                            // Time components for filtering
                             dateDay: eventAt.getDate(),
                             dayMonth: eventAt.getMonth() + 1,
                             dayYear: eventAt.getFullYear(),
@@ -795,23 +1447,82 @@ function seedIngestionData() {
                             machineDate: eventAt.toISOString().slice(0, 19).replace("T", " ")
                         },
                         event: {
-                            eventCategory: alarmEvent.category,
-                            eventCode: alarmEvent.code,
-                            eventText: alarmEvent.text,
-                            severity: alarmEvent.severity,
+                            eventCategory: stageEvent.category,
+                            eventCode: stageEvent.code,
+                            eventText: stageEvent.text,
+                            severity: stageEvent.severity,
                             eventState: isAlarm ? "OPEN" : "INFO",
-                            alarmAll: isAlarm ? ";" + alarmEvent.code + ";" : "",
-                            eventAll: isAlarm ? "" : ";" + alarmEvent.code + ";"
+                            alarmAll: isAlarm ? ";" + stageEvent.code + ";" : "",
+                            eventAll: isAlarm ? "" : ";" + stageEvent.code + ";"
                         },
                         ingestedAt: now()
-                    };
-                    
-                    alarmEventDocs.push(alarmDoc);
+                    });
                     totalAlarmRecords++;
                 }
 
+                safeInsert(cppCollection, cppDocs);
+                safeInsert(alarmCollection, alarmEventDocs);
+
+                checkpointDocs.push({
+                    checkpointId: "CP-" + eq.equipmentId + "-" + batchNo + "-BATCH_CPP",
+                    equipmentId: eq.equipmentId,
+                    streamType: "BATCH_CPP",
+                    sourceTable: "SKPharma::CDSSKPharma.B_UDA_" + eq.equipmentCode,
+                    lastProcessedSeqId: cppSeq,
+                    lastProcessedAt: now(),
+                    status: "SUCCESS",
+                    updatedAt: now()
+                });
+
+                checkpointDocs.push({
+                    checkpointId: "CP-" + eq.equipmentId + "-" + batchNo + "-ALARM_EVENT",
+                    equipmentId: eq.equipmentId,
+                    streamType: "ALARM_EVENT",
+                    sourceTable: "SKPharma::CDSSKPharma.AE_" + eq.equipmentCode,
+                    lastProcessedSeqId: alarmSeq,
+                    lastProcessedAt: now(),
+                    status: "SUCCESS",
+                    updatedAt: now()
+                });
+
+                jobRunDocs.push({
+                    jobRunId: "JOB-SEED-" + eq.equipmentType + "-" + batchNo + "-CPP",
+                    equipmentId: eq.equipmentId,
+                    streamType: "BATCH_CPP",
+                    windowStartSeqId: cppSeq - CPP_POINTS_PER_BATCH + 1,
+                    windowEndSeqId: cppSeq,
+                    recordsRead: CPP_POINTS_PER_BATCH,
+                    recordsWritten: CPP_POINTS_PER_BATCH,
+                    recordsSkipped: 0,
+                    status: "SUCCESS",
+                    startedAt: toIsoDate(batchStart),
+                    completedAt: toIsoDate(addMinutes(batchStart, 12)),
+                    createdAt: now(),
+                    updatedAt: now()
+                });
+
+                jobRunDocs.push({
+                    jobRunId: "JOB-SEED-" + eq.equipmentType + "-" + batchNo + "-ALARM",
+                    equipmentId: eq.equipmentId,
+                    streamType: "ALARM_EVENT",
+                    windowStartSeqId: alarmSeq - stageEvents.length + 1,
+                    windowEndSeqId: alarmSeq,
+                    recordsRead: stageEvents.length,
+                    recordsWritten: stageEvents.length,
+                    recordsSkipped: 0,
+                    status: "SUCCESS",
+                    startedAt: toIsoDate(addMinutes(batchStart, 2)),
+                    completedAt: toIsoDate(addMinutes(batchStart, 16)),
+                    createdAt: now(),
+                    updatedAt: now()
+                });
+
                 batchSummaryDocs.push({
                     tenantId: TENANT_ID,
+                    plantId: eq.plantId,
+                    blockId: eq.blockId,
+                    areaId: eq.areaId,
+                    roomId: eq.roomId,
                     equipmentId: eq.equipmentId,
                     batchNo: batchNo,
                     lotNo: lotNo,
@@ -824,101 +1535,99 @@ function seedIngestionData() {
                     operatorName: operatorName,
                     supervisorName: supervisorName,
                     batchStartAt: toIsoDate(batchStart),
-                    batchEndAt: toIsoDate(addMinutes(batchStart, (CPP_POINTS_PER_BATCH - 1) * 2 + 5)),
+                    batchEndAt: toIsoDate(addMinutes(batchStart, 18)),
                     batchStatus: "COMPLETED",
                     cppRecordCount: CPP_POINTS_PER_BATCH,
-                    alarmCount: ALARMS_PER_BATCH - 1,
-                    eventCount: 1,
+                    alarmCount: alarmEventDocs.filter(function(a) { return a.event.eventCategory === "ALARM"; }).length,
+                    eventCount: alarmEventDocs.filter(function(a) { return a.event.eventCategory === "EVENT"; }).length,
                     productionCount: randomInt(1000, 5000),
                     createdAt: now(),
                     updatedAt: now(),
                     hierarchy: eq.hierarchy
                 });
-            }
 
-            safeInsert(cppCollection, cppDocs);
-            safeInsert(alarmCollection, alarmEventDocs);
+                pipelineStageStatus[eq.equipmentType] = "COMPLETED";
+                if (!pipelineStartAt || batchStart < pipelineStartAt) {
+                    pipelineStartAt = batchStart;
+                }
+                var stageEndAt = addMinutes(batchStart, 18);
+                if (!pipelineEndAt || stageEndAt > pipelineEndAt) {
+                    pipelineEndAt = stageEndAt;
+                }
+                pipelineCppCount += CPP_POINTS_PER_BATCH;
+                pipelineAlarmCount += alarmEventDocs.filter(function(a) { return a.event.eventCategory === "ALARM"; }).length;
+                pipelineEventCount += alarmEventDocs.filter(function(a) { return a.event.eventCategory === "EVENT"; }).length;
 
-            checkpointDocs.push({
-                checkpointId: "CP-" + eq.equipmentId + "-BATCH_CPP",
-                equipmentId: eq.equipmentId,
-                streamType: "BATCH_CPP",
-                sourceTable: "SKPharma::CDSSKPharma.B_UDA_" + eq.equipmentCode,
-                lastProcessedSeqId: cppSeq,
-                lastProcessedAt: now(),
-                status: "SUCCESS",
-                updatedAt: now()
-            });
-
-            checkpointDocs.push({
-                checkpointId: "CP-" + eq.equipmentId + "-ALARM_EVENT",
-                equipmentId: eq.equipmentId,
-                streamType: "ALARM_EVENT",
-                sourceTable: "SKPharma::CDSSKPharma.AE_" + eq.equipmentCode,
-                lastProcessedSeqId: alarmSeq,
-                lastProcessedAt: now(),
-                status: "SUCCESS",
-                updatedAt: now()
-            });
-
-            jobRunDocs.push({
-                jobRunId: "JOB-SEED-BATCH-" + pad3(eqIdx + 1),
-                equipmentId: eq.equipmentId,
-                streamType: "BATCH_CPP",
-                windowStartSeqId: cppSeq - (BATCHES_PER_EQUIPMENT * CPP_POINTS_PER_BATCH) + 1,
-                windowEndSeqId: cppSeq,
-                recordsRead: BATCHES_PER_EQUIPMENT * CPP_POINTS_PER_BATCH,
-                recordsWritten: BATCHES_PER_EQUIPMENT * CPP_POINTS_PER_BATCH,
-                recordsSkipped: 0,
-                status: "SUCCESS",
-                startedAt: toIsoDate(addMinutes(baseDate, eqIdx * 25)),
-                completedAt: toIsoDate(addMinutes(baseDate, eqIdx * 25 + 5)),
-                createdAt: now(),
-                updatedAt: now()
-            });
-
-            jobRunDocs.push({
-                jobRunId: "JOB-SEED-ALARM-" + pad3(eqIdx + 1),
-                equipmentId: eq.equipmentId,
-                streamType: "ALARM_EVENT",
-                windowStartSeqId: alarmSeq - (BATCHES_PER_EQUIPMENT * ALARMS_PER_BATCH) + 1,
-                windowEndSeqId: alarmSeq,
-                recordsRead: BATCHES_PER_EQUIPMENT * ALARMS_PER_BATCH,
-                recordsWritten: BATCHES_PER_EQUIPMENT * ALARMS_PER_BATCH,
-                recordsSkipped: 0,
-                status: "SUCCESS",
-                startedAt: toIsoDate(addMinutes(baseDate, eqIdx * 25 + 7)),
-                completedAt: toIsoDate(addMinutes(baseDate, eqIdx * 25 + 11)),
-                createdAt: now(),
-                updatedAt: now()
-            });
-
-            if (latestCpp) {
-                var liveState = LIVE_STATES[eqIdx % LIVE_STATES.length];
-                db.iiot_equipment_live_status.updateOne(
-                    { equipmentId: eq.equipmentId },
-                    {
-                        $set: {
-                            equipmentId: eq.equipmentId,
-                            equipmentType: eq.equipmentType,
-                            equipmentName: eq.equipmentName,
-                            equipmentLocation: eq.hierarchy.fullPath,
-                            currentState: liveState,
-                            stateReason: liveState,
-                            lastBatchNo: latestCpp.meta.batchNo,
-                            lastLotNo: latestCpp.meta.lotNo,
-                            lastProductName: latestCpp.meta.productName,
-                            lastOperatorName: latestCpp.meta.operatorName,
-                            lastSourceSeqId: latestCpp.source.sourceSeqId,
-                            lastEventAt: latestCpp.observedAt,
-                            heartbeatAt: now(),
-                            updatedAt: now()
+                if (latestCpp) {
+                    var liveState = LIVE_STATES[(batchIdx + eqIdx) % LIVE_STATES.length];
+                    db.iiot_equipment_live_status.updateOne(
+                        { equipmentId: eq.equipmentId },
+                        {
+                            $set: {
+                                equipmentId: eq.equipmentId,
+                                equipmentType: eq.equipmentType,
+                                equipmentName: eq.equipmentName,
+                                equipmentLocation: eq.hierarchy.fullPath,
+                                currentState: liveState,
+                                stateReason: liveState,
+                                lastBatchNo: latestCpp.meta.batchNo,
+                                lastLotNo: latestCpp.meta.lotNo,
+                                lastProductName: latestCpp.meta.productName,
+                                lastOperatorName: latestCpp.meta.operatorName,
+                                lastSourceSeqId: latestCpp.source.sourceSeqId,
+                                lastEventAt: latestCpp.observedAt,
+                                heartbeatAt: now(),
+                                updatedAt: now()
+                            },
+                            $setOnInsert: { createdAt: now() }
                         },
-                        $setOnInsert: { createdAt: now() }
-                    },
-                    { upsert: true }
-                );
+                        { upsert: true }
+                    );
+                }
             }
+
+            var allStagesCompleted = STAGE_SEQUENCE.every(function(stage) {
+                return pipelineStageStatus[stage] === "COMPLETED";
+            });
+            batchSummaryDocs.push({
+                tenantId: TENANT_ID,
+                plantId: "PLNT-0001",
+                blockId: "BLK-0001",
+                areaId: "AREA-0001",
+                roomId: "ROOM-0001",
+                equipmentId: "PIPELINE-" + batchNo,
+                batchNo: batchNo,
+                lotNo: lotNo,
+                productName: product.productName,
+                productCode: product.productCode,
+                equipmentType: "PIPELINE",
+                equipmentName: "WEG->FBD->BLE Pipeline",
+                equipmentLocation: "PLNT-0001/BLK-0001/AREA-0001/ROOM-0001/PIPELINE",
+                batchSize: batchSize,
+                operatorName: operatorName,
+                supervisorName: supervisorName,
+                batchStartAt: toIsoDate(pipelineStartAt || now()),
+                batchEndAt: toIsoDate(pipelineEndAt || now()),
+                batchStatus: allStagesCompleted ? "COMPLETED" : "IN_PROGRESS",
+                cppRecordCount: pipelineCppCount,
+                alarmCount: pipelineAlarmCount,
+                eventCount: pipelineEventCount,
+                productionCount: randomInt(1000, 5000),
+                stageStatus: {
+                    WEG: pipelineStageStatus.WEG || "PENDING",
+                    FBD: pipelineStageStatus.FBD || "PENDING",
+                    BLE: pipelineStageStatus.BLE || "PENDING"
+                },
+                createdAt: now(),
+                updatedAt: now(),
+                hierarchy: {
+                    plant: "PLNT-0001",
+                    block: "BLK-0001",
+                    area: "AREA-0001",
+                    room: "ROOM-0001",
+                    fullPath: "PLNT-0001/BLK-0001/AREA-0001/ROOM-0001/PIPELINE"
+                }
+            });
         }
 
         safeInsert("iiot_ingestion_checkpoint", checkpointDocs);
@@ -1279,8 +1988,11 @@ function runSeed() {
         
         createIndexes();
         seedMasterData();
-        seedIngestionData();
-        seedLegacySampleCsvIngestionData();
+        var loadedRealtime = seedRealtimeSheetIngestionData();
+        if (!loadedRealtime) {
+            seedIngestionData();
+        }
+        // Keep legacy sample CSV loader disabled for stage-based WEG/FBD/BLE seeding.
         
         logInfo("=== SEED COMPLETED ===");
         logInfo("Database: " + databaseName);
