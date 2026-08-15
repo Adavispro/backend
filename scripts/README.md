@@ -12,6 +12,40 @@ This folder contains the local development workflow for the Adavis Platform.
 - `stop-all.ps1`: stops managed Spring services and Docker containers.
 - `setup-dev.ps1`: one-command setup for check, seed, Docker, and service startup. Use `-BuildFirst` if you also want a full root build.
 
+## Mock Data Service
+
+Start the mock source API in the background:
+
+```powershell
+.\scripts\run-mock-data-service.ps1
+```
+
+Stop it with:
+
+```powershell
+.\scripts\stop-mock-data-service.ps1
+```
+
+## Scheduler Ingestion Service
+
+Start scheduler ingestion in the background:
+
+```powershell
+.\scripts\run-scheduler-ingestion.ps1
+```
+
+Start scheduler ingestion for specific datasets:
+
+```powershell
+.\scripts\run-scheduler-ingestion.ps1 -DatasetIds G5RMG,G6RMG,G5FBD,G5OGB
+```
+
+Stop it with:
+
+```powershell
+.\scripts\stop-scheduler-ingestion.ps1
+```
+
 ## Typical usage
 
 ### First-time local startup

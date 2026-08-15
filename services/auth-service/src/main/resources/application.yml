@@ -59,6 +59,10 @@ password:
     history-count: ${PASSWORD_POLICY_HISTORY_COUNT:5}
 
 services:
+  mdm:
+    base-url: ${MDM_SERVICE_BASE_URL:http://localhost:9083}
+  license:
+    base-url: ${LICENSE_SERVICE_BASE_URL:http://localhost:8082}
   audit:
     base-url: ${AUDIT_SERVICE_BASE_URL:http://localhost:8084}
 

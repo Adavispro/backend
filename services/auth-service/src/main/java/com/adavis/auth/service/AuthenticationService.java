@@ -15,6 +15,9 @@ import com.adavis.dto.auth.response.LoginInitiateResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -50,6 +53,7 @@ public class AuthenticationService {
     private final PasswordPolicyService passwordPolicyService;
     private final AuditEventPublisher auditEventPublisher;
     private final RedisTemplate<String, String> redisTemplate;
+    private final MongoTemplate mongoTemplate;
 
     private static final String BLACKLIST_PREFIX = "blacklist:";
     private static final String SUPER_ADMIN_USER_ID = "SUPER_ADMIN";
@@ -474,6 +478,27 @@ public class AuthenticationService {
             return StringUtils.hasText(tenantValue) ? tenantValue : null;
         } catch (RestClientException ex) {
             log.warn("Tenant resolution lookup failed for userId {}: {}", userId, ex.getMessage());
+            return resolveTenantIdFromLocalProfile(userId);
+        }
+    }
+
+    private String resolveTenantIdFromLocalProfile(String userId) {
+        try {
+            Query query = Query.query(Criteria.where("userId").is(userId));
+            org.bson.Document profile = mongoTemplate.findOne(query, org.bson.Document.class, "mdm_user_profiles");
+            if (profile == null) {
+                return null;
+            }
+
+            Object tenantId = profile.get("tenantId");
+            String tenantValue = tenantId == null ? null : String.valueOf(tenantId).trim();
+            if (StringUtils.hasText(tenantValue)) {
+                log.info("Resolved tenant context from local profile for userId={}", userId);
+                return tenantValue;
+            }
+            return null;
+        } catch (Exception ex) {
+            log.warn("Local tenant resolution lookup failed for userId {}: {}", userId, ex.getMessage());
             return null;
         }
     }

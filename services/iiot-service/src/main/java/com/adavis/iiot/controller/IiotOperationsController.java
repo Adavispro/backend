@@ -229,6 +229,15 @@ public class IiotOperationsController {
         return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getBatchSummary(filter)));
     }
 
+            @PostMapping("/reports/batch-summary/approval")
+            public ResponseEntity<ApiResponse<Map<String, Object>>> updateBatchSummaryApproval(
+                @RequestBody Map<String, Object> request) {
+            return ResponseEntity.ok(
+                ApiResponse.success(
+                    "Batch summary approval updated",
+                    iiotOperationsService.updateBatchSummaryApproval(request)));
+            }
+
     @GetMapping("/reports/cpp")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCppData(
             @RequestParam(required = false) String tenantId,

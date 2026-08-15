@@ -48,7 +48,7 @@ public class IiotOperationsService {
     private static final String ASSETS_COLLECTION = "iiot_assets";
     private static final String ASSET_TAGS_COLLECTION = "iiot_asset_tags";
     private static final String TAG_THRESHOLDS_COLLECTION = "iiot_tag_thresholds";
-    private static final String EQUIPMENT_MASTER_COLLECTION = "iiot_equiment_master";
+    private static final String EQUIPMENT_MASTER_COLLECTION = "iiot_equipment_master";
     private static final String CRITICAL_PARAMETERS_COLLECTION = "iiot_equipment_critical_parameters";
     private static final String CRITICAL_PARAMETER_LIMITS_COLLECTION = "iiot_equipment_critical_parameters_limit";
     private static final String PRODUCT_MASTER_COLLECTION = "iiot_product_master";
@@ -57,8 +57,11 @@ public class IiotOperationsService {
     private static final String JOB_RUN_COLLECTION = "iiot_ingestion_job_run";
     private static final String EQUIPMENT_LIVE_STATUS_COLLECTION = "iiot_equipment_live_status";
     private static final String BATCH_SUMMARY_COLLECTION = "iiot_batch_summary";
-    private static final String CPP_TS_PREFIX = "iiot_ts_cpp_";
-    private static final String ALARM_TS_PREFIX = "iiot_ts_alarm_event_";
+    private static final String BATCH_TS_COLLECTION = "iiot_ts_batch_";
+    private static final String ALARM_TS_COLLECTION = "iiot_ts_alarm_";
+    private static final String AUDIT_TS_COLLECTION = "iiot_ts_audit_";
+    private static final String LEGACY_CPP_TS_PREFIX = "iiot_ts_cpp_";
+    private static final String LEGACY_ALARM_TS_PREFIX = "iiot_ts_alarm_event_";
     private static final String TELEMETRY_COLLECTION = "iiot_telemetry";
     private static final String STATE_COLLECTION = "iiot_asset_states";
     private static final String OEE_CONFIG_COLLECTION = "iiot_oee_config";
@@ -564,45 +567,151 @@ public class IiotOperationsService {
         return mongoTemplate.find(query, Document.class, BATCH_SUMMARY_COLLECTION).stream().map(this::toMap).toList();
     }
 
+    public Map<String, Object> updateBatchSummaryApproval(Map<String, Object> request) {
+        String batchNo = requireFilterText(request, "batchNo");
+        String lotNo = requireFilterText(request, "lotNo");
+        String equipmentCode = requireFilterText(request, "equipmentCode");
+        String requestedStatus = requireFilterText(request, "status").toUpperCase(Locale.ROOT);
+        String supervisorName = stringValue(request.get("supervisorName"));
+
+        if (!"UNDER_REVIEW".equals(requestedStatus)
+                && !"APPROVED".equals(requestedStatus)
+                && !"REJECTED".equals(requestedStatus)) {
+            throw new BusinessException("status must be one of UNDER_REVIEW, APPROVED, or REJECTED");
+        }
+
+        Query query = new Query();
+        applyEqualsCriteria(query, request, "tenantId");
+        query.addCriteria(Criteria.where("batchNo").is(batchNo));
+        query.addCriteria(Criteria.where("lotNo").is(lotNo));
+        query.addCriteria(Criteria.where("stages").elemMatch(Criteria.where("equipmentCode").is(equipmentCode)));
+
+        Document summary = mongoTemplate.findOne(query, Document.class, BATCH_SUMMARY_COLLECTION);
+        if (summary == null) {
+            throw new BusinessException("Batch summary stage not found for batchNo=" + batchNo
+                    + ", lotNo=" + lotNo + ", equipmentCode=" + equipmentCode);
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Document> stages = (List<Document>) summary.get("stages");
+        if (stages == null || stages.isEmpty()) {
+            throw new BusinessException("No stages available in batch summary");
+        }
+
+        String approvedBy = firstNonBlank(stringValue(request.get("approvedBy")), "SYSTEM");
+        String comments = firstNonBlank(stringValue(request.get("comments")), "");
+        Date now = Date.from(Instant.now());
+
+        boolean stageMatched = false;
+        for (Document stage : stages) {
+            String stageEquipmentCode = stringValue(stage.get("equipmentCode"));
+            if (!equipmentCode.equalsIgnoreCase(firstNonBlank(stageEquipmentCode, ""))) {
+                continue;
+            }
+
+            Document approval = stage.get("approval", Document.class);
+            if (approval == null) {
+                approval = new Document();
+            }
+
+            approval.put("status", requestedStatus);
+            if ("APPROVED".equals(requestedStatus) || "REJECTED".equals(requestedStatus)) {
+                approval.put("approvedBy", approvedBy);
+                approval.put("approvedAt", now);
+            } else {
+                approval.put("approvedBy", "");
+                approval.put("approvedAt", null);
+                approval.put("requestedBy", approvedBy);
+                approval.put("requestedAt", now);
+                stage.put("requestedBy", approvedBy);
+                stage.put("requestedAt", now);
+                if (supervisorName != null && !supervisorName.isBlank()) {
+                    stage.put("supervisorName", supervisorName.trim());
+                }
+            }
+            approval.put("comments", comments);
+
+            stage.put("approval", approval);
+            stageMatched = true;
+            break;
+        }
+
+        if (!stageMatched) {
+            throw new BusinessException("Stage not found for equipmentCode: " + equipmentCode);
+        }
+
+        summary.put("overallStatus", deriveBatchOverallStatus(stages));
+        summary.put("updatedAt", now);
+
+        return toMap(mongoTemplate.save(summary, BATCH_SUMMARY_COLLECTION));
+    }
+
     public List<Map<String, Object>> getCppData(Map<String, Object> filter) {
         String tenantId = firstNonBlank(stringValue(filter.get("tenantId")), DEFAULT_TENANT_ID);
         String equipmentId = requireFilterText(filter, "equipmentId");
-        String collection = buildPerEquipmentCollectionName(CPP_TS_PREFIX, tenantId, equipmentId);
-        Query query = new Query();
-        applyMetaCriteria(query, "meta.equipmentId", equipmentId);
-        applyMetaCriteria(query, "meta.batchNo", stringValue(filter.get("batchNo")));
-        applyMetaCriteria(query, "meta.lotNo", stringValue(filter.get("lotNo")));
-        applyMetaCriteria(query, "meta.productName", stringValue(filter.get("productName")));
-        applyDateRangeCriteria(query, filter, "observedAt", "fromDate", "toDate");
-        int limit = toInteger(filter.get("limit"), 1000, 10000);
-        int offset = toNonNegativeInteger(filter.get("offset"));
-        if (offset > 0) {
-            query.skip(offset);
+        String collection = resolveTimeSeriesReadCollection(BATCH_TS_COLLECTION, LEGACY_CPP_TS_PREFIX, tenantId, equipmentId);
+        List<Map<String, Object>> records = queryCppData(collection, filter, equipmentId, true);
+        if (records.isEmpty()) {
+            String batchNo = stringValue(filter.get("batchNo"));
+            String lotNo = stringValue(filter.get("lotNo"));
+            String productName = stringValue(filter.get("productName"));
+            if ((batchNo != null && !batchNo.isBlank()) || (lotNo != null && !lotNo.isBlank()) || (productName != null && !productName.isBlank())) {
+                records = queryCppData(collection, filter, equipmentId, false);
+            }
         }
-        query.with(Sort.by(Sort.Direction.DESC, "observedAt")).limit(limit);
-        return mongoTemplate.find(query, Document.class, collection).stream().map(this::toMap).toList();
+        return records;
     }
 
     public List<Map<String, Object>> getAlarmEventData(Map<String, Object> filter) {
         String tenantId = firstNonBlank(stringValue(filter.get("tenantId")), DEFAULT_TENANT_ID);
         String equipmentId = requireFilterText(filter, "equipmentId");
-        String collection = buildPerEquipmentCollectionName(ALARM_TS_PREFIX, tenantId, equipmentId);
-        Query query = new Query();
-        applyMetaCriteria(query, "meta.equipmentId", equipmentId);
-        applyMetaCriteria(query, "meta.batchNo", stringValue(filter.get("batchNo")));
-        applyMetaCriteria(query, "meta.lotNo", stringValue(filter.get("lotNo")));
-        applyMetaCriteria(query, "meta.productName", stringValue(filter.get("productName")));
         String category = stringValue(filter.get("eventCategory"));
-        if (category != null && !category.isBlank()) {
-            query.addCriteria(Criteria.where("event.eventCategory").is(category.toUpperCase(Locale.ROOT)));
+        if (category == null || category.isBlank()) {
+            List<Map<String, Object>> combined = new ArrayList<>();
+            combined.addAll(queryAlarmEventCollection(
+                    resolveTimeSeriesReadCollection(ALARM_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId),
+                    filter,
+                    equipmentId,
+                    null));
+            combined.addAll(queryAlarmEventCollection(
+                    resolveTimeSeriesReadCollection(AUDIT_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId),
+                    filter,
+                    equipmentId,
+                    "EVENT"));
+                    combined.sort((left, right) -> {
+                    String rightTs = firstNonBlank(
+                        firstNonBlank(stringValue(right.get("event_time")), stringValue(right.get("eventAt"))),
+                        "");
+                    String leftTs = firstNonBlank(
+                        firstNonBlank(stringValue(left.get("event_time")), stringValue(left.get("eventAt"))),
+                        "");
+                    return rightTs.compareTo(leftTs);
+                    });
+            return combined;
         }
-        applyDateRangeCriteria(query, filter, "eventAt", "fromDate", "toDate");
+
+        String normalizedCategory = category.toUpperCase(Locale.ROOT);
+        String collection = resolveTimeSeriesReadCollection(
+                "EVENT".equals(normalizedCategory) ? AUDIT_TS_COLLECTION : ALARM_TS_COLLECTION,
+                LEGACY_ALARM_TS_PREFIX,
+                tenantId,
+                equipmentId);
+        return queryAlarmEventCollection(collection, filter, equipmentId, normalizedCategory);
+    }
+
+    private List<Map<String, Object>> queryAlarmEventCollection(String collection,
+                                                                Map<String, Object> filter,
+                                                                String equipmentId,
+                                                                String category) {
+        Query query = new Query();
+        applyEquipmentCriteria(query, equipmentId);
+        applyDateRangeCriteria(query, filter, "event_time", "fromDate", "toDate");
         int limit = toInteger(filter.get("limit"), 1000, 10000);
         int offset = toNonNegativeInteger(filter.get("offset"));
         if (offset > 0) {
             query.skip(offset);
         }
-        query.with(Sort.by(Sort.Direction.DESC, "eventAt")).limit(limit);
+        query.with(Sort.by(Sort.Direction.DESC, "event_time", "eventAt")).limit(limit);
         return mongoTemplate.find(query, Document.class, collection).stream().map(this::toMap).toList();
     }
 
@@ -625,21 +734,16 @@ public class IiotOperationsService {
         response.put("batchNo", batchNo);
         response.put("equipment", toMap(equipmentMaster));
 
-        String cppCollection = buildPerEquipmentCollectionName(CPP_TS_PREFIX, tenantId, equipmentId);
-        Query cppQuery = new Query();
-        cppQuery.addCriteria(Criteria.where("meta.equipmentId").is(equipmentId));
-        cppQuery.addCriteria(Criteria.where("meta.batchNo").is(batchNo));
-        cppQuery.with(Sort.by(Sort.Direction.ASC, "observedAt"));
-        List<Map<String, Object>> cppData = mongoTemplate.find(cppQuery, Document.class, cppCollection)
-                .stream()
-                .map(this::toMap)
-                .toList();
+        String cppCollection = resolveTimeSeriesReadCollection(BATCH_TS_COLLECTION, LEGACY_CPP_TS_PREFIX, tenantId, equipmentId);
+        List<Map<String, Object>> cppData = queryEquipmentBatchCppData(cppCollection, equipmentId, batchNo, true);
+        if (cppData.isEmpty()) {
+            cppData = queryEquipmentBatchCppData(cppCollection, equipmentId, batchNo, false);
+        }
 
-        String alarmCollection = buildPerEquipmentCollectionName(ALARM_TS_PREFIX, tenantId, equipmentId);
+        String alarmCollection = resolveTimeSeriesReadCollection(ALARM_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId);
         Query alarmQuery = new Query();
-        alarmQuery.addCriteria(Criteria.where("meta.equipmentId").is(equipmentId));
-        alarmQuery.addCriteria(Criteria.where("meta.batchNo").is(batchNo));
-        alarmQuery.with(Sort.by(Sort.Direction.ASC, "eventAt"));
+        addEquipmentCriteria(alarmQuery, equipmentId);
+        alarmQuery.with(Sort.by(Sort.Direction.ASC, "event_time", "eventAt"));
         List<Map<String, Object>> alarmData = mongoTemplate.find(alarmQuery, Document.class, alarmCollection)
                 .stream()
                 .map(this::toMap)
@@ -657,10 +761,47 @@ public class IiotOperationsService {
         return response;
     }
 
+    private List<Map<String, Object>> queryCppData(String collection,
+                                                   Map<String, Object> filter,
+                                                   String equipmentId,
+                                                   boolean includeBatchCriteria) {
+        Query query = new Query();
+        applyEquipmentCriteria(query, equipmentId);
+        if (includeBatchCriteria) {
+            applyMetaCriteria(query, "meta.batchNo", stringValue(filter.get("batchNo")));
+            applyMetaCriteria(query, "meta.lotNo", stringValue(filter.get("lotNo")));
+            applyMetaCriteria(query, "meta.productName", stringValue(filter.get("productName")));
+        }
+        applyDateRangeCriteria(query, filter, "observedAt", "fromDate", "toDate");
+        int limit = toInteger(filter.get("limit"), 1000, 10000);
+        int offset = toNonNegativeInteger(filter.get("offset"));
+        if (offset > 0) {
+            query.skip(offset);
+        }
+        query.with(Sort.by(Sort.Direction.DESC, "observedAt")).limit(limit);
+        return mongoTemplate.find(query, Document.class, collection).stream().map(this::toMap).toList();
+    }
+
+    private List<Map<String, Object>> queryEquipmentBatchCppData(String collection,
+                                                                 String equipmentId,
+                                                                 String batchNo,
+                                                                 boolean includeBatchCriteria) {
+        Query query = new Query();
+        addEquipmentCriteria(query, equipmentId);
+        if (includeBatchCriteria && batchNo != null && !batchNo.isBlank()) {
+            query.addCriteria(Criteria.where("meta.batchNo").is(batchNo));
+        }
+        query.with(Sort.by(Sort.Direction.ASC, "observedAt"));
+        return mongoTemplate.find(query, Document.class, collection)
+                .stream()
+                .map(this::toMap)
+                .toList();
+    }
+
     public Map<String, Object> acknowledgeAlarmEvent(Map<String, Object> filter, String eventId, Map<String, Object> request) {
         String tenantId = firstNonBlank(stringValue(filter.get("tenantId")), DEFAULT_TENANT_ID);
         String equipmentId = requireFilterText(filter, "equipmentId");
-        String collection = buildPerEquipmentCollectionName(ALARM_TS_PREFIX, tenantId, equipmentId);
+        String collection = resolveTimeSeriesReadCollection(ALARM_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId);
 
         Document eventDoc = findDocumentById(collection, eventId);
         if (eventDoc == null) {
@@ -789,12 +930,12 @@ public class IiotOperationsService {
         int written = 0;
         int skipped = 0;
         Instant startedAt = Instant.now();
-        String targetCollection = buildPerEquipmentCollectionName(
-                "BATCH_CPP".equals(streamType) ? CPP_TS_PREFIX : ALARM_TS_PREFIX,
-                tenantId,
-                equipmentId);
-
-        ensureSimpleIndex(targetCollection, "source.tableName", "source.sourceSeqId");
+        if ("BATCH_CPP".equals(streamType)) {
+            ensureSimpleIndex(BATCH_TS_COLLECTION, "source.tableName", "source.sourceSeqId");
+        } else {
+            ensureSimpleIndex(ALARM_TS_COLLECTION, "source.tableName", "source.sourceSeqId");
+            ensureSimpleIndex(AUDIT_TS_COLLECTION, "source.tableName", "source.sourceSeqId");
+        }
 
         for (Map<String, Object> row : rows) {
             Long rowSeq = toLongNullable(row.get(sequenceColumn));
@@ -803,22 +944,26 @@ public class IiotOperationsService {
                 continue;
             }
 
-            Map<String, Object> tsDoc = "BATCH_CPP".equals(streamType)
-                    ? buildCppDoc(tenantId, equipmentId, sourceTable, sequenceColumn, timestampColumn, row)
-                    : buildAlarmEventDocs(tenantId, equipmentId, sourceTable, sequenceColumn, timestampColumn, row).stream().findFirst().orElse(null);
-            if (tsDoc == null) {
+            List<Map<String, Object>> tsDocs = "BATCH_CPP".equals(streamType)
+                    ? List.of(buildCppDoc(tenantId, equipmentId, sourceTable, sequenceColumn, timestampColumn, row))
+                    : buildAlarmEventDocs(tenantId, equipmentId, sourceTable, sequenceColumn, timestampColumn, row);
+            tsDocs = tsDocs.stream().filter(Objects::nonNull).toList();
+            if (tsDocs.isEmpty()) {
                 skipped++;
                 continue;
             }
 
             try {
-                mongoTemplate.insert(new Document(tsDoc), targetCollection);
-                written++;
-                maxSeq = Math.max(maxSeq, rowSeq);
-                if ("BATCH_CPP".equals(streamType)) {
-                    upsertBatchSummaryFromCpp(tsDoc);
+                for (Map<String, Object> tsDoc : tsDocs) {
+                    String targetCollection = resolveTimeSeriesWriteCollection(streamType, tsDoc);
+                    mongoTemplate.insert(new Document(tsDoc), targetCollection);
+                    written++;
+                    if ("BATCH_CPP".equals(streamType)) {
+                        upsertBatchSummaryFromCpp(tsDoc);
+                    }
+                    upsertEquipmentLiveStatusFromTs(tsDoc, streamType);
                 }
-                upsertEquipmentLiveStatusFromTs(tsDoc, streamType);
+                maxSeq = Math.max(maxSeq, rowSeq);
             } catch (MongoWriteException ex) {
                 if (ex.getError() != null && ex.getError().getCode() == 11000) {
                     skipped++;
@@ -1210,10 +1355,85 @@ public class IiotOperationsService {
         return normalized;
     }
 
+    private String deriveBatchOverallStatus(List<Document> stages) {
+        boolean hasUnderReview = false;
+        boolean allApprovedOrNotStarted = true;
+
+        for (Document stage : stages) {
+            String executionStatus = firstNonBlank(stringValue(stage.get("executionStatus")), "").toUpperCase(Locale.ROOT);
+            Document approval = stage.get("approval", Document.class);
+            String approvalStatus = approval == null
+                    ? "PENDING"
+                    : firstNonBlank(stringValue(approval.get("status")), "PENDING").toUpperCase(Locale.ROOT);
+
+            if ("REJECTED".equals(approvalStatus)) {
+                return "REJECTED";
+            }
+
+            if ("UNDER_REVIEW".equals(approvalStatus)) {
+                hasUnderReview = true;
+            }
+
+            if (!"NOT_STARTED".equals(executionStatus)
+                    && !"APPROVED".equals(approvalStatus)
+                    && !"RELEASED".equals(approvalStatus)) {
+                allApprovedOrNotStarted = false;
+            }
+        }
+
+        if (allApprovedOrNotStarted) {
+            return "APPROVED";
+        }
+
+        if (hasUnderReview) {
+            return "UNDER_REVIEW";
+        }
+
+        return "IN_PROGRESS";
+    }
+
     private Document findCheckpoint(String equipmentId, String streamType) {
         Query query = new Query(Criteria.where("equipmentId").is(equipmentId)
                 .and("streamType").is(streamType));
         return mongoTemplate.findOne(query, Document.class, CHECKPOINT_COLLECTION);
+    }
+
+    private String resolveTimeSeriesReadCollection(String preferredCollection,
+                                                   String legacyPrefix,
+                                                   String tenantId,
+                                                   String equipmentId) {
+        String perEquipmentPreferred = preferredCollection + sanitizeCollectionPart(equipmentId).toUpperCase(Locale.ROOT);
+        if (mongoTemplate.collectionExists(perEquipmentPreferred)) {
+            return perEquipmentPreferred;
+        }
+        if (mongoTemplate.collectionExists(preferredCollection)) {
+            return preferredCollection;
+        }
+        return buildPerEquipmentCollectionName(legacyPrefix, tenantId, equipmentId);
+    }
+
+    private void applyEquipmentCriteria(Query query, String equipmentId) {
+        if (equipmentId == null || equipmentId.isBlank()) {
+            return;
+        }
+        addEquipmentCriteria(query, equipmentId);
+    }
+
+    private void addEquipmentCriteria(Query query, String equipmentId) {
+        query.addCriteria(new Criteria().orOperator(
+                Criteria.where("meta.equipmentId").is(equipmentId),
+                Criteria.where("meta.equipmentCode").is(equipmentId),
+                Criteria.where("meta.equipment_code").is(equipmentId)));
+    }
+
+    private String resolveTimeSeriesWriteCollection(String streamType, Map<String, Object> tsDoc) {
+        if ("BATCH_CPP".equals(streamType)) {
+            return BATCH_TS_COLLECTION;
+        }
+
+        Map<String, Object> event = asMap(tsDoc.get("event"));
+        String category = firstNonBlank(stringValue(event.get("eventCategory")), "ALARM").toUpperCase(Locale.ROOT);
+        return "EVENT".equals(category) ? AUDIT_TS_COLLECTION : ALARM_TS_COLLECTION;
     }
 
     private String buildPerEquipmentCollectionName(String prefix, String tenantId, String equipmentId) {
