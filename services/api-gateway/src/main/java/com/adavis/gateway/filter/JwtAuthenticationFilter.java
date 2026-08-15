@@ -128,7 +128,10 @@ public class JwtAuthenticationFilter implements GatewayFilter, Ordered {
     }
 
     private boolean isLicenseBypassPath(String path) {
-        return path.startsWith("/api/v1/mdm/license/") || path.startsWith("/api/v1/auth/");
+        return path.startsWith("/api/v1/mdm/license/")
+                || path.startsWith("/api/v1/auth/")
+                || path.matches("^/api/v1/mdm/users/[^/]+/login-context$")
+                || path.matches("^/api/v1/mdm/users/[^/]+/select-plant$");
     }
 
     private ServerHttpRequest buildTrustedRequestHeaders(ServerHttpRequest request,
