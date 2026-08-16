@@ -76,6 +76,9 @@ logging:
     org.springframework.cloud.gateway: INFO
 
 management:
+  health:
+    mongo:
+      enabled: false
   endpoints:
     web:
       exposure:

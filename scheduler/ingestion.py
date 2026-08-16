@@ -369,6 +369,27 @@ class SchedulerIngestionService:
             upsert=True,
         )
 
+        try:
+            self.db["iiot_equipment_live_status"].update_one(
+                {"equipmentId": equipment_code},
+                {
+                    "$set": {
+                        "equipmentId": equipment_code,
+                        "currentState": "Running" if "START" in str(execution_status).upper() or execution_status in ("IN_PROGRESS", "COMPLETED") else "Idle",
+                        "stateReason": f"Batch in progress: {batch_no}",
+                        "lastBatchNo": batch_no,
+                        "lastLotNo": lot_no,
+                        "lastEventAt": now_dt.isoformat() + "Z",
+                        "heartbeatAt": now_dt.isoformat() + "Z",
+                        "updatedAt": now_dt,
+                    },
+                    "$setOnInsert": {"createdAt": now_dt},
+                },
+                upsert=True,
+            )
+        except Exception:
+            pass
+
     def _ensure_timeseries_collection(self, collection_name: str, time_field: str = "event_time") -> None:
         if self.db is None:
             return

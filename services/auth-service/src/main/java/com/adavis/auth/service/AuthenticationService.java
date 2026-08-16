@@ -365,15 +365,23 @@ public class AuthenticationService {
     private User findUserByIdentifier(String identifier) {
         String normalizedIdentifier = identifier == null ? null : identifier.trim();
         return userRepository.findByUserId(normalizedIdentifier)
+            .or(() -> userRepository.findByUsername(normalizedIdentifier))
             .or(() -> userRepository.findByEmail(normalizedIdentifier))
-                .orElseThrow(() -> new UnauthorizedException("User not found"));
+            .or(() -> userRepository.findByUserIdIgnoreCase(normalizedIdentifier))
+            .or(() -> userRepository.findByUsernameIgnoreCase(normalizedIdentifier))
+            .or(() -> userRepository.findByEmailIgnoreCase(normalizedIdentifier))
+            .orElseThrow(() -> new UnauthorizedException("User not found"));
     }
 
     private User findUserByIdentifierForInitiate(String identifier) {
         String normalizedIdentifier = identifier == null ? null : identifier.trim();
         return userRepository.findByUserId(normalizedIdentifier)
-                .or(() -> userRepository.findByEmail(normalizedIdentifier))
-                .orElseThrow(() -> new ResourceNotFoundException("User", normalizedIdentifier));
+            .or(() -> userRepository.findByUsername(normalizedIdentifier))
+            .or(() -> userRepository.findByEmail(normalizedIdentifier))
+            .or(() -> userRepository.findByUserIdIgnoreCase(normalizedIdentifier))
+            .or(() -> userRepository.findByUsernameIgnoreCase(normalizedIdentifier))
+            .or(() -> userRepository.findByEmailIgnoreCase(normalizedIdentifier))
+            .orElseThrow(() -> new ResourceNotFoundException("User", normalizedIdentifier));
     }
 
     private User upsertActiveUser(String userId, String username, String email) {

@@ -397,8 +397,11 @@ function seedMasterData() {
     var productDocs = getProductCatalog(ts);
     var batchSummaryDocs = createBatchSummaryDocs(equipmentDefs, productDocs, ts);
 
+    var liveStatusDocs = [];
     equipmentDefs.forEach(function(eq, index) {
         var lineId = (eq.equipmentCode || "").slice(0, 2).toUpperCase();
+        var isRunning = index % 3 !== 2;
+        var batchNo = index < 3 ? "UB0026002" : (index < 6 ? "LV0026001" : "BATCH-G7-003");
         equipmentDocs.push({
             equipmentSeqId: 10000 + index + 1,
             tenantId: TENANT_ID,
@@ -425,6 +428,18 @@ function seedMasterData() {
             equipmentLocation: eq.hierarchy.fullPath
         });
 
+        liveStatusDocs.push({
+            equipmentId: eq.equipmentId,
+            currentState: isRunning ? "Running" : "Idle",
+            stateReason: isRunning ? "Auto Cycle Started" : "Waiting for Batch",
+            lastBatchNo: batchNo,
+            lastLotNo: "01 of 05",
+            lastEventAt: ts.toISOString(),
+            heartbeatAt: ts.toISOString(),
+            createdAt: ts,
+            updatedAt: ts
+        });
+
         var payload = buildParameterDocs(eq.equipmentId, eq.plantId, index + 1, ts);
         parameterDocs = parameterDocs.concat(payload.params);
         parameterLimitDocs = parameterLimitDocs.concat(payload.limits);
@@ -433,12 +448,13 @@ function seedMasterData() {
     EQUIPMENT_MASTER_COLLECTIONS.forEach(function(name) {
         safeUpsert(name, equipmentDocs, "equipmentId");
     });
+    safeUpsert("iiot_equipment_live_status", liveStatusDocs, "equipmentId");
     safeUpsert("iiot_product_master", productDocs, "productId");
     safeUpsert("iiot_equipment_critical_parameters", parameterDocs, "parameterId");
     safeUpsert("iiot_equipment_critical_parameters_limit", parameterLimitDocs, "parameterLimitId");
     safeUpsert("iiot_batch_summary", batchSummaryDocs, "batchNo");
 
-    logInfo("Master data seeded: equipment=" + equipmentDocs.length + ", products=" + productDocs.length + ", parameters=" + parameterDocs.length + ", limits=" + parameterLimitDocs.length + ", summaries=" + batchSummaryDocs.length);
+    logInfo("Master data seeded: equipment=" + equipmentDocs.length + ", products=" + productDocs.length + ", parameters=" + parameterDocs.length + ", limits=" + parameterLimitDocs.length + ", summaries=" + batchSummaryDocs.length + ", liveStatuses=" + liveStatusDocs.length);
 }
 
 function runSeed() {
@@ -447,6 +463,7 @@ function runSeed() {
     var coreCollections = [
         "iiot_equipment_master",
         "iiot_equiment_master",
+        "iiot_equipment_live_status",
         "iiot_equipment_critical_parameters",
         "iiot_equipment_critical_parameters_limit",
         "iiot_product_master",

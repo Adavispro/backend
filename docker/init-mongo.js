@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Adavis AI Platform - MongoDB Initialization Script
 // Destructive reset: drops and recreates the application database on each run
 // ============================================
@@ -10,7 +10,7 @@ if (typeof process !== 'undefined' && process.env && process.env.MONGO_INITDB_DA
 }
 db = db.getSiblingDB(databaseName);
 
-var DEFAULT_ADAVIS_PASSWORD_HASH = '$2a$10$pzWt1lCtyuKoDTX3cv6ICOvlchKgpk/OAvzZXFbiT6HrodBFtyFxe';
+var DEFAULT_ADAVIS_PASSWORD_HASH = '$2a$10$pTqk117OIRN.neOJ7PzEue3dsv2gu5aSE2HXDFSbzlfNd1Bj3CGBO'; // Password@123
 var DEFAULT_PERMISSION_ACTIONS = ['READ', 'WRITE', 'REVIEW', 'APPROVE', 'DEACTIVATE'];
 
 function ensureDatabaseReady() {
@@ -1728,6 +1728,194 @@ db.auth_users.updateOne(
     { upsert: true }
 );
 
+// ============================================
+// Seed - OPERATOR_USER_01
+// ============================================
+
+db.mdm_user_profiles.updateOne(
+    { userId: 'OPERATOR_USER_01' },
+    {
+        $set: {
+            userTrackId: 'USR-0007',
+            tenantId: 'TNT-0001',
+            firstName: 'Production',
+            lastName: 'Operator 01',
+            phoneNumber: '+91-9876543210',
+            title: 'Production Operator',
+            userType: 'INTERNAL_EMPLOYEE',
+            email: 'operator01@adavis.com',
+            empId: 'EMP-00101',
+            isActive: true,
+            isBlocked: false,
+            isExternal: false,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+db.auth_users.updateOne(
+    { userId: 'OPERATOR_USER_01' },
+    {
+        $set: {
+            username: 'operator_user_01',
+            email: 'operator01@adavis.com',
+            status: 'ACTIVE',
+            isLocked: false,
+            failedAttempts: 0,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+// ============================================
+// Seed - SUPERVISOR_USER_01
+// ============================================
+
+db.mdm_user_profiles.updateOne(
+    { userId: 'SUPERVISOR_USER_01' },
+    {
+        $set: {
+            userTrackId: 'USR-0008',
+            tenantId: 'TNT-0001',
+            firstName: 'Shift',
+            lastName: 'Supervisor 01',
+            phoneNumber: '+91-9876543211',
+            title: 'Shift Supervisor',
+            userType: 'INTERNAL_EMPLOYEE',
+            email: 'supervisor01@adavis.com',
+            empId: 'EMP-00102',
+            isActive: true,
+            isBlocked: false,
+            isExternal: false,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+db.auth_users.updateOne(
+    { userId: 'SUPERVISOR_USER_01' },
+    {
+        $set: {
+            username: 'supervisor_user_01',
+            email: 'supervisor01@adavis.com',
+            status: 'ACTIVE',
+            isLocked: false,
+            failedAttempts: 0,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+// ============================================
+// Seed - NEW_OPERATOR_02
+// ============================================
+
+db.mdm_user_profiles.updateOne(
+    { userId: 'NEW_OPERATOR_02' },
+    {
+        $set: {
+            userTrackId: 'USR-0010',
+            tenantId: 'TNT-0001',
+            firstName: 'Alex',
+            lastName: 'Operator',
+            phoneNumber: '+91-9876543212',
+            title: 'Production Operator',
+            userType: 'INTERNAL_EMPLOYEE',
+            email: 'operator_new02@adavis.com',
+            empId: 'EMP-00105',
+            isActive: true,
+            isBlocked: false,
+            isExternal: false,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+db.auth_users.updateOne(
+    { userId: 'NEW_OPERATOR_02' },
+    {
+        $set: {
+            username: 'new_operator_02',
+            email: 'operator_new02@adavis.com',
+            status: 'ACTIVE',
+            isLocked: false,
+            failedAttempts: 0,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+// ============================================
+// Seed - NEW_SUPERVISOR_02
+// ============================================
+
+db.mdm_user_profiles.updateOne(
+    { userId: 'NEW_SUPERVISOR_02' },
+    {
+        $set: {
+            userTrackId: 'USR-0011',
+            tenantId: 'TNT-0001',
+            firstName: 'Sarah',
+            lastName: 'Supervisor',
+            phoneNumber: '+91-9876543213',
+            title: 'Shift Supervisor',
+            userType: 'INTERNAL_EMPLOYEE',
+            email: 'supervisor_new02@adavis.com',
+            empId: 'EMP-00106',
+            isActive: true,
+            isBlocked: false,
+            isExternal: false,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+db.auth_users.updateOne(
+    { userId: 'NEW_SUPERVISOR_02' },
+    {
+        $set: {
+            username: 'new_supervisor_02',
+            email: 'supervisor_new02@adavis.com',
+            status: 'ACTIVE',
+            isLocked: false,
+            failedAttempts: 0,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
 
 
 // ============================================
@@ -1837,6 +2025,90 @@ db.mdm_user_auth_credentials.updateOne(
     {
         $set: {
             email: 'shift_supervisor@adavis.com',
+            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
+            mustChangePassword: false,
+            passwordUpdatedAt: ISODate(),
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:05:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+// ============================================
+// OPERATOR_USER_01 Credentials
+// ============================================
+
+db.mdm_user_auth_credentials.updateOne(
+    { userId: 'OPERATOR_USER_01' },
+    {
+        $set: {
+            email: 'operator01@adavis.com',
+            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
+            mustChangePassword: false,
+            passwordUpdatedAt: ISODate(),
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:05:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+// ============================================
+// SUPERVISOR_USER_01 Credentials
+// ============================================
+
+db.mdm_user_auth_credentials.updateOne(
+    { userId: 'SUPERVISOR_USER_01' },
+    {
+        $set: {
+            email: 'supervisor01@adavis.com',
+            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
+            mustChangePassword: false,
+            passwordUpdatedAt: ISODate(),
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:05:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+// ============================================
+// NEW_OPERATOR_02 Credentials
+// ============================================
+
+db.mdm_user_auth_credentials.updateOne(
+    { userId: 'NEW_OPERATOR_02' },
+    {
+        $set: {
+            email: 'operator_new02@adavis.com',
+            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
+            mustChangePassword: false,
+            passwordUpdatedAt: ISODate(),
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:05:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+// ============================================
+// NEW_SUPERVISOR_02 Credentials
+// ============================================
+
+db.mdm_user_auth_credentials.updateOne(
+    { userId: 'NEW_SUPERVISOR_02' },
+    {
+        $set: {
+            email: 'supervisor_new02@adavis.com',
             passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
             mustChangePassword: false,
             passwordUpdatedAt: ISODate(),
@@ -2233,6 +2505,38 @@ upsertOne('mdm_user_assignments_to_user_groups', { userId: 'SHIFT_SUPERVISOR', g
     assignedBy: 'SYSTEM'
 });
 
+upsertOne('mdm_user_assignments_to_user_groups', { userId: 'OPERATOR_USER_01', groupId: productionOperatorGroupId }, {
+    userId: 'OPERATOR_USER_01',
+    groupId: productionOperatorGroupId,
+    isActive: true,
+    assignedAt: ISODate('2026-03-01T10:10:00Z'),
+    assignedBy: 'SYSTEM'
+});
+
+upsertOne('mdm_user_assignments_to_user_groups', { userId: 'SUPERVISOR_USER_01', groupId: shiftSupervisorGroupId }, {
+    userId: 'SUPERVISOR_USER_01',
+    groupId: shiftSupervisorGroupId,
+    isActive: true,
+    assignedAt: ISODate('2026-03-01T10:10:00Z'),
+    assignedBy: 'SYSTEM'
+});
+
+upsertOne('mdm_user_assignments_to_user_groups', { userId: 'NEW_OPERATOR_02', groupId: productionOperatorGroupId }, {
+    userId: 'NEW_OPERATOR_02',
+    groupId: productionOperatorGroupId,
+    isActive: true,
+    assignedAt: ISODate('2026-03-01T10:10:00Z'),
+    assignedBy: 'SYSTEM'
+});
+
+upsertOne('mdm_user_assignments_to_user_groups', { userId: 'NEW_SUPERVISOR_02', groupId: shiftSupervisorGroupId }, {
+    userId: 'NEW_SUPERVISOR_02',
+    groupId: shiftSupervisorGroupId,
+    isActive: true,
+    assignedAt: ISODate('2026-03-01T10:10:00Z'),
+    assignedBy: 'SYSTEM'
+});
+
 upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000001' }, {
     assignmentId: 'ASGN-000001',
     tenantId: 'TNT-0001',
@@ -2287,6 +2591,46 @@ upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000006' }, {
     assignmentId: 'ASGN-000006',
     tenantId: 'TNT-0001',
     userId: 'SHIFT_SUPERVISOR',
+    plantId: 'PLNT-0001',
+    departmentId: 'DEP-0002',
+    groupId: shiftSupervisorGroupId,
+    isActive: true
+});
+
+upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000007' }, {
+    assignmentId: 'ASGN-000007',
+    tenantId: 'TNT-0001',
+    userId: 'OPERATOR_USER_01',
+    plantId: 'PLNT-0001',
+    departmentId: 'DEP-0002',
+    groupId: productionOperatorGroupId,
+    isActive: true
+});
+
+upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000008' }, {
+    assignmentId: 'ASGN-000008',
+    tenantId: 'TNT-0001',
+    userId: 'SUPERVISOR_USER_01',
+    plantId: 'PLNT-0001',
+    departmentId: 'DEP-0002',
+    groupId: shiftSupervisorGroupId,
+    isActive: true
+});
+
+upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000009' }, {
+    assignmentId: 'ASGN-000009',
+    tenantId: 'TNT-0001',
+    userId: 'NEW_OPERATOR_02',
+    plantId: 'PLNT-0001',
+    departmentId: 'DEP-0002',
+    groupId: productionOperatorGroupId,
+    isActive: true
+});
+
+upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000010' }, {
+    assignmentId: 'ASGN-000010',
+    tenantId: 'TNT-0001',
+    userId: 'NEW_SUPERVISOR_02',
     plantId: 'PLNT-0001',
     departmentId: 'DEP-0002',
     groupId: shiftSupervisorGroupId,
