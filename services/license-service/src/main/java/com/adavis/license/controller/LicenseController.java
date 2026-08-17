@@ -67,6 +67,25 @@ public class LicenseController {
                         firstNonBlank(toText(request.get("upgradedBy")), currentUserId)));
                 }
 
+                @PostMapping("/tenant/{tenantId}/renew")
+                public ApiResponse<LicenseResponse> renewLicenseByTenant(
+                    @PathVariable String tenantId,
+                    @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+                    @RequestBody(required = false) Map<String, Object> request) {
+                Map<String, Object> safeReq = request != null ? request : Map.of();
+                return ApiResponse.success(
+                    "License renewed successfully",
+                    licenseService.renewTenantLicense(
+                        tenantId,
+                        toText(safeReq.get("encryptedLicenseToken")),
+                        toInteger(safeReq.get("validityYears")),
+                        toText(safeReq.get("planId")),
+                        toStringList(safeReq.get("modules")),
+                        toInteger(safeReq.get("maxUsers")),
+                        toText(safeReq.get("reason")),
+                        firstNonBlank(toText(safeReq.get("performedBy")), currentUserId)));
+                }
+
     @GetMapping("/tenant/{tenantId}/history")
     public ApiResponse<List<LicenseHistory>> getTenantLicenseHistory(@PathVariable String tenantId) {
         return ApiResponse.success(licenseService.getLicenseHistoryByTenantId(tenantId));

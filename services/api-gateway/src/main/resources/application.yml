@@ -45,7 +45,7 @@ spring:
         - id: iiot-service
           uri: ${GATEWAY_IIOT_SERVICE_URI:http://localhost:9085}
           predicates:
-            - Path=/api/v1/iiot/**
+            - Path=/api/v1/iiot/**,/api/v1/notifications/**
 
   data:
     redis:

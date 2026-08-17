@@ -26,6 +26,9 @@ public class GatewayConfig {
     @Value("${gateway.routes.mdm-service-uri:http://localhost:9083}")
     private String mdmServiceUri;
 
+    @Value("${gateway.routes.iiot-service-uri:http://localhost:9085}")
+    private String iiotServiceUri;
+
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
@@ -54,6 +57,13 @@ public class GatewayConfig {
                         .filters(f -> f
                                 .filter(jwtAuthenticationFilter))
                         .uri(mdmServiceUri))
+
+                // IIoT Service - Protected with JWT
+                .route("iiot-service", r -> r
+                        .path("/api/v1/iiot/**")
+                        .filters(f -> f
+                                .filter(jwtAuthenticationFilter))
+                        .uri(iiotServiceUri))
                 .build();
     }
 }

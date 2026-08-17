@@ -46,7 +46,7 @@ class IiotOperationsServiceMonitoringTest {
                 "batchNo", "B001-2026"
         );
 
-        when(mongoTemplate.findOne(any(Query.class), eq(Document.class), eq("iiot_equiment_master")))
+        when(mongoTemplate.findOne(any(Query.class), eq(Document.class), eq("iiot_equipment_master")))
                 .thenReturn(new Document("equipmentId", "RMG-100L-2-PVII"));
         when(mongoTemplate.findOne(any(Query.class), eq(Document.class), eq("iiot_equipment_live_status")))
                 .thenReturn(new Document("equipmentId", "RMG-100L-2-PVII")

@@ -50,6 +50,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -61,6 +66,9 @@ public class LicenseService {
 
     @Value("${license.jwt.public-key-path:../../license_generation_module/keys/public_key.pem}")
     private String publicKeyPath;
+
+    @Value("${license.jwt.private-key-path:../../license_generation_module/keys/private_key.pem}")
+    private String privateKeyPath;
 
     @Value("${license.jwt.issuer:ADAVIS}")
     private String expectedIssuer;
@@ -631,14 +639,192 @@ public class LicenseService {
         return true;
     }
 
+    @Transactional
+    @CacheEvict(value = {"license", "licenseModules"}, allEntries = true)
+    public LicenseResponse renewTenantLicense(String tenantId, String encryptedLicenseToken,
+                                              Integer validityYears, String planId,
+                                              List<String> modules, Integer maxUsers,
+                                              String reason, String actor) {
+        log.info("Renewing license for tenant: {} by actor: {}", tenantId, actor);
+        License license = getActiveLicenseEntityByTenantId(tenantId);
+
+        if (encryptedLicenseToken != null && !encryptedLicenseToken.isBlank()) {
+            Claims tokenClaims = parseAndValidateLicenseToken(encryptedLicenseToken);
+            String tokenTenantId = tokenClaims.get("tenantId", String.class);
+            if (tokenTenantId != null && !tokenTenantId.isBlank() && !tenantId.equalsIgnoreCase(tokenTenantId)) {
+                throw new BusinessException("Token tenant mismatch: token is for " + tokenTenantId + " but renewing " + tenantId);
+            }
+            return applyTokenUpgrade(license, tokenClaims, actor, reason);
+        }
+
+        int years = (validityYears != null && validityYears > 0) ? validityYears : 1;
+        Instant now = Instant.now();
+        Instant expiry = (license.getExpiryDate() != null && license.getExpiryDate().isAfter(now))
+                ? license.getExpiryDate().plus(years * 365L, ChronoUnit.DAYS)
+                : now.plus(years * 365L, ChronoUnit.DAYS);
+
+        String effectivePlanId = (planId != null && !planId.isBlank())
+                ? planId
+                : (license.getPlan() != null ? license.getPlan().getPlanId() : "PLAN_ENTERPRISE");
+        String effectivePlanName = (license.getPlan() != null && license.getPlan().getPlanName() != null)
+                ? license.getPlan().getPlanName()
+                : "Enterprise";
+        String effectivePlanType = (license.getPlan() != null && license.getPlan().getPlanType() != null)
+                ? license.getPlan().getPlanType()
+                : "PAID";
+
+        List<String> effectiveModules = (modules != null && !modules.isEmpty())
+                ? modules
+                : (license.getModules() != null && !license.getModules().isEmpty() ? license.getModules() : List.of("MOD-MDM", "MOD-IIOT"));
+
+        Integer effectiveMaxUsers = (maxUsers != null && maxUsers > 0)
+                ? maxUsers
+                : (license.getMaxUsers() != null ? license.getMaxUsers() : 500);
+
+        String generatedToken;
+        try {
+            generatedToken = generateSignedToken(tenantId, effectivePlanId, effectivePlanName, effectivePlanType,
+                    effectiveModules, effectiveMaxUsers, now, expiry);
+        } catch (Exception ex) {
+            log.error("Failed to generate signed license token: {}", ex.getMessage(), ex);
+            throw new BusinessException("Failed to generate signed license token: " + ex.getMessage());
+        }
+
+        String beforeStatus = license.getStatus();
+        Integer beforeMaxUsers = license.getMaxUsers();
+        List<String> beforeModules = license.getModules() != null ? new ArrayList<>(license.getModules()) : Collections.emptyList();
+        Instant beforeExpiry = license.getExpiryDate();
+
+        Map<String, Object> metadata = license.getMetadata() != null ? new HashMap<>(license.getMetadata()) : new HashMap<>();
+        metadata.put("encryptedLicenseToken", generatedToken);
+        metadata.put("tenantId", tenantId);
+        metadata.put("tokenIssuer", expectedIssuer);
+        metadata.put("renewedAt", now.toString());
+        license.setMetadata(metadata);
+        license.setExpiryDate(expiry);
+        license.setMaxUsers(effectiveMaxUsers);
+        license.setModules(effectiveModules);
+        license.setStatus("ACTIVE");
+        license.setUpgradeCount(license.getUpgradeCount() != null ? license.getUpgradeCount() + 1 : 1);
+        license.setUpdatedAt(now);
+        license.setUpdatedBy(actor);
+
+        License savedLicense = licenseRepository.save(license);
+
+        createHistory(savedLicense, "RENEWED", beforeStatus, savedLicense.getStatus(),
+                beforeMaxUsers, savedLicense.getMaxUsers(), beforeModules, savedLicense.getModules(),
+                beforeExpiry, savedLicense.getExpiryDate(), firstNonBlank(reason, "Annual license renewal"), actor);
+
+        publishAuditEvent(savedLicense, "LICENSE_RENEWED", actor, "SUCCESS", null,
+                null, snapshot(savedLicense));
+
+        return mapToResponse(savedLicense);
+    }
+
+    private String generateSignedToken(String tenantId, String planId, String planName, String planType,
+                                       List<String> modules, Integer maxUsers, Instant startDate, Instant expiryDate)
+            throws IOException, GeneralSecurityException {
+        RSAPrivateKey privateKey = loadPrivateKey();
+        Instant now = Instant.now();
+
+        Map<String, Object> planMap = new HashMap<>();
+        planMap.put("planId", planId);
+        planMap.put("planName", planName);
+        planMap.put("planType", planType);
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("tenantId", tenantId);
+        claims.put("licenceKey", "LIC-" + tenantId);
+        claims.put("plan", planMap);
+        claims.put("modules", modules);
+        claims.put("maxUsers", maxUsers);
+        claims.put("startDate", startDate.toString());
+        claims.put("expiryDate", expiryDate.toString());
+        claims.put("version", 1);
+
+        return Jwts.builder()
+                .issuer(expectedIssuer)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiryDate))
+                .claims(claims)
+                .signWith(privateKey, Jwts.SIG.RS256)
+                .compact();
+    }
+
+    private RSAPrivateKey loadPrivateKey() throws IOException, GeneralSecurityException {
+        String pem = null;
+
+        List<Path> candidates = List.of(
+                Path.of(privateKeyPath),
+                Path.of("license_generation_module/keys/private_key.pem"),
+                Path.of("license_generation_module/keys_txt/private_key.txt"),
+                Path.of("ADAVIS_PLATFORM_BACKEND/license_generation_module/keys/private_key.pem"),
+                Path.of("ADAVIS_PLATFORM_BACKEND/license_generation_module/keys_txt/private_key.txt"),
+                Path.of("../license_generation_module/keys/private_key.pem"),
+                Path.of("../license_generation_module/keys_txt/private_key.txt"),
+                Path.of("../../license_generation_module/keys/private_key.pem"),
+                Path.of("../../license_generation_module/keys_txt/private_key.txt")
+        );
+
+        for (Path candidate : candidates) {
+            Path normalized = candidate.toAbsolutePath().normalize();
+            if (Files.exists(normalized)) {
+                pem = Files.readString(normalized, StandardCharsets.UTF_8);
+                break;
+            }
+        }
+
+        if (pem == null) {
+            Resource resource = null;
+            try {
+                if (privateKeyPath.startsWith("classpath:") || privateKeyPath.startsWith("file:")) {
+                    resource = resourceLoader.getResource(privateKeyPath);
+                }
+            } catch (IllegalArgumentException ex) {
+                log.debug("Ignoring invalid resource path for private key: {}", privateKeyPath);
+            }
+
+            if (resource == null || !resource.exists()) {
+                resource = resourceLoader.getResource("classpath:keys/private_key.pem");
+            }
+            if (resource == null || !resource.exists()) {
+                resource = resourceLoader.getResource("file:license_generation_module/keys/private_key.pem");
+            }
+            if (resource == null || !resource.exists()) {
+                resource = resourceLoader.getResource("file:ADAVIS_PLATFORM_BACKEND/license_generation_module/keys/private_key.pem");
+            }
+            if (resource == null || !resource.exists()) {
+                throw new IOException("Private key file not found. Checked path: " + privateKeyPath);
+            }
+            pem = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        }
+
+        String normalized = pem
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                .replace("-----END RSA PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+
+        byte[] keyBytes = Base64.getDecoder().decode(normalized);
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return (RSAPrivateKey) keyFactory.generatePrivate(spec);
+    }
+
     private RSAPublicKey loadPublicKey() throws IOException, GeneralSecurityException {
         String pem = null;
 
         List<Path> candidates = List.of(
                 Path.of(publicKeyPath),
                 Path.of("license_generation_module/keys/public_key.pem"),
+                Path.of("license_generation_module/keys_txt/public_key.txt"),
+                Path.of("ADAVIS_PLATFORM_BACKEND/license_generation_module/keys/public_key.pem"),
+                Path.of("ADAVIS_PLATFORM_BACKEND/license_generation_module/keys_txt/public_key.txt"),
                 Path.of("../license_generation_module/keys/public_key.pem"),
-                Path.of("../../license_generation_module/keys/public_key.pem")
+                Path.of("../license_generation_module/keys_txt/public_key.txt"),
+                Path.of("../../license_generation_module/keys/public_key.pem"),
+                Path.of("../../license_generation_module/keys_txt/public_key.txt")
         );
 
         for (Path candidate : candidates) {
@@ -660,9 +846,15 @@ public class LicenseService {
             }
 
             if (resource == null || !resource.exists()) {
+                resource = resourceLoader.getResource("classpath:keys/public_key.pem");
+            }
+            if (resource == null || !resource.exists()) {
                 resource = resourceLoader.getResource("file:license_generation_module/keys/public_key.pem");
             }
-            if (!resource.exists()) {
+            if (resource == null || !resource.exists()) {
+                resource = resourceLoader.getResource("file:ADAVIS_PLATFORM_BACKEND/license_generation_module/keys/public_key.pem");
+            }
+            if (resource == null || !resource.exists()) {
                 throw new IOException("Public key file not found. Checked path: " + publicKeyPath);
             }
             pem = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);

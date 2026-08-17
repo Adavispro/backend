@@ -32,10 +32,14 @@ logs/
 # Docker
 **/.dockerignore
 
-# Kubernetes secrets
+# Kubernetes secrets and sensitive keys
 **/secrets.yaml
 **/*-secret.yaml
 **/secrets/
+**/keys_txt/
+*.key
+*.pem
+private_key.txt
 
 # Terraform
 **/.terraform/

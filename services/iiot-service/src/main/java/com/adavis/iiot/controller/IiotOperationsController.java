@@ -1,6 +1,7 @@
 package com.adavis.iiot.controller;
 
 import com.adavis.common.dto.ApiResponse;
+import com.adavis.iiot.service.BatchWorkflowService;
 import com.adavis.iiot.service.IiotOperationsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,12 +21,16 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import com.adavis.security.JwtTokenProvider;
+
 @RestController
 @RequestMapping("/api/v1/iiot")
 @RequiredArgsConstructor
 public class IiotOperationsController {
 
     private final IiotOperationsService iiotOperationsService;
+    private final BatchWorkflowService batchWorkflowService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/equipment-master")
     public ResponseEntity<ApiResponse<Map<String, Object>>> createEquipmentMaster(@RequestBody Map<String, Object> request) {
@@ -229,14 +235,119 @@ public class IiotOperationsController {
         return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getBatchSummary(filter)));
     }
 
-            @PostMapping("/reports/batch-summary/approval")
-            public ResponseEntity<ApiResponse<Map<String, Object>>> updateBatchSummaryApproval(
-                @RequestBody Map<String, Object> request) {
-            return ResponseEntity.ok(
-                ApiResponse.success(
-                    "Batch summary approval updated",
-                    iiotOperationsService.updateBatchSummaryApproval(request)));
-            }
+    @PostMapping("/reports/batch-summary/approval")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateBatchSummaryApproval(
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, Object> request) {
+
+        // Extract fields from request body
+        String batchNo = (String) request.getOrDefault("batchNo", "");
+        String lotNo = (String) request.getOrDefault("lotNo", "");
+        String equipmentCode = (String) request.getOrDefault("equipmentCode", "");
+        String targetStatus = (String) request.getOrDefault("status", "");
+        String comments = (String) request.getOrDefault("comments", "");
+        String tenantId = (String) request.getOrDefault("tenantId", "");
+        if ((tenantId == null || tenantId.isBlank()) && headerTenantId != null && !headerTenantId.isBlank()) {
+            tenantId = headerTenantId.trim();
+        }
+        String supervisorName = (String) request.get("supervisorName");
+
+        // Resolve userId from authHeader / request body if not in header
+        if (userId == null || userId.isBlank()) {
+            userId = (String) request.get("approvedBy");
+        }
+        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = authHeader.substring(7).trim();
+                userId = jwtTokenProvider.getUserIdFromToken(token);
+            } catch (Exception ignored) {}
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = "SYSTEM";
+        }
+
+        // Resolve role from request body if not in header (backward compatibility)
+        if (userRole == null || userRole.isBlank()) {
+            userRole = (String) request.getOrDefault("userRole", "");
+        }
+
+        Map<String, Object> result = batchWorkflowService.executeTransition(
+                userId, userRole, tenantId, batchNo, lotNo, equipmentCode,
+                targetStatus, comments, supervisorName);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Batch summary approval updated", result));
+    }
+
+    @GetMapping("/workflow/assignees")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getWorkflowAssignees(
+            @RequestParam(required = false) String targetStatus,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
+        List<Map<String, Object>> assignees = batchWorkflowService.getEligibleAssignees(targetStatus, effectiveTenant, plantId);
+        return ResponseEntity.ok(ApiResponse.success(assignees));
+    }
+
+    @GetMapping("/workflow/audit-trail")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getWorkflowAuditTrail(
+            @RequestParam(required = false) String batchNo,
+            @RequestParam(required = false) String lotNo,
+            @RequestParam(required = false) String equipmentCode,
+            @RequestParam(required = false) String tenantId,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
+        List<Map<String, Object>> auditTrail = batchWorkflowService.getWorkflowAuditTrail(batchNo, lotNo, equipmentCode, effectiveTenant);
+        return ResponseEntity.ok(ApiResponse.success(auditTrail));
+    }
+
+    @PostMapping("/reports/batch-summary/bulk-approval")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateBatchSummaryBulkApproval(
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, Object> request) {
+
+        String targetStatus = (String) request.getOrDefault("status", "");
+        String comments = (String) request.getOrDefault("comments", "");
+        String tenantId = (String) request.getOrDefault("tenantId", "");
+        if ((tenantId == null || tenantId.isBlank()) && headerTenantId != null && !headerTenantId.isBlank()) {
+            tenantId = headerTenantId.trim();
+        }
+        String supervisorName = (String) request.get("supervisorName");
+
+        if (userId == null || userId.isBlank()) {
+            userId = (String) request.get("approvedBy");
+        }
+        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = authHeader.substring(7).trim();
+                userId = jwtTokenProvider.getUserIdFromToken(token);
+            } catch (Exception ignored) {}
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = "SYSTEM";
+        }
+
+        if (userRole == null || userRole.isBlank()) {
+            userRole = (String) request.getOrDefault("userRole", "");
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> items = (List<Map<String, String>>) request.get("items");
+        if (items == null) items = List.of();
+
+        Map<String, Object> result = batchWorkflowService.executeBulkTransition(
+                userId, userRole, tenantId, items, targetStatus, comments, supervisorName);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Batch summary bulk approval completed", result));
+    }
 
     @GetMapping("/reports/cpp")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCppData(

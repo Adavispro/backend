@@ -620,6 +620,7 @@ class SchedulerIngestionService:
         dataset_ids = tuple(dataset_ids or DEFAULT_DATASET_IDS)
 
         self.db.ingestion_state.create_index([("_id", 1)])
+        self.db.iiot_ingested_events_registry.create_index([("createdAt", 1)], expireAfterSeconds=2592000)
         self.db.iiot_ingestion_job_run.create_index([("jobRunId", 1)], unique=True)
         self.db.iiot_ingestion_job_run.create_index([("datasetId", 1), ("startedAt", -1)])
         self.db.iiot_ingestion_job_run.create_index([("status", 1), ("startedAt", -1)])
@@ -698,6 +699,29 @@ class SchedulerIngestionService:
                 row.get("time") or row.get("Time"),
             )
 
+            batch_events_collection = self._dataset_collection("batch_events", dataset_id)
+            if self.db is not None:
+                dedup_key = f"batch:{dataset_id}:{batch_no}:{lot_no}:{equipment_code}:{observed_at.isoformat()}"
+                try:
+                    self.db.iiot_ingested_events_registry.insert_one({
+                        "_id": dedup_key,
+                        "datasetId": dataset_id,
+                        "type": "batch",
+                        "createdAt": datetime.utcnow()
+                    })
+                except Exception:
+                    # Atomic collision on duplicate key: another worker already ingested this point
+                    continue
+            elif batch_events_collection is not None:
+                existing = batch_events_collection.find_one({
+                    "meta.batchNo": batch_no,
+                    "meta.lotNo": lot_no,
+                    "meta.equipmentCode": equipment_code,
+                    "observedAt": observed_at,
+                })
+                if existing is not None:
+                    continue
+
             event_doc = {
                 "observedAt": observed_at,
                 "event_time": observed_at,
@@ -716,7 +740,6 @@ class SchedulerIngestionService:
                 "ingestedAt": datetime.utcnow(),
             }
 
-            batch_events_collection = self._dataset_collection("batch_events", dataset_id)
             try:
                 batch_events_collection.insert_one(event_doc)
             except Exception:
@@ -733,12 +756,38 @@ class SchedulerIngestionService:
             timestamp = str(row.get("timestamp") or row.get("TimeStamp") or row.get("TIMESTAMP") or row.get("DT") or row.get("TimeString") or "")
             event_time = self._coerce_event_time(timestamp, row.get("DT"), row.get("TimeString"))
             equipment_code = self._extract_equipment_code(row, dataset_id)
+            msg_number = row.get("msg_number") if row.get("msg_number") is not None else row.get("MsgNumber") or 0
+            dt_str = str(row.get("dt") or row.get("DT") or "")
+            time_str = str(row.get("time_string") or row.get("TimeString") or "")
+
+            alarm_events_collection = self._dataset_collection("alarm_events", dataset_id)
+            if self.db is not None:
+                dedup_key = f"alarm:{dataset_id}:{equipment_code}:{msg_number}:{dt_str}:{time_str}"
+                try:
+                    self.db.iiot_ingested_events_registry.insert_one({
+                        "_id": dedup_key,
+                        "datasetId": dataset_id,
+                        "type": "alarm",
+                        "createdAt": datetime.utcnow()
+                    })
+                except Exception:
+                    continue
+            elif alarm_events_collection is not None:
+                existing = alarm_events_collection.find_one({
+                    "meta.equipment_code": equipment_code,
+                    "msg_number": msg_number,
+                    "dt": dt_str,
+                    "time_string": time_str,
+                })
+                if existing is not None:
+                    continue
+
             event_doc = {
                 "time_ms": row.get("time_ms") if row.get("time_ms") is not None else row.get("Time_ms") or 0,
                 "msg_proc": row.get("msg_proc") if row.get("msg_proc") is not None else row.get("MsgProc") or 0,
                 "state_after": row.get("state_after") if row.get("state_after") is not None else row.get("StateAfter") or 0,
                 "msg_class": row.get("msg_class") if row.get("msg_class") is not None else row.get("MsgClass") or 0,
-                "msg_number": row.get("msg_number") if row.get("msg_number") is not None else row.get("MsgNumber") or 0,
+                "msg_number": msg_number,
                 "var1": str(row.get("var1") or row.get("Var1") or ""),
                 "var2": str(row.get("var2") or row.get("Var2") or ""),
                 "var3": str(row.get("var3") or row.get("Var3") or ""),
@@ -747,21 +796,20 @@ class SchedulerIngestionService:
                 "var6": str(row.get("var6") or row.get("Var6") or ""),
                 "var7": str(row.get("var7") or row.get("Var7") or ""),
                 "var8": str(row.get("var8") or row.get("Var8") or ""),
-                "time_string": str(row.get("time_string") or row.get("TimeString") or ""),
+                "time_string": time_str,
                 "msg_text": str(row.get("msg_text") or row.get("MsgText") or ""),
                 "plc": str(row.get("plc") or row.get("PLC") or ""),
-                "dt": str(row.get("dt") or row.get("DT") or ""),
+                "dt": dt_str,
                 "event_time": event_time,
                 "meta": {
                     "equipment_code": equipment_code,
-                    "msg_number": row.get("msg_number") if row.get("msg_number") is not None else row.get("MsgNumber") or 0,
+                    "msg_number": msg_number,
                 },
                 "updated_at": datetime.utcnow(),
             }
             if not event_doc["msg_number"] and not event_doc["dt"]:
                 continue
 
-            alarm_events_collection = self._dataset_collection("alarm_events", dataset_id)
             try:
                 alarm_events_collection.insert_one(event_doc)
             except Exception:
@@ -780,8 +828,32 @@ class SchedulerIngestionService:
                 row.get("dt") or row.get("DT") or row.get("DateTime"),
             )
             equipment_code = self._extract_equipment_code(row, dataset_id)
+            record_id = str(row.get("record_id") or row.get("RecordID") or row.get("RECORD_ID") or "")
+            dt_str = str(row.get("dt") or row.get("DT") or row.get("DateTime") or "")
+
+            audit_events_collection = self._dataset_collection("audit_events", dataset_id)
+            if self.db is not None:
+                dedup_key = f"audit:{dataset_id}:{equipment_code}:{record_id}:{dt_str}"
+                try:
+                    self.db.iiot_ingested_events_registry.insert_one({
+                        "_id": dedup_key,
+                        "datasetId": dataset_id,
+                        "type": "audit",
+                        "createdAt": datetime.utcnow()
+                    })
+                except Exception:
+                    continue
+            elif audit_events_collection is not None:
+                existing = audit_events_collection.find_one({
+                    "meta.equipment_code": equipment_code,
+                    "record_id": record_id,
+                    "dt": dt_str,
+                })
+                if existing is not None:
+                    continue
+
             event_doc = {
-                "record_id": str(row.get("record_id") or row.get("RecordID") or row.get("RECORD_ID") or ""),
+                "record_id": record_id,
                 "time_stamp": str(row.get("time_stamp") or row.get("TimeStamp") or row.get("TIMESTAMP") or ""),
                 "delta_to_utc": str(row.get("delta_to_utc") or row.get("DeltaToUTC") or row.get("DELTA_TO_UTC") or ""),
                 "user_id": str(row.get("user_id") or row.get("UserID") or row.get("USER_ID") or ""),
@@ -789,18 +861,17 @@ class SchedulerIngestionService:
                 "description": str(row.get("description") or row.get("Description") or row.get("DESCRIPTION") or ""),
                 "comment": row.get("comment") if row.get("comment") is not None else row.get("Comment"),
                 "checksum": str(row.get("checksum") or row.get("Checksum") or row.get("CHECKSUM") or ""),
-                "dt": str(row.get("dt") or row.get("DT") or row.get("DateTime") or ""),
+                "dt": dt_str,
                 "event_time": event_time,
                 "meta": {
                     "equipment_code": equipment_code,
-                    "record_id": str(row.get("record_id") or row.get("RecordID") or row.get("RECORD_ID") or ""),
+                    "record_id": record_id,
                 },
                 "updated_at": datetime.utcnow(),
             }
             if not event_doc["record_id"]:
                 continue
 
-            audit_events_collection = self._dataset_collection("audit_events", dataset_id)
             try:
                 audit_events_collection.insert_one(event_doc)
             except Exception:

@@ -1916,6 +1916,53 @@ db.auth_users.updateOne(
     { upsert: true }
 );
 
+// ============================================
+// Seed - NEW_REVIEWER_02
+// ============================================
+
+db.mdm_user_profiles.updateOne(
+    { userId: 'NEW_REVIEWER_02' },
+    {
+        $set: {
+            userTrackId: 'USR-0016',
+            tenantId: 'TNT-0001',
+            firstName: 'Elena',
+            lastName: 'Reviewer',
+            phoneNumber: '+91-9876543213',
+            title: 'QA Reviewer',
+            userType: 'INTERNAL_EMPLOYEE',
+            email: 'reviewer_new02@adavis.com',
+            empId: 'EMP-00116',
+            isActive: true,
+            isBlocked: false,
+            isExternal: false,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
+db.auth_users.updateOne(
+    { userId: 'NEW_REVIEWER_02' },
+    {
+        $set: {
+            username: 'new_reviewer_02',
+            email: 'reviewer_new02@adavis.com',
+            status: 'ACTIVE',
+            isLocked: false,
+            failedAttempts: 0,
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:00:00Z')
+        }
+    },
+    { upsert: true }
+);
+
 
 
 // ============================================
@@ -2121,6 +2168,27 @@ db.mdm_user_auth_credentials.updateOne(
     { upsert: true }
 );
 
+// ============================================
+// NEW_REVIEWER_02 Credentials
+// ============================================
+
+db.mdm_user_auth_credentials.updateOne(
+    { userId: 'NEW_REVIEWER_02' },
+    {
+        $set: {
+            email: 'reviewer_new02@adavis.com',
+            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
+            mustChangePassword: false,
+            passwordUpdatedAt: ISODate(),
+            updatedAt: ISODate()
+        },
+        $setOnInsert: {
+            createdAt: ISODate('2026-03-01T10:05:00Z')
+        }
+    },
+    { upsert: true }
+);
+
 
 var roleSeed = [
     {
@@ -2257,6 +2325,15 @@ var roleSeed = [
         roleCode: 'IIOT_ADMIN',
         isActive: true,
         createdAt: ISODate('2026-01-20T10:30:00Z')
+    },
+    {
+        roleId: 'ROLE-0016',
+        tenantId: 'TNT-0001',
+        roleName: 'QA Reviewer',
+        description: 'QA Reviewer',
+        roleCode: 'QA_REVIEWER',
+        isActive: true,
+        createdAt: ISODate('2026-01-20T10:30:00Z')
     }
 ];
 upsertManyWithAutoId('mdm_roles', roleSeed, 'roleId', { sequenceName: 'roleId', prefix: 'ROLE', padLength: 4 });
@@ -2378,6 +2455,15 @@ var groupSeed = [
         groupCode: 'SHIFT_SUPERVISOR',
         isActive: true,
         createdAt: ISODate('2026-01-20T11:00:00Z')
+    },
+    {
+        groupId: 'GRP-0016',
+        tenantId: 'TNT-0001',
+        groupName: 'QA Reviewers',
+        description: 'QA Reviewers',
+        groupCode: 'QA_REVIEWERS',
+        isActive: true,
+        createdAt: ISODate('2026-01-20T11:00:00Z')
     }
 ];
 upsertManyWithAutoId('mdm_user_groups', groupSeed, 'groupId', { sequenceName: 'groupId', prefix: 'GRP', padLength: 4 });
@@ -2461,6 +2547,7 @@ upsertMany('mdm_role_assignments_to_user_groups', [
     { groupId: 'GRP-0008', roleId: 'ROLE-0013', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: 'GRP-0009', roleId: 'ROLE-0014', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: 'GRP-0010', roleId: 'ROLE-0015', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
+    { groupId: 'GRP-0016', roleId: 'ROLE-0016', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: productionOperatorGroupId, roleId: productionOperatorRoleId, isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: shiftSupervisorGroupId, roleId: shiftSupervisorRoleId, isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' }
 ], 'roleId');
@@ -2532,6 +2619,14 @@ upsertOne('mdm_user_assignments_to_user_groups', { userId: 'NEW_OPERATOR_02', gr
 upsertOne('mdm_user_assignments_to_user_groups', { userId: 'NEW_SUPERVISOR_02', groupId: shiftSupervisorGroupId }, {
     userId: 'NEW_SUPERVISOR_02',
     groupId: shiftSupervisorGroupId,
+    isActive: true,
+    assignedAt: ISODate('2026-03-01T10:10:00Z'),
+    assignedBy: 'SYSTEM'
+});
+
+upsertOne('mdm_user_assignments_to_user_groups', { userId: 'NEW_REVIEWER_02', groupId: 'GRP-0016' }, {
+    userId: 'NEW_REVIEWER_02',
+    groupId: 'GRP-0016',
     isActive: true,
     assignedAt: ISODate('2026-03-01T10:10:00Z'),
     assignedBy: 'SYSTEM'
@@ -2689,6 +2784,33 @@ upsertOne('mdm_role_permissions', { roleId: shiftSupervisorRoleId, moduleId: 'MO
     ]
 });
 
+upsertOne('mdm_role_permissions', { roleId: 'ROLE-0016', moduleId: 'MOD-0002', version: 1 }, {
+    tenantId: 'TNT-0001',
+    roleId: 'ROLE-0016',
+    moduleId: 'MOD-0002',
+    version: 1,
+    isActive: true,
+    effectiveFrom: ISODate('2026-03-01T00:00:00Z'),
+    effectiveTo: null,
+    screenPermissions: [
+        {
+            screenId: 'SCR-0011',
+            actions: ['READ', 'REVIEW'],
+            featurePermissions: [
+                {
+                    featureId: 'FEAT-0022',
+                    actions: ['READ', 'REVIEW']
+                }
+            ]
+        },
+        {
+            screenId: 'SCR-0012',
+            actions: ['READ'],
+            featurePermissions: []
+        }
+    ]
+});
+
 
 upsertOne('mdm_licenses', { tenantId: 'TNT-0001' }, {
     tenantId: 'TNT-0001',
@@ -2722,13 +2844,13 @@ var sequenceDefinitions = [
     { sequenceName: 'areaId', collectionName: 'mdm_areas', fieldName: 'areaId', prefix: 'AREA', padLength: 4, seedValues: ['AREA-0001', 'AREA-0002', 'AREA-0003', 'AREA-0004', 'AREA-0005', 'AREA-0006', 'AREA-0007', 'AREA-0008', 'AREA-0009', 'AREA-0010', 'AREA-0011' ] },
     { sequenceName: 'departmentId', collectionName: 'mdm_departments', fieldName: 'departmentId', prefix: 'DEP', padLength: 4, seedValues: ['DEP-0001', 'DEP-0002', 'DEP-0003', 'DEP-0004', 'DEP-0005', 'DEP-0006', 'DEP-0007', 'DEP-0008', 'DEP-0009', 'DEP-0010', 'DEP-0011', 'DEP-0012', 'DEP-0013', 'DEP-0014', 'DEP-0015', 'DEP-0016'] },
     { sequenceName: 'roomId', collectionName: 'mdm_rooms', fieldName: 'roomId', prefix: 'ROOM', padLength: 4, seedValues: ['ROOM-0001', 'ROOM-0002', 'ROOM-0003', 'ROOM-0004', 'ROOM-0005', 'ROOM-0006', 'ROOM-0007', 'ROOM-0008', 'ROOM-0009', 'ROOM-0010', 'ROOM-0011', 'ROOM-0012', 'ROOM-0013', 'ROOM-0014', 'ROOM-0015', 'ROOM-0016', 'ROOM-0017'] },
-    { sequenceName: 'userTrackId', collectionName: 'mdm_user_profiles', fieldName: 'userTrackId', prefix: 'USR', padLength: 4, seedValues: ['USR-0001', 'USR-0002', 'USR-0003', 'USR-0004', 'USR-0005', 'USR-0006'] },
-    { sequenceName: 'groupId', collectionName: 'mdm_user_groups', fieldName: 'groupId', prefix: 'GRP', padLength: 4, seedValues: ['GRP-0001', 'GRP-0002', 'GRP-0003', 'GRP-0004', 'GRP-0005', 'GRP-0006', 'GRP-0007', 'GRP-0008', 'GRP-0009', 'GRP-0010', 'GRP-0011', 'GRP-0012'] },
-    { sequenceName: 'roleId', collectionName: 'mdm_roles', fieldName: 'roleId', prefix: 'ROLE', padLength: 4, seedValues: ['ROLE-0001', 'ROLE-0002', 'ROLE-0003', 'ROLE-0004', 'ROLE-0005', 'ROLE-0006', 'ROLE-0007', 'ROLE-0008', 'ROLE-0009', 'ROLE-0010', 'ROLE-0011', 'ROLE-0012', 'ROLE-0013', 'ROLE-0014', 'ROLE-0015'] },
+    { sequenceName: 'userTrackId', collectionName: 'mdm_user_profiles', fieldName: 'userTrackId', prefix: 'USR', padLength: 4, seedValues: ['USR-0001', 'USR-0002', 'USR-0003', 'USR-0004', 'USR-0005', 'USR-0006', 'USR-0010', 'USR-0011', 'USR-0016'] },
+    { sequenceName: 'groupId', collectionName: 'mdm_user_groups', fieldName: 'groupId', prefix: 'GRP', padLength: 4, seedValues: ['GRP-0001', 'GRP-0002', 'GRP-0003', 'GRP-0004', 'GRP-0005', 'GRP-0006', 'GRP-0007', 'GRP-0008', 'GRP-0009', 'GRP-0010', 'GRP-0011', 'GRP-0012', 'GRP-0016'] },
+    { sequenceName: 'roleId', collectionName: 'mdm_roles', fieldName: 'roleId', prefix: 'ROLE', padLength: 4, seedValues: ['ROLE-0001', 'ROLE-0002', 'ROLE-0003', 'ROLE-0004', 'ROLE-0005', 'ROLE-0006', 'ROLE-0007', 'ROLE-0008', 'ROLE-0009', 'ROLE-0010', 'ROLE-0011', 'ROLE-0012', 'ROLE-0013', 'ROLE-0014', 'ROLE-0015', 'ROLE-0016'] },
     { sequenceName: 'moduleId', collectionName: 'mdm_modules', fieldName: 'moduleId', prefix: 'MOD', padLength: 4, seedValues: ['MOD-0001', 'MOD-0002', 'MOD-0003'] },
     { sequenceName: 'screenId', collectionName: 'mdm_screens', fieldName: 'screenId', prefix: 'SCR', padLength: 4, seedValues: ['SCR-0001', 'SCR-0002', 'SCR-0003', 'SCR-0004', 'SCR-0005', 'SCR-0006', 'SCR-0007', 'SCR-0008', 'SCR-0009', 'SCR-0010', 'SCR-0011', 'SCR-0012'] },
     { sequenceName: 'featureId', collectionName: 'mdm_features', fieldName: 'featureId', prefix: 'FEAT', padLength: 4, seedValues: ['FEAT-0001', 'FEAT-0002', 'FEAT-0003', 'FEAT-0004', 'FEAT-0005', 'FEAT-0006', 'FEAT-0007', 'FEAT-0008', 'FEAT-0009', 'FEAT-0010', 'FEAT-0011', 'FEAT-0012', 'FEAT-0013', 'FEAT-0014', 'FEAT-0015', 'FEAT-0016', 'FEAT-0017', 'FEAT-0018', 'FEAT-0019', 'FEAT-0020', 'FEAT-0021', 'FEAT-0022', 'FEAT-0023'] },
-    { sequenceName: 'assignmentId', collectionName: 'mdm_user_context_assignments', fieldName: 'assignmentId', prefix: 'ASGN', padLength: 6, seedValues: ['ASGN-000001'] },
+    { sequenceName: 'assignmentId', collectionName: 'mdm_user_context_assignments', fieldName: 'assignmentId', prefix: 'ASGN', padLength: 6, seedValues: ['ASGN-000001', 'ASGN-000002', 'ASGN-000003', 'ASGN-000004', 'ASGN-000005', 'ASGN-000006', 'ASGN-000007', 'ASGN-000008', 'ASGN-000009'] },
     { sequenceName: 'licenseId', collectionName: 'mdm_licenses', fieldName: 'licenseId', prefix: 'LIC', padLength: 4, seedValues: ['LIC-0001'] },
     { sequenceName: 'assetId', collectionName: 'iiot_assets', fieldName: 'assetId', prefix: 'EQP-RMG', padLength: 4, seedValues: ['EQP-RMG-0042'] },
     { sequenceName: 'tagId', collectionName: 'iiot_asset_tags', fieldName: 'tagId', prefix: 'TAG', padLength: 6, seedValues: ['TAG-000512'] },
