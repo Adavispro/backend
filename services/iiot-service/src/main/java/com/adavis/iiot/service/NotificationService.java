@@ -83,20 +83,6 @@ public class NotificationService {
                     recipients = recipientResolver.resolveBatchParticipants(tenantId, plantId, batchNo, equipmentCode, stage, actorUserId);
                     break;
 
-                case "PENDING":
-                    if ("REJECTED".equalsIgnoreCase(previousStatus)) {
-                        eventCode = "BATCH_REWORKED";
-                        title = "Batch Stage Reworked";
-                        String reworkText = (comments != null && !comments.isBlank()) ? comments.trim() : "None";
-                        message = String.format("Batch %s (Lot: %s, Stage: %s) was REWORKED by Operator %s and returned to PENDING. Remarks: %s",
-                                batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId, reworkText);
-                        severity = "INFO";
-                        recipients = recipientResolver.resolveQAReviewers(tenantId, plantId, actorUserId);
-                    } else {
-                        return;
-                    }
-                    break;
-
                 default:
                     log.debug("No automated notifications configured for transition to state: {}", normTarget);
                     return;

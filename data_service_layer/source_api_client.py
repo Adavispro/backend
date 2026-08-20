@@ -8,16 +8,50 @@ that mimics the production system until the real API is connected.
 from __future__ import annotations
 
 import json
+import logging
+import os
+import time
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
+logger = logging.getLogger(__name__)
 
-BASE_URL = "http://localhost:8000/fwxapi/rest/v1/Dataset"
+BASE_URL = os.getenv("SOURCE_API_BASE_URL", "http://localhost:8000/fwxapi/rest/v1/Dataset")
 DEFAULT_DATASET_ID = "G5RMG"
+DEFAULT_TIMEOUT_SECONDS = int(os.getenv("SOURCE_API_TIMEOUT", "30"))
+MAX_RETRIES = int(os.getenv("SOURCE_API_MAX_RETRIES", "3"))
+BACKOFF_FACTOR = float(os.getenv("SOURCE_API_BACKOFF_FACTOR", "0.5"))
+
+# Global thread-safe session with connection pooling
+_SESSION: Optional[requests.Session] = None
+
+
+def get_source_api_session() -> requests.Session:
+    global _SESSION
+    if _SESSION is None:
+        session = requests.Session()
+        retry_strategy = Retry(
+            total=MAX_RETRIES,
+            backoff_factor=BACKOFF_FACTOR,
+            status_forcelist=[500, 502, 503, 504],
+            allowed_methods=["GET"],
+            raise_on_status=False,
+        )
+        adapter = HTTPAdapter(
+            pool_connections=20,
+            pool_maxsize=50,
+            max_retries=retry_strategy,
+        )
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        _SESSION = session
+    return _SESSION
 
 
 @dataclass
@@ -155,17 +189,37 @@ def build_point_name(dataset: str, params: Optional[Dict[str, Any]] = None, data
 def fetch_dataset(
     dataset_name: str,
     params: Optional[Dict[str, Any]] = None,
-    base_url: str = BASE_URL,
+    base_url: Optional[str] = None,
     dataset_id: str = DEFAULT_DATASET_ID,
+    timeout: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> Dict[str, Any]:
+    resolved_base_url = base_url or BASE_URL
     point_name = build_point_name(dataset_name, params, dataset_id=dataset_id)
     encoded = quote(point_name, safe="")
-    url = f"{base_url}?pointname={encoded}"
-    response = requests.get(url, timeout=30)
+    url = f"{resolved_base_url}?pointname={encoded}"
+
+    session = get_source_api_session()
+    try:
+        response = session.get(url, timeout=timeout)
+    except requests.RequestException as exc:
+        logger.error("Source API request failed for dataset=%s point_name=%s error=%s", dataset_name, point_name, str(exc))
+        raise RuntimeError(f"Source API connection failed for dataset '{dataset_name}': {str(exc)}") from exc
+
+    if response.status_code >= 400 and response.status_code < 500:
+        # Non-retryable 4xx error: fail fast
+        raise ValueError(f"Source API rejected request for dataset '{dataset_name}' with status {response.status_code}")
+
     response.raise_for_status()
-    payload = response.json()
+
+    try:
+        payload = response.json()
+    except Exception as exc:
+        raise ValueError(f"Invalid JSON payload received from source API for dataset '{dataset_name}'") from exc
+
     if payload.get("status") != "success":
-        raise ValueError(f"Source API error for {dataset_name}: {payload}")
+        error_msg = payload.get("message") or payload.get("error") or "Unknown source error"
+        raise ValueError(f"Source API returned error status for '{dataset_name}': {error_msg}")
+
     return payload
 
 

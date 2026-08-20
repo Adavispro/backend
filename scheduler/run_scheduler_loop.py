@@ -15,7 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run scheduler ingestion cycle in a loop")
     parser.add_argument("--mongo-uri", default="mongodb://admin:Admin123!@localhost:37017/adavis_platform?authSource=admin")
     parser.add_argument("--db-name", default="adavis_platform")
-    parser.add_argument("--interval-seconds", type=int, default=900)
+    parser.add_argument("--interval-seconds", type=int, default=600, help="Interval between runs in seconds (default: 600 / 10 minutes)")
     parser.add_argument("--dataset-ids", nargs="*", default=list(DEFAULT_DATASET_IDS))
     parser.add_argument("--once", action="store_true", help="Run one ingestion cycle and exit")
     return parser.parse_args()

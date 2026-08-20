@@ -1729,239 +1729,260 @@ db.auth_users.updateOne(
 );
 
 // ============================================
-// Seed - OPERATOR_USER_01
+// Operational Users Seed (12 Canonical Users + Legacy Aliases)
 // ============================================
 
-db.mdm_user_profiles.updateOne(
-    { userId: 'OPERATOR_USER_01' },
+var operationalUsersSeed = [
+    // --- 4 PRODUCTION OPERATORS ---
     {
-        $set: {
-            userTrackId: 'USR-0007',
-            tenantId: 'TNT-0001',
-            firstName: 'Production',
-            lastName: 'Operator 01',
-            phoneNumber: '+91-9876543210',
-            title: 'Production Operator',
-            userType: 'INTERNAL_EMPLOYEE',
-            email: 'operator01@adavis.com',
-            empId: 'EMP-00101',
-            isActive: true,
-            isBlocked: false,
-            isExternal: false,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'OPERATOR_USER_01',
+        username: 'operator_01',
+        email: 'operator_01@adavis.com',
+        userTrackId: 'USR-0007',
+        empId: 'EMP-00101',
+        firstName: 'Production',
+        lastName: 'Operator 01',
+        phoneNumber: '+91-9876543210',
+        title: 'Production Operator',
+        groupId: 'GRP-0011'
     },
-    { upsert: true }
-);
-
-db.auth_users.updateOne(
-    { userId: 'OPERATOR_USER_01' },
     {
-        $set: {
-            username: 'operator_user_01',
-            email: 'operator01@adavis.com',
-            status: 'ACTIVE',
-            isLocked: false,
-            failedAttempts: 0,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'OPERATOR_USER_02',
+        username: 'operator_02',
+        email: 'operator_02@adavis.com',
+        userTrackId: 'USR-0010',
+        empId: 'EMP-00102',
+        firstName: 'Alex',
+        lastName: 'Operator 02',
+        phoneNumber: '+91-9876543212',
+        title: 'Production Operator',
+        groupId: 'GRP-0011'
     },
-    { upsert: true }
-);
-
-// ============================================
-// Seed - SUPERVISOR_USER_01
-// ============================================
-
-db.mdm_user_profiles.updateOne(
-    { userId: 'SUPERVISOR_USER_01' },
     {
-        $set: {
-            userTrackId: 'USR-0008',
-            tenantId: 'TNT-0001',
-            firstName: 'Shift',
-            lastName: 'Supervisor 01',
-            phoneNumber: '+91-9876543211',
-            title: 'Shift Supervisor',
-            userType: 'INTERNAL_EMPLOYEE',
-            email: 'supervisor01@adavis.com',
-            empId: 'EMP-00102',
-            isActive: true,
-            isBlocked: false,
-            isExternal: false,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'OPERATOR_USER_03',
+        username: 'operator_03',
+        email: 'operator_03@adavis.com',
+        userTrackId: 'USR-0021',
+        empId: 'EMP-00103',
+        firstName: 'Carlos',
+        lastName: 'Operator 03',
+        phoneNumber: '+91-9876543214',
+        title: 'Production Operator',
+        groupId: 'GRP-0011'
     },
-    { upsert: true }
-);
-
-db.auth_users.updateOne(
-    { userId: 'SUPERVISOR_USER_01' },
     {
-        $set: {
-            username: 'supervisor_user_01',
-            email: 'supervisor01@adavis.com',
-            status: 'ACTIVE',
-            isLocked: false,
-            failedAttempts: 0,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'OPERATOR_USER_04',
+        username: 'operator_04',
+        email: 'operator_04@adavis.com',
+        userTrackId: 'USR-0022',
+        empId: 'EMP-00104',
+        firstName: 'David',
+        lastName: 'Operator 04',
+        phoneNumber: '+91-9876543215',
+        title: 'Production Operator',
+        groupId: 'GRP-0011'
     },
-    { upsert: true }
-);
 
-// ============================================
-// Seed - NEW_OPERATOR_02
-// ============================================
-
-db.mdm_user_profiles.updateOne(
-    { userId: 'NEW_OPERATOR_02' },
+    // --- 4 REVIEWERS ---
     {
-        $set: {
-            userTrackId: 'USR-0010',
-            tenantId: 'TNT-0001',
-            firstName: 'Alex',
-            lastName: 'Operator',
-            phoneNumber: '+91-9876543212',
-            title: 'Production Operator',
-            userType: 'INTERNAL_EMPLOYEE',
-            email: 'operator_new02@adavis.com',
-            empId: 'EMP-00105',
-            isActive: true,
-            isBlocked: false,
-            isExternal: false,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'REVIEWER_USER_01',
+        username: 'reviewer_01',
+        email: 'reviewer_01@adavis.com',
+        userTrackId: 'USR-0016',
+        empId: 'EMP-00201',
+        firstName: 'Elena',
+        lastName: 'Reviewer 01',
+        phoneNumber: '+91-9876543213',
+        title: 'QA Reviewer',
+        groupId: 'GRP-0016'
     },
-    { upsert: true }
-);
-
-db.auth_users.updateOne(
-    { userId: 'NEW_OPERATOR_02' },
     {
-        $set: {
-            username: 'new_operator_02',
-            email: 'operator_new02@adavis.com',
-            status: 'ACTIVE',
-            isLocked: false,
-            failedAttempts: 0,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'REVIEWER_USER_02',
+        username: 'reviewer_02',
+        email: 'reviewer_02@adavis.com',
+        userTrackId: 'USR-0023',
+        empId: 'EMP-00202',
+        firstName: 'Fiona',
+        lastName: 'Reviewer 02',
+        phoneNumber: '+91-9876543216',
+        title: 'QA Reviewer',
+        groupId: 'GRP-0016'
     },
-    { upsert: true }
-);
-
-// ============================================
-// Seed - NEW_SUPERVISOR_02
-// ============================================
-
-db.mdm_user_profiles.updateOne(
-    { userId: 'NEW_SUPERVISOR_02' },
     {
-        $set: {
-            userTrackId: 'USR-0011',
-            tenantId: 'TNT-0001',
-            firstName: 'Sarah',
-            lastName: 'Supervisor',
-            phoneNumber: '+91-9876543213',
-            title: 'Shift Supervisor',
-            userType: 'INTERNAL_EMPLOYEE',
-            email: 'supervisor_new02@adavis.com',
-            empId: 'EMP-00106',
-            isActive: true,
-            isBlocked: false,
-            isExternal: false,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'REVIEWER_USER_03',
+        username: 'reviewer_03',
+        email: 'reviewer_03@adavis.com',
+        userTrackId: 'USR-0024',
+        empId: 'EMP-00203',
+        firstName: 'George',
+        lastName: 'Reviewer 03',
+        phoneNumber: '+91-9876543217',
+        title: 'QA Reviewer',
+        groupId: 'GRP-0016'
     },
-    { upsert: true }
-);
-
-db.auth_users.updateOne(
-    { userId: 'NEW_SUPERVISOR_02' },
     {
-        $set: {
-            username: 'new_supervisor_02',
-            email: 'supervisor_new02@adavis.com',
-            status: 'ACTIVE',
-            isLocked: false,
-            failedAttempts: 0,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'REVIEWER_USER_04',
+        username: 'reviewer_04',
+        email: 'reviewer_04@adavis.com',
+        userTrackId: 'USR-0025',
+        empId: 'EMP-00204',
+        firstName: 'Hannah',
+        lastName: 'Reviewer 04',
+        phoneNumber: '+91-9876543218',
+        title: 'QA Reviewer',
+        groupId: 'GRP-0016'
     },
-    { upsert: true }
-);
 
-// ============================================
-// Seed - NEW_REVIEWER_02
-// ============================================
-
-db.mdm_user_profiles.updateOne(
-    { userId: 'NEW_REVIEWER_02' },
+    // --- 4 SUPERVISORS / QA APPROVERS ---
     {
-        $set: {
-            userTrackId: 'USR-0016',
-            tenantId: 'TNT-0001',
-            firstName: 'Elena',
-            lastName: 'Reviewer',
-            phoneNumber: '+91-9876543213',
-            title: 'QA Reviewer',
-            userType: 'INTERNAL_EMPLOYEE',
-            email: 'reviewer_new02@adavis.com',
-            empId: 'EMP-00116',
-            isActive: true,
-            isBlocked: false,
-            isExternal: false,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'SUPERVISOR_USER_01',
+        username: 'supervisor_01',
+        email: 'supervisor_01@adavis.com',
+        userTrackId: 'USR-0008',
+        empId: 'EMP-00301',
+        firstName: 'Shift',
+        lastName: 'Supervisor 01',
+        phoneNumber: '+91-9876543211',
+        title: 'Shift Supervisor',
+        groupId: 'GRP-0012'
     },
-    { upsert: true }
-);
-
-db.auth_users.updateOne(
-    { userId: 'NEW_REVIEWER_02' },
     {
-        $set: {
-            username: 'new_reviewer_02',
-            email: 'reviewer_new02@adavis.com',
-            status: 'ACTIVE',
-            isLocked: false,
-            failedAttempts: 0,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
+        userId: 'SUPERVISOR_USER_02',
+        username: 'supervisor_02',
+        email: 'supervisor_02@adavis.com',
+        userTrackId: 'USR-0011',
+        empId: 'EMP-00302',
+        firstName: 'Sarah',
+        lastName: 'Supervisor 02',
+        phoneNumber: '+91-9876543219',
+        title: 'Shift Supervisor',
+        groupId: 'GRP-0012'
     },
-    { upsert: true }
-);
+    {
+        userId: 'SUPERVISOR_USER_03',
+        username: 'supervisor_03',
+        email: 'supervisor_03@adavis.com',
+        userTrackId: 'USR-0026',
+        empId: 'EMP-00303',
+        firstName: 'Ian',
+        lastName: 'Supervisor 03',
+        phoneNumber: '+91-9876543220',
+        title: 'Shift Supervisor',
+        groupId: 'GRP-0012'
+    },
+    {
+        userId: 'SUPERVISOR_USER_04',
+        username: 'supervisor_04',
+        email: 'supervisor_04@adavis.com',
+        userTrackId: 'USR-0027',
+        empId: 'EMP-00304',
+        firstName: 'Julia',
+        lastName: 'Supervisor 04',
+        phoneNumber: '+91-9876543221',
+        title: 'Shift Supervisor',
+        groupId: 'GRP-0012'
+    },
+
+    // --- Legacy Aliases for backward test compatibility ---
+    {
+        userId: 'NEW_OPERATOR_02',
+        username: 'new_operator_02',
+        email: 'operator_new02@adavis.com',
+        userTrackId: 'USR-0028',
+        empId: 'EMP-00105',
+        firstName: 'Alex',
+        lastName: 'Operator',
+        phoneNumber: '+91-9876543212',
+        title: 'Production Operator',
+        groupId: 'GRP-0011'
+    },
+    {
+        userId: 'NEW_SUPERVISOR_02',
+        username: 'new_supervisor_02',
+        email: 'supervisor_new02@adavis.com',
+        userTrackId: 'USR-0029',
+        empId: 'EMP-00106',
+        firstName: 'Sarah',
+        lastName: 'Supervisor',
+        phoneNumber: '+91-9876543213',
+        title: 'Shift Supervisor',
+        groupId: 'GRP-0012'
+    },
+    {
+        userId: 'NEW_REVIEWER_02',
+        username: 'new_reviewer_02',
+        email: 'reviewer_new02@adavis.com',
+        userTrackId: 'USR-0030',
+        empId: 'EMP-00116',
+        firstName: 'Elena',
+        lastName: 'Reviewer',
+        phoneNumber: '+91-9876543213',
+        title: 'QA Reviewer',
+        groupId: 'GRP-0016'
+    }
+];
+
+operationalUsersSeed.forEach(function(u) {
+    db.mdm_user_profiles.updateOne(
+        { userId: u.userId },
+        {
+            $set: {
+                userTrackId: u.userTrackId,
+                tenantId: 'TNT-0001',
+                firstName: u.firstName,
+                lastName: u.lastName,
+                phoneNumber: u.phoneNumber,
+                title: u.title,
+                userType: 'INTERNAL_EMPLOYEE',
+                email: u.email,
+                empId: u.empId,
+                isActive: true,
+                isBlocked: false,
+                isExternal: false,
+                updatedAt: ISODate()
+            },
+            $setOnInsert: {
+                createdAt: ISODate('2026-03-01T10:00:00Z')
+            }
+        },
+        { upsert: true }
+    );
+
+    db.auth_users.updateOne(
+        { userId: u.userId },
+        {
+            $set: {
+                username: u.username,
+                email: u.email,
+                status: 'ACTIVE',
+                isLocked: false,
+                failedAttempts: 0,
+                updatedAt: ISODate()
+            },
+            $setOnInsert: {
+                createdAt: ISODate('2026-03-01T10:00:00Z')
+            }
+        },
+        { upsert: true }
+    );
+
+    db.mdm_user_auth_credentials.updateOne(
+        { userId: u.userId },
+        {
+            $set: {
+                email: u.email,
+                passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
+                mustChangePassword: false,
+                passwordUpdatedAt: ISODate(),
+                updatedAt: ISODate()
+            },
+            $setOnInsert: {
+                createdAt: ISODate('2026-03-01T10:05:00Z')
+            }
+        },
+        { upsert: true }
+    );
+});
 
 
 
@@ -2084,110 +2105,7 @@ db.mdm_user_auth_credentials.updateOne(
     { upsert: true }
 );
 
-// ============================================
-// OPERATOR_USER_01 Credentials
-// ============================================
-
-db.mdm_user_auth_credentials.updateOne(
-    { userId: 'OPERATOR_USER_01' },
-    {
-        $set: {
-            email: 'operator01@adavis.com',
-            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
-            mustChangePassword: false,
-            passwordUpdatedAt: ISODate(),
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:05:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// ============================================
-// SUPERVISOR_USER_01 Credentials
-// ============================================
-
-db.mdm_user_auth_credentials.updateOne(
-    { userId: 'SUPERVISOR_USER_01' },
-    {
-        $set: {
-            email: 'supervisor01@adavis.com',
-            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
-            mustChangePassword: false,
-            passwordUpdatedAt: ISODate(),
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:05:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// ============================================
-// NEW_OPERATOR_02 Credentials
-// ============================================
-
-db.mdm_user_auth_credentials.updateOne(
-    { userId: 'NEW_OPERATOR_02' },
-    {
-        $set: {
-            email: 'operator_new02@adavis.com',
-            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
-            mustChangePassword: false,
-            passwordUpdatedAt: ISODate(),
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:05:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// ============================================
-// NEW_SUPERVISOR_02 Credentials
-// ============================================
-
-db.mdm_user_auth_credentials.updateOne(
-    { userId: 'NEW_SUPERVISOR_02' },
-    {
-        $set: {
-            email: 'supervisor_new02@adavis.com',
-            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
-            mustChangePassword: false,
-            passwordUpdatedAt: ISODate(),
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:05:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// ============================================
-// NEW_REVIEWER_02 Credentials
-// ============================================
-
-db.mdm_user_auth_credentials.updateOne(
-    { userId: 'NEW_REVIEWER_02' },
-    {
-        $set: {
-            email: 'reviewer_new02@adavis.com',
-            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
-            mustChangePassword: false,
-            passwordUpdatedAt: ISODate(),
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:05:00Z')
-        }
-    },
-    { upsert: true }
-);
+// (Operational user credentials initialized in operationalUsersSeed loop)
 
 
 var roleSeed = [
@@ -2592,144 +2510,26 @@ upsertOne('mdm_user_assignments_to_user_groups', { userId: 'SHIFT_SUPERVISOR', g
     assignedBy: 'SYSTEM'
 });
 
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'OPERATOR_USER_01', groupId: productionOperatorGroupId }, {
-    userId: 'OPERATOR_USER_01',
-    groupId: productionOperatorGroupId,
-    isActive: true,
-    assignedAt: ISODate('2026-03-01T10:10:00Z'),
-    assignedBy: 'SYSTEM'
-});
+operationalUsersSeed.forEach(function(u, idx) {
+    var assignedGroupId = u.groupId;
+    upsertOne('mdm_user_assignments_to_user_groups', { userId: u.userId, groupId: assignedGroupId }, {
+        userId: u.userId,
+        groupId: assignedGroupId,
+        isActive: true,
+        assignedAt: ISODate('2026-03-01T10:10:00Z'),
+        assignedBy: 'SYSTEM'
+    });
 
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'SUPERVISOR_USER_01', groupId: shiftSupervisorGroupId }, {
-    userId: 'SUPERVISOR_USER_01',
-    groupId: shiftSupervisorGroupId,
-    isActive: true,
-    assignedAt: ISODate('2026-03-01T10:10:00Z'),
-    assignedBy: 'SYSTEM'
-});
-
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'NEW_OPERATOR_02', groupId: productionOperatorGroupId }, {
-    userId: 'NEW_OPERATOR_02',
-    groupId: productionOperatorGroupId,
-    isActive: true,
-    assignedAt: ISODate('2026-03-01T10:10:00Z'),
-    assignedBy: 'SYSTEM'
-});
-
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'NEW_SUPERVISOR_02', groupId: shiftSupervisorGroupId }, {
-    userId: 'NEW_SUPERVISOR_02',
-    groupId: shiftSupervisorGroupId,
-    isActive: true,
-    assignedAt: ISODate('2026-03-01T10:10:00Z'),
-    assignedBy: 'SYSTEM'
-});
-
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'NEW_REVIEWER_02', groupId: 'GRP-0016' }, {
-    userId: 'NEW_REVIEWER_02',
-    groupId: 'GRP-0016',
-    isActive: true,
-    assignedAt: ISODate('2026-03-01T10:10:00Z'),
-    assignedBy: 'SYSTEM'
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000001' }, {
-    assignmentId: 'ASGN-000001',
-    tenantId: 'TNT-0001',
-    userId: 'SUPER_ADMIN',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: platformAdminGroupId,
-    isActive: true
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000002' }, {
-    assignmentId: 'ASGN-000002',
-    tenantId: 'TNT-0001',
-    userId: 'IT_ADMIN',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: platformAdminGroupId,
-    isActive: true
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000003' }, {
-    assignmentId: 'ASGN-000003',
-    tenantId: 'TNT-0001',
-    userId: 'USR-0003',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: platformAdminGroupId,
-    isActive: true
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000004' }, {
-    assignmentId: 'ASGN-000004',
-    tenantId: 'TNT-0001',
-    userId: 'USR-0004',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: platformAdminGroupId,
-    isActive: true
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000005' }, {
-    assignmentId: 'ASGN-000005',
-    tenantId: 'TNT-0001',
-    userId: 'PRODUCTION_OPERATOR',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: productionOperatorGroupId,
-    isActive: true
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000006' }, {
-    assignmentId: 'ASGN-000006',
-    tenantId: 'TNT-0001',
-    userId: 'SHIFT_SUPERVISOR',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: shiftSupervisorGroupId,
-    isActive: true
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000007' }, {
-    assignmentId: 'ASGN-000007',
-    tenantId: 'TNT-0001',
-    userId: 'OPERATOR_USER_01',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: productionOperatorGroupId,
-    isActive: true
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000008' }, {
-    assignmentId: 'ASGN-000008',
-    tenantId: 'TNT-0001',
-    userId: 'SUPERVISOR_USER_01',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: shiftSupervisorGroupId,
-    isActive: true
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000009' }, {
-    assignmentId: 'ASGN-000009',
-    tenantId: 'TNT-0001',
-    userId: 'NEW_OPERATOR_02',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: productionOperatorGroupId,
-    isActive: true
-});
-
-upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000010' }, {
-    assignmentId: 'ASGN-000010',
-    tenantId: 'TNT-0001',
-    userId: 'NEW_SUPERVISOR_02',
-    plantId: 'PLNT-0001',
-    departmentId: 'DEP-0002',
-    groupId: shiftSupervisorGroupId,
-    isActive: true
+    var asgnId = toPaddedId('ASGN', idx + 7, 6);
+    upsertOne('mdm_user_context_assignments', { assignmentId: asgnId }, {
+        assignmentId: asgnId,
+        tenantId: 'TNT-0001',
+        userId: u.userId,
+        plantId: 'PLNT-0001',
+        departmentId: 'DEP-0002',
+        groupId: assignedGroupId,
+        isActive: true
+    });
 });
 
 upsertOne('mdm_role_permissions', { roleId: superAdminRoleId, moduleId: 'MOD-0001', version: 1 },
@@ -2844,7 +2644,7 @@ var sequenceDefinitions = [
     { sequenceName: 'areaId', collectionName: 'mdm_areas', fieldName: 'areaId', prefix: 'AREA', padLength: 4, seedValues: ['AREA-0001', 'AREA-0002', 'AREA-0003', 'AREA-0004', 'AREA-0005', 'AREA-0006', 'AREA-0007', 'AREA-0008', 'AREA-0009', 'AREA-0010', 'AREA-0011' ] },
     { sequenceName: 'departmentId', collectionName: 'mdm_departments', fieldName: 'departmentId', prefix: 'DEP', padLength: 4, seedValues: ['DEP-0001', 'DEP-0002', 'DEP-0003', 'DEP-0004', 'DEP-0005', 'DEP-0006', 'DEP-0007', 'DEP-0008', 'DEP-0009', 'DEP-0010', 'DEP-0011', 'DEP-0012', 'DEP-0013', 'DEP-0014', 'DEP-0015', 'DEP-0016'] },
     { sequenceName: 'roomId', collectionName: 'mdm_rooms', fieldName: 'roomId', prefix: 'ROOM', padLength: 4, seedValues: ['ROOM-0001', 'ROOM-0002', 'ROOM-0003', 'ROOM-0004', 'ROOM-0005', 'ROOM-0006', 'ROOM-0007', 'ROOM-0008', 'ROOM-0009', 'ROOM-0010', 'ROOM-0011', 'ROOM-0012', 'ROOM-0013', 'ROOM-0014', 'ROOM-0015', 'ROOM-0016', 'ROOM-0017'] },
-    { sequenceName: 'userTrackId', collectionName: 'mdm_user_profiles', fieldName: 'userTrackId', prefix: 'USR', padLength: 4, seedValues: ['USR-0001', 'USR-0002', 'USR-0003', 'USR-0004', 'USR-0005', 'USR-0006', 'USR-0010', 'USR-0011', 'USR-0016'] },
+    { sequenceName: 'userTrackId', collectionName: 'mdm_user_profiles', fieldName: 'userTrackId', prefix: 'USR', padLength: 4, seedValues: ['USR-0001', 'USR-0002', 'USR-0003', 'USR-0004', 'USR-0005', 'USR-0006', 'USR-0007', 'USR-0008', 'USR-0010', 'USR-0011', 'USR-0016', 'USR-0021', 'USR-0022', 'USR-0023', 'USR-0024', 'USR-0025', 'USR-0026', 'USR-0027', 'USR-0028', 'USR-0029', 'USR-0030'] },
     { sequenceName: 'groupId', collectionName: 'mdm_user_groups', fieldName: 'groupId', prefix: 'GRP', padLength: 4, seedValues: ['GRP-0001', 'GRP-0002', 'GRP-0003', 'GRP-0004', 'GRP-0005', 'GRP-0006', 'GRP-0007', 'GRP-0008', 'GRP-0009', 'GRP-0010', 'GRP-0011', 'GRP-0012', 'GRP-0016'] },
     { sequenceName: 'roleId', collectionName: 'mdm_roles', fieldName: 'roleId', prefix: 'ROLE', padLength: 4, seedValues: ['ROLE-0001', 'ROLE-0002', 'ROLE-0003', 'ROLE-0004', 'ROLE-0005', 'ROLE-0006', 'ROLE-0007', 'ROLE-0008', 'ROLE-0009', 'ROLE-0010', 'ROLE-0011', 'ROLE-0012', 'ROLE-0013', 'ROLE-0014', 'ROLE-0015', 'ROLE-0016'] },
     { sequenceName: 'moduleId', collectionName: 'mdm_modules', fieldName: 'moduleId', prefix: 'MOD', padLength: 4, seedValues: ['MOD-0001', 'MOD-0002', 'MOD-0003'] },
@@ -2856,11 +2656,505 @@ var sequenceDefinitions = [
     { sequenceName: 'tagId', collectionName: 'iiot_asset_tags', fieldName: 'tagId', prefix: 'TAG', padLength: 6, seedValues: ['TAG-000512'] },
     { sequenceName: 'thresholdId', collectionName: 'iiot_tag_thresholds', fieldName: 'thresholdId', prefix: 'THR', padLength: 6, seedValues: ['THR-001042'] },
     { sequenceName: 'requestId', collectionName: 'mdm_user_lifecycle_requests', fieldName: 'requestId', prefix: 'REQ', padLength: 6, seedValues: [] },
-    { sequenceName: 'documentId', collectionName: 'dms_documents', fieldName: 'documentId', prefix: 'DOC', padLength: 6, seedValues: [] }
+    { sequenceName: 'documentId', collectionName: 'dms_documents', fieldName: 'documentId', prefix: 'DOC', padLength: 6, seedValues: [] },
+    { sequenceName: 'workflowId', collectionName: 'mdm_workflow_definitions', fieldName: 'workflowId', prefix: 'WFD', padLength: 4, seedValues: ['WFD-0001'] },
+    { sequenceName: 'stageId', collectionName: 'mdm_workflow_stages', fieldName: 'stageId', prefix: 'WFS', padLength: 4, seedValues: ['WFS-0001', 'WFS-0002', 'WFS-0003'] },
+    { sequenceName: 'actionId', collectionName: 'mdm_workflow_actions', fieldName: 'actionId', prefix: 'WFA', padLength: 4, seedValues: ['WFA-0001', 'WFA-0002', 'WFA-0003', 'WFA-0004', 'WFA-0005', 'WFA-0006'] },
+    { sequenceName: 'transitionId', collectionName: 'mdm_workflow_transitions', fieldName: 'transitionId', prefix: 'WFT', padLength: 4, seedValues: ['WFT-0001', 'WFT-0002', 'WFT-0003', 'WFT-0004', 'WFT-0005', 'WFT-0006', 'WFT-0007'] },
+    { sequenceName: 'assignmentId', collectionName: 'mdm_workflow_assignments', fieldName: 'assignmentId', prefix: 'WFAS', padLength: 4, seedValues: ['WFAS-0001', 'WFAS-0002', 'WFAS-0003'] }
 ];
 
 for (var s = 0; s < sequenceDefinitions.length; s++) {
     initializeSequence(sequenceDefinitions[s]);
+}
+
+logInfo('Seeding Workflow MDM Definitions and Initial IIoT State Machine...');
+
+upsertOne('mdm_workflow_definitions', { workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW', version: '1.0.0' }, {
+    workflowId: 'WFD-0001',
+    workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+    workflowName: 'IIoT Batch Stage Review and Approval Workflow',
+    module: 'IIOT',
+    entity: 'BATCH_STAGE',
+    description: 'Dynamic multi-stage review and approval workflow for IIoT batch equipment execution.',
+    version: '1.0.0',
+    status: 'ACTIVE',
+    effectiveFrom: now(),
+    tenantId: 'TNT-0001',
+    plantId: 'PLNT-0001',
+    stageCodes: ['SUBMISSION', 'REVIEW', 'APPROVAL'],
+    isActive: true,
+    createdBy: 'PLATFORM_SUPER_ADMIN',
+    createdAt: now(),
+    updatedAt: now()
+});
+
+var workflowStages = [
+    {
+        stageId: 'WFS-0001',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        stageCode: 'SUBMISSION',
+        stageName: 'Production Submission',
+        sequence: 1,
+        assignedRole: 'PRODUCTION_OPERATOR',
+        stageType: 'INITIAL',
+        entryStatus: 'PENDING',
+        exitStatus: 'UNDER_REVIEW',
+        assignmentRule: 'ROLE_BASED',
+        isMandatory: true,
+        allowedActionCodes: ['SUBMIT_FOR_REVIEW', 'SUBMIT_RESPONSE'],
+        tenantId: 'TNT-0001',
+        plantId: 'PLNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        stageId: 'WFS-0002',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        stageCode: 'REVIEW',
+        stageName: 'Quality Review',
+        sequence: 2,
+        assignedRole: 'PRODUCTION_REVIEWER',
+        stageType: 'INTERMEDIATE',
+        entryStatus: 'UNDER_REVIEW',
+        exitStatus: 'REVIEWER_REVIEWED',
+        assignmentRule: 'ROLE_BASED',
+        isMandatory: true,
+        allowedActionCodes: ['SUBMIT_FOR_APPROVAL', 'REQUEST_ADDITIONAL_INFO'],
+        tenantId: 'TNT-0001',
+        plantId: 'PLNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        stageId: 'WFS-0003',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        stageCode: 'APPROVAL',
+        stageName: 'Final QA Approval',
+        sequence: 3,
+        assignedRole: 'QA_APPROVER',
+        stageType: 'FINAL',
+        entryStatus: 'REVIEWER_REVIEWED',
+        exitStatus: 'APPROVED',
+        assignmentRule: 'ROLE_BASED',
+        isMandatory: true,
+        allowedActionCodes: ['APPROVE', 'REQUEST_ADDITIONAL_INFO', 'DEFER'],
+        tenantId: 'TNT-0001',
+        plantId: 'PLNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    }
+];
+for (var st = 0; st < workflowStages.length; st++) {
+    upsertOne('mdm_workflow_stages', { workflowCode: workflowStages[st].workflowCode, stageCode: workflowStages[st].stageCode }, workflowStages[st]);
+}
+
+var workflowActions = [
+    {
+        actionId: 'WFA-0001',
+        actionCode: 'SUBMIT_FOR_REVIEW',
+        actionName: 'Submit for Review',
+        displayName: 'Submit for Review',
+        actionType: 'SUBMIT',
+        applicableRole: 'PRODUCTION_OPERATOR',
+        requiresEsign: true,
+        requiresComment: false,
+        requiresJustification: false,
+        requiresAdditionalInfo: false,
+        requiresResponse: false,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        actionId: 'WFA-0002',
+        actionCode: 'SUBMIT_FOR_APPROVAL',
+        actionName: 'Submit for Approval',
+        displayName: 'Submit for Approval',
+        actionType: 'REVIEW',
+        applicableRole: 'PRODUCTION_REVIEWER',
+        requiresEsign: true,
+        requiresComment: true,
+        requiresJustification: false,
+        requiresAdditionalInfo: false,
+        requiresResponse: false,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        actionId: 'WFA-0003',
+        actionCode: 'APPROVE',
+        actionName: 'Approve',
+        displayName: 'Approve',
+        actionType: 'APPROVE',
+        applicableRole: 'QA_APPROVER',
+        requiresEsign: true,
+        requiresComment: true,
+        requiresJustification: false,
+        requiresAdditionalInfo: false,
+        requiresResponse: false,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        actionId: 'WFA-0004',
+        actionCode: 'REQUEST_ADDITIONAL_INFO',
+        actionName: 'Request Additional Information',
+        displayName: 'Request Additional Information',
+        actionType: 'RETURN',
+        applicableRole: 'QA_APPROVER',
+        requiresEsign: true,
+        requiresComment: true,
+        requiresJustification: false,
+        requiresAdditionalInfo: true,
+        requiresResponse: false,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        actionId: 'WFA-0005',
+        actionCode: 'DEFER',
+        actionName: 'Defer',
+        displayName: 'Defer',
+        actionType: 'DEFER',
+        applicableRole: 'QA_APPROVER',
+        requiresEsign: true,
+        requiresComment: true,
+        requiresJustification: false,
+        requiresAdditionalInfo: false,
+        requiresResponse: false,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        actionId: 'WFA-0006',
+        actionCode: 'SUBMIT_RESPONSE',
+        actionName: 'Submit Response',
+        displayName: 'Submit Response',
+        actionType: 'RESPONSE',
+        applicableRole: 'PRODUCTION_OPERATOR',
+        requiresEsign: true,
+        requiresComment: true,
+        requiresJustification: false,
+        requiresAdditionalInfo: false,
+        requiresResponse: true,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    // Legacy aliases for backward test compatibility
+    {
+        actionId: 'WFA-0007',
+        actionCode: 'SEND_FOR_REVIEW',
+        actionName: 'Send for Review',
+        displayName: 'Submit for Review',
+        actionType: 'SUBMIT',
+        applicableRole: 'PRODUCTION_OPERATOR',
+        requiresEsign: true,
+        requiresComment: false,
+        requiresJustification: false,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        actionId: 'WFA-0008',
+        actionCode: 'SEND_FOR_APPROVAL',
+        actionName: 'Send for Approval',
+        displayName: 'Submit for Approval',
+        actionType: 'REVIEW',
+        applicableRole: 'PRODUCTION_REVIEWER',
+        requiresEsign: true,
+        requiresComment: true,
+        requiresJustification: false,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        actionId: 'WFA-0009',
+        actionCode: 'REJECT',
+        actionName: 'Request Additional Information (Reject)',
+        displayName: 'Request Additional Information',
+        actionType: 'REJECT',
+        applicableRole: 'PRODUCTION_REVIEWER',
+        requiresEsign: true,
+        requiresComment: true,
+        requiresJustification: true,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        actionId: 'WFA-0010',
+        actionCode: 'SUBMIT_JUSTIFICATION',
+        actionName: 'Submit Response & Resubmit',
+        displayName: 'Submit Response',
+        actionType: 'JUSTIFY',
+        applicableRole: 'PRODUCTION_OPERATOR',
+        requiresEsign: true,
+        requiresComment: true,
+        requiresJustification: true,
+        requiresUserSelection: false,
+        requiresConfirmation: true,
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    }
+];
+for (var ac = 0; ac < workflowActions.length; ac++) {
+    upsertOne('mdm_workflow_actions', { actionCode: workflowActions[ac].actionCode }, workflowActions[ac]);
+}
+
+var workflowTransitions = [
+    // Canonical transitions
+    {
+        transitionId: 'WFT-0001',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'SUBMISSION',
+        actionCode: 'SUBMIT_FOR_REVIEW',
+        toStageCode: 'REVIEW',
+        resultingStatus: 'UNDER_REVIEW',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0002',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'SUBMISSION',
+        actionCode: 'SUBMIT_RESPONSE',
+        toStageCode: 'REVIEW',
+        resultingStatus: 'UNDER_REVIEW',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0003',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'REVIEW',
+        actionCode: 'SUBMIT_FOR_APPROVAL',
+        toStageCode: 'APPROVAL',
+        resultingStatus: 'REVIEWER_REVIEWED',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0004',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'REVIEW',
+        actionCode: 'REQUEST_ADDITIONAL_INFO',
+        toStageCode: 'SUBMISSION',
+        resultingStatus: 'RETURNED_TO_OPERATOR',
+        returnStageCode: 'SUBMISSION',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0005',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'APPROVAL',
+        actionCode: 'APPROVE',
+        toStageCode: 'COMPLETED',
+        resultingStatus: 'APPROVED',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0006',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'APPROVAL',
+        actionCode: 'REQUEST_ADDITIONAL_INFO',
+        toStageCode: 'SUBMISSION',
+        resultingStatus: 'RETURNED_TO_OPERATOR',
+        returnStageCode: 'SUBMISSION',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0007',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'APPROVAL',
+        actionCode: 'DEFER',
+        toStageCode: 'APPROVAL',
+        resultingStatus: 'DEFERRED',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    // Legacy transitions for test suite compatibility
+    {
+        transitionId: 'WFT-0008',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'SUBMISSION',
+        actionCode: 'SEND_FOR_REVIEW',
+        toStageCode: 'REVIEW',
+        resultingStatus: 'UNDER_REVIEW',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0009',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'SUBMISSION',
+        actionCode: 'SUBMIT_JUSTIFICATION',
+        toStageCode: 'REVIEW',
+        resultingStatus: 'UNDER_REVIEW',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0010',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'REVIEW',
+        actionCode: 'SEND_FOR_APPROVAL',
+        toStageCode: 'APPROVAL',
+        resultingStatus: 'REVIEWER_REVIEWED',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0011',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'REVIEW',
+        actionCode: 'REJECT',
+        toStageCode: 'SUBMISSION',
+        resultingStatus: 'RETURNED_TO_OPERATOR',
+        returnStageCode: 'SUBMISSION',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        transitionId: 'WFT-0012',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        workflowVersion: '1.0.0',
+        fromStageCode: 'APPROVAL',
+        actionCode: 'REJECT',
+        toStageCode: 'SUBMISSION',
+        resultingStatus: 'RETURNED_TO_OPERATOR',
+        returnStageCode: 'SUBMISSION',
+        tenantId: 'TNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    }
+];
+for (var tr = 0; tr < workflowTransitions.length; tr++) {
+    upsertOne('mdm_workflow_transitions', { workflowCode: workflowTransitions[tr].workflowCode, fromStageCode: workflowTransitions[tr].fromStageCode, actionCode: workflowTransitions[tr].actionCode }, workflowTransitions[tr]);
+}
+
+var workflowAssignments = [
+    {
+        assignmentId: 'WFAS-0001',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        stageCode: 'SUBMISSION',
+        roleCode: 'PRODUCTION_OPERATOR',
+        eligibleUserRule: 'ALL_IN_ROLE',
+        assignmentRule: 'ROLE_BASED',
+        tenantId: 'TNT-0001',
+        plantId: 'PLNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        assignmentId: 'WFAS-0002',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        stageCode: 'REVIEW',
+        roleCode: 'PRODUCTION_REVIEWER',
+        eligibleUserRule: 'ALL_IN_ROLE',
+        assignmentRule: 'ROLE_BASED',
+        tenantId: 'TNT-0001',
+        plantId: 'PLNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    },
+    {
+        assignmentId: 'WFAS-0003',
+        workflowCode: 'IIOT_BATCH_STAGE_WORKFLOW',
+        stageCode: 'APPROVAL',
+        roleCode: 'QA_APPROVER',
+        eligibleUserRule: 'ALL_IN_ROLE',
+        assignmentRule: 'ROLE_BASED',
+        tenantId: 'TNT-0001',
+        plantId: 'PLNT-0001',
+        isActive: true,
+        createdAt: now(),
+        updatedAt: now()
+    }
+];
+for (var asg = 0; asg < workflowAssignments.length; asg++) {
+    upsertOne('mdm_workflow_assignments', { workflowCode: workflowAssignments[asg].workflowCode, stageCode: workflowAssignments[asg].stageCode }, workflowAssignments[asg]);
 }
 
 logInfo('Loading IIOT seed data...');

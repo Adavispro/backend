@@ -13,8 +13,10 @@ from data_service_layer.source_api_client import (
     fetch_batch_details as source_fetch_batch_details,
 )
 
-DATA_INGESTION_START_DATE = "2026-08-15 06:00:00"
-SCHEDULER_RUN_INTERVAL_MINUTES = 15
+import os
+
+DATA_INGESTION_START_DATE = os.getenv("DATA_INGESTION_START_DATE", "2026-08-15 06:00:00")
+SCHEDULER_RUN_INTERVAL_MINUTES = int(os.getenv("SCHEDULER_INTERVAL_MINUTES", "10"))
 MAX_PARALLEL_DATASETS = 6
 DEFAULT_DATASET_IDS = (
     "G5RMG",

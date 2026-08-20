@@ -47,6 +47,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleForbiddenException(ForbiddenException ex) {
+        log.warn("Forbidden: {}", ex.getMessage());
+        ApiResponse<Void> response = ApiResponse.error(ex.getMessage(), ex.getErrorCode());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<List<ValidationError>>> handleValidationExceptions(
             MethodArgumentNotValidException ex) {

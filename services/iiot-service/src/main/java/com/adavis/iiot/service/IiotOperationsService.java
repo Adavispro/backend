@@ -74,6 +74,7 @@ public class IiotOperationsService {
     private final MongoTemplate mongoTemplate;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final BatchPdfGeneratorService batchPdfGeneratorService;
 
     @Value("${iiot.ingestion.source-db.url:}")
     private String sourceDbUrl;
@@ -548,15 +549,95 @@ public class IiotOperationsService {
     }
 
     public List<Map<String, Object>> getBatchSummary(Map<String, Object> filter) {
+        List<Criteria> andCriteria = new java.util.ArrayList<>();
+
+        String tenantId = stringValue(filter.get("tenantId"));
+        if (!tenantId.isBlank()) {
+            andCriteria.add(new Criteria().orOperator(
+                    Criteria.where("tenantId").is(tenantId),
+                    Criteria.where("tenantId").exists(false),
+                    Criteria.where("tenantId").is(null)
+            ));
+        }
+
+        String plantId = stringValue(filter.get("plantId"));
+        if (!plantId.isBlank()) {
+            andCriteria.add(new Criteria().orOperator(
+                    Criteria.where("plantId").is(plantId),
+                    Criteria.where("plantId").exists(false),
+                    Criteria.where("plantId").is(null)
+            ));
+        }
+
+        String areaId = stringValue(filter.get("areaId"));
+        if (!areaId.isBlank()) {
+            andCriteria.add(Criteria.where("areaId").is(areaId));
+        }
+
+        String equipmentId = stringValue(filter.get("equipmentId"));
+        if (!equipmentId.isBlank()) {
+            andCriteria.add(new Criteria().orOperator(
+                    Criteria.where("equipmentId").is(equipmentId),
+                    Criteria.where("stages.equipmentCode").is(equipmentId),
+                    Criteria.where("stages.equipmentId").is(equipmentId)
+            ));
+        }
+
+        String productName = stringValue(filter.get("productName"));
+        if (!productName.isBlank()) {
+            andCriteria.add(Criteria.where("productName").is(productName));
+        }
+
+        String productCode = stringValue(filter.get("productCode"));
+        if (!productCode.isBlank()) {
+            andCriteria.add(Criteria.where("productCode").is(productCode));
+        }
+
+        String batchNo = stringValue(filter.get("batchNo"));
+        if (!batchNo.isBlank()) {
+            andCriteria.add(Criteria.where("batchNo").is(batchNo));
+        }
+
+        String lotNo = stringValue(filter.get("lotNo"));
+        if (!lotNo.isBlank()) {
+            andCriteria.add(Criteria.where("lotNo").is(lotNo));
+        }
+
+        Instant from = parseInstantSafe(filter.get("fromDate"));
+        Instant to = parseInstantSafe(filter.get("toDate"));
+        if (from != null && to != null) {
+            andCriteria.add(Criteria.where("batchStartAt").gte(from).lte(to));
+        } else if (from != null) {
+            andCriteria.add(Criteria.where("batchStartAt").gte(from));
+        } else if (to != null) {
+            andCriteria.add(Criteria.where("batchStartAt").lte(to));
+        }
+
+        String status = stringValue(filter.get("status"));
+        if (!status.isBlank()) {
+            if ("DEFERRED".equalsIgnoreCase(status)) {
+                andCriteria.add(new Criteria().orOperator(
+                        Criteria.where("overallStatus").is("DEFERRED"),
+                        Criteria.where("stages.approval.status").is("DEFERRED")
+                ));
+            } else if ("APPROVED".equalsIgnoreCase(status)) {
+                andCriteria.add(new Criteria().orOperator(
+                        Criteria.where("overallStatus").in("APPROVED", "COMPLETED"),
+                        Criteria.where("stages.approval.status").in("APPROVED", "COMPLETED")
+                ));
+            } else if ("PENDING".equalsIgnoreCase(status)) {
+                andCriteria.add(new Criteria().orOperator(
+                        Criteria.where("overallStatus").nin("APPROVED", "COMPLETED", "DEFERRED"),
+                        Criteria.where("stages.approval.status").nin("APPROVED", "COMPLETED", "DEFERRED")
+                ));
+            }
+        }
+
         Query query = new Query();
-        applyEqualsCriteria(query, filter, "tenantId");
-        applyEqualsCriteria(query, filter, "plantId");
-        applyEqualsCriteria(query, filter, "areaId");
-        applyEqualsCriteria(query, filter, "equipmentId");
-        applyEqualsCriteria(query, filter, "productName");
-        applyEqualsCriteria(query, filter, "batchNo");
-        applyEqualsCriteria(query, filter, "lotNo");
-        applyDateRangeCriteria(query, filter, "batchStartAt", "fromDate", "toDate");
+        if (!andCriteria.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(andCriteria.toArray(new Criteria[0])));
+        }
+
         query.with(Sort.by(Sort.Direction.DESC, "batchStartAt", "updatedAt"));
         int limit = toInteger(filter.get("limit"), 500, 5000);
         int offset = toNonNegativeInteger(filter.get("offset"));
@@ -565,6 +646,60 @@ public class IiotOperationsService {
         }
         query.limit(limit);
         return mongoTemplate.find(query, Document.class, BATCH_SUMMARY_COLLECTION).stream().map(this::toMap).toList();
+    }
+
+    public byte[] getBatchPdfBytes(String batchNo, String lotNo, String equipmentCode, String tenantId, String userId, String userRole) {
+        Query query = new Query(Criteria.where("batchNo").is(batchNo));
+        if (lotNo != null && !lotNo.isBlank()) {
+            query.addCriteria(Criteria.where("lotNo").is(lotNo));
+        }
+        Document summary = mongoTemplate.findOne(query, Document.class, BATCH_SUMMARY_COLLECTION);
+        if (summary == null) {
+            throw new BusinessException("Batch summary not found for batch: " + batchNo);
+        }
+
+        String storagePath = summary.getString("pdfStoragePath");
+        byte[] pdfBytes;
+        if (storagePath != null && !storagePath.isBlank()) {
+            try {
+                pdfBytes = batchPdfGeneratorService.loadStoredPdfBytes(storagePath);
+            } catch (Exception ex) {
+                log.warn("Stored PDF not accessible at path={}, generating fresh copy: {}", storagePath, ex.getMessage());
+                String effectiveLot = lotNo != null && !lotNo.isBlank() ? lotNo : summary.getString("lotNo");
+                String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : "LINE_SUMMARY";
+                BatchPdfGeneratorService.PdfGenerationResult res = batchPdfGeneratorService.generateAndStoreBatchPdf(
+                        batchNo, effectiveLot, effectiveEq, tenantId, summary.getString("plantId"));
+                pdfBytes = res.getPdfBytes();
+            }
+        } else {
+            String effectiveLot = lotNo != null && !lotNo.isBlank() ? lotNo : summary.getString("lotNo");
+            String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : "LINE_SUMMARY";
+            BatchPdfGeneratorService.PdfGenerationResult res = batchPdfGeneratorService.generateAndStoreBatchPdf(
+                    batchNo, effectiveLot, effectiveEq, tenantId, summary.getString("plantId"));
+            pdfBytes = res.getPdfBytes();
+        }
+
+        // Record Audit Trail for PDF Download
+        Document auditEvent = new Document();
+        auditEvent.put("tenantId", tenantId != null ? tenantId : DEFAULT_TENANT_ID);
+        auditEvent.put("batchNo", batchNo);
+        auditEvent.put("lotNo", lotNo != null ? lotNo : summary.getString("lotNo"));
+        auditEvent.put("equipmentCode", equipmentCode != null ? equipmentCode : "ALL");
+        auditEvent.put("action", "DOWNLOAD_BATCH_DOSSIER_PDF");
+        auditEvent.put("userId", userId != null ? userId : "SYSTEM");
+        auditEvent.put("userRole", userRole != null ? userRole : "USER");
+        auditEvent.put("comments", "GxP PDF Batch Dossier downloaded");
+        Date now = Date.from(Instant.now());
+        auditEvent.put("timestamp", now);
+        auditEvent.put("createdAt", now);
+        auditEvent.put("esignatureVerified", true);
+        try {
+            mongoTemplate.insert(auditEvent, "iiot_workflow_audit_trail");
+        } catch (Exception ex) {
+            log.error("Failed to write audit trail for PDF download of batch={}: {}", batchNo, ex.getMessage());
+        }
+
+        return pdfBytes;
     }
 
     public Map<String, Object> updateBatchSummaryApproval(Map<String, Object> request) {
@@ -1462,7 +1597,15 @@ public class IiotOperationsService {
     private void applyEqualsCriteria(Query query, Map<String, Object> filter, String key) {
         String value = stringValue(filter.get(key));
         if (value != null && !value.isBlank()) {
-            query.addCriteria(Criteria.where(key).is(value));
+            if ("tenantId".equals(key) || "plantId".equals(key)) {
+                query.addCriteria(new Criteria().orOperator(
+                        Criteria.where(key).is(value),
+                        Criteria.where(key).exists(false),
+                        Criteria.where(key).is(null)
+                ));
+            } else {
+                query.addCriteria(Criteria.where(key).is(value));
+            }
         }
     }
 

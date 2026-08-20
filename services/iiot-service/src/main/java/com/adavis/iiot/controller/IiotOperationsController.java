@@ -2,6 +2,7 @@ package com.adavis.iiot.controller;
 
 import com.adavis.common.dto.ApiResponse;
 import com.adavis.iiot.service.BatchWorkflowService;
+import com.adavis.iiot.service.DynamicWorkflowEngine;
 import com.adavis.iiot.service.IiotOperationsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ public class IiotOperationsController {
 
     private final IiotOperationsService iiotOperationsService;
     private final BatchWorkflowService batchWorkflowService;
+    private final DynamicWorkflowEngine dynamicWorkflowEngine;
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/equipment-master")
@@ -209,30 +211,59 @@ public class IiotOperationsController {
 
     @GetMapping("/reports/batch-summary")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getBatchSummary(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-Plant-Id", required = false) String headerPlantId,
             @RequestParam(required = false) String tenantId,
             @RequestParam(required = false) String plantId,
             @RequestParam(required = false) String areaId,
             @RequestParam(required = false) String equipmentId,
             @RequestParam(required = false) String productName,
+            @RequestParam(required = false) String productCode,
             @RequestParam(required = false) String batchNo,
             @RequestParam(required = false) String lotNo,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) Integer limit,
             @RequestParam(required = false) Integer offset) {
+        String effectiveTenantId = (tenantId != null && !tenantId.isBlank()) ? tenantId : (headerTenantId != null ? headerTenantId : "");
+        String effectivePlantId = (plantId != null && !plantId.isBlank()) ? plantId : (headerPlantId != null ? headerPlantId : "");
         Map<String, Object> filter = Map.ofEntries(
-                Map.entry("tenantId", tenantId == null ? "" : tenantId),
-                Map.entry("plantId", plantId == null ? "" : plantId),
+                Map.entry("tenantId", effectiveTenantId),
+                Map.entry("plantId", effectivePlantId),
                 Map.entry("areaId", areaId == null ? "" : areaId),
                 Map.entry("equipmentId", equipmentId == null ? "" : equipmentId),
                 Map.entry("productName", productName == null ? "" : productName),
+                Map.entry("productCode", productCode == null ? "" : productCode),
                 Map.entry("batchNo", batchNo == null ? "" : batchNo),
                 Map.entry("lotNo", lotNo == null ? "" : lotNo),
+                Map.entry("status", status == null ? "" : status),
                 Map.entry("fromDate", fromDate == null ? "" : fromDate),
                 Map.entry("toDate", toDate == null ? "" : toDate),
                 Map.entry("limit", limit == null ? 500 : limit),
                 Map.entry("offset", offset == null ? 0 : offset));
         return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getBatchSummary(filter)));
+    }
+
+    @GetMapping("/batch-reports/{batchNo}/pdf")
+    public ResponseEntity<byte[]> downloadBatchPdf(
+            @PathVariable String batchNo,
+            @RequestParam(required = false) String lotNo,
+            @RequestParam(required = false) String equipmentCode,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+
+        byte[] pdfBytes = iiotOperationsService.getBatchPdfBytes(
+                batchNo, lotNo, equipmentCode, headerTenantId, userId, userRole);
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+        String filename = String.format("Batch_Dossier_%s.pdf", batchNo);
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename(filename).build());
+        headers.setContentLength(pdfBytes.length);
+
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 
     @PostMapping("/reports/batch-summary/approval")
@@ -303,6 +334,152 @@ public class IiotOperationsController {
         String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
         List<Map<String, Object>> auditTrail = batchWorkflowService.getWorkflowAuditTrail(batchNo, lotNo, equipmentCode, effectiveTenant);
         return ResponseEntity.ok(ApiResponse.success(auditTrail));
+    }
+
+    @GetMapping("/workflow/allowed-actions")
+    public ResponseEntity<ApiResponse<List<DynamicWorkflowEngine.AllowedActionDto>>> getAllowedActions(
+            @RequestParam String batchNo,
+            @RequestParam String lotNo,
+            @RequestParam String equipmentCode,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        String userId = headerUserId;
+        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                userId = jwtTokenProvider.getUserIdFromToken(authHeader.substring(7).trim());
+            } catch (Exception ignored) {}
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = "SYSTEM";
+        }
+
+        String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
+        List<DynamicWorkflowEngine.AllowedActionDto> actions = dynamicWorkflowEngine.getAllowedActions(
+                userId, headerUserRole, effectiveTenant, plantId, batchNo, lotNo, equipmentCode);
+
+        return ResponseEntity.ok(ApiResponse.success(actions));
+    }
+
+    @PostMapping("/workflow/execute-action")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> executeWorkflowAction(
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody DynamicWorkflowEngine.ActionExecutionRequest request) {
+
+        String userId = headerUserId;
+        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                userId = jwtTokenProvider.getUserIdFromToken(authHeader.substring(7).trim());
+            } catch (Exception ignored) {}
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = request.getUserId();
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = "SYSTEM";
+        }
+        request.setUserId(userId);
+
+        if (request.getUserRole() == null || request.getUserRole().isBlank()) {
+            request.setUserRole(headerUserRole);
+        }
+        if (request.getTenantId() == null || request.getTenantId().isBlank()) {
+            request.setTenantId(headerTenantId);
+        }
+
+        Map<String, Object> result = dynamicWorkflowEngine.executeAction(request);
+        return ResponseEntity.ok(ApiResponse.success("Workflow action executed successfully", result));
+    }
+
+    @PostMapping("/workflow/bulk-action")
+    public ResponseEntity<ApiResponse<DynamicWorkflowEngine.BulkExecutionResult>> executeBulkAction(
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-Plant-Id", required = false) String headerPlantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody DynamicWorkflowEngine.BulkActionExecutionRequest request) {
+
+        String userId = headerUserId;
+        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                userId = jwtTokenProvider.getUserIdFromToken(authHeader.substring(7).trim());
+            } catch (Exception ignored) {}
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = request.getUserId();
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = "SYSTEM";
+        }
+        request.setUserId(userId);
+
+        if (request.getUserRole() == null || request.getUserRole().isBlank()) {
+            request.setUserRole(headerUserRole);
+        }
+        if (request.getTenantId() == null || request.getTenantId().isBlank()) {
+            request.setTenantId(headerTenantId);
+        }
+        if (request.getPlantId() == null || request.getPlantId().isBlank()) {
+            request.setPlantId(headerPlantId);
+        }
+
+        DynamicWorkflowEngine.BulkExecutionResult result = dynamicWorkflowEngine.executeBulkAction(request);
+        return ResponseEntity.ok(ApiResponse.success("Bulk workflow action executed", result));
+    }
+
+    @GetMapping("/workflow/dashboard-counts")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getWorkflowDashboardCounts(
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        String userId = headerUserId;
+        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                userId = jwtTokenProvider.getUserIdFromToken(authHeader.substring(7).trim());
+            } catch (Exception ignored) {}
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = "SYSTEM";
+        }
+
+        String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
+        Map<String, Object> counts = dynamicWorkflowEngine.getDashboardCounts(
+                userId, headerUserRole, effectiveTenant, plantId);
+
+        return ResponseEntity.ok(ApiResponse.success(counts));
+    }
+
+    @GetMapping("/workflow/instance")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getWorkflowInstance(
+            @RequestParam String batchNo,
+            @RequestParam String lotNo,
+            @RequestParam String equipmentCode,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+
+        String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
+        var instance = dynamicWorkflowEngine.getOrCreateWorkflowInstance(
+                batchNo, lotNo, equipmentCode, effectiveTenant, plantId, null, "SYSTEM");
+        var history = dynamicWorkflowEngine.getWorkflowActionHistory(batchNo, lotNo, equipmentCode);
+
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("instance", instance);
+        response.put("history", history);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/reports/batch-summary/bulk-approval")

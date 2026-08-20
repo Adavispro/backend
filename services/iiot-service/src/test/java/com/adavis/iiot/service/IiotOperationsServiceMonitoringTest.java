@@ -31,12 +31,15 @@ class IiotOperationsServiceMonitoringTest {
     @Mock
     private StringRedisTemplate stringRedisTemplate;
 
+    @Mock
+    private BatchPdfGeneratorService batchPdfGeneratorService;
+
     private IiotOperationsService service;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        service = new IiotOperationsService(mongoTemplate, stringRedisTemplate, new ObjectMapper());
+        service = new IiotOperationsService(mongoTemplate, stringRedisTemplate, new ObjectMapper(), batchPdfGeneratorService);
     }
 
     @Test
