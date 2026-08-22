@@ -28,14 +28,64 @@ $ErrorActionPreference = "Stop"
 
 $backendRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 
-$pythonExe = Join-Path $backendRoot ".venv\Scripts\python.exe"
-
 # ------------------------------------------------------------
-# Validate Python environment
+# Resolve Python executable
 # ------------------------------------------------------------
 
-if (-not (Test-Path $pythonExe)) {
-    throw "Python executable not found at '$pythonExe'. Create the backend virtual environment first."
+$pythonCommand = $null
+
+# Try "python"
+$pythonPath = Get-Command python -ErrorAction SilentlyContinue
+
+if ($null -ne $pythonPath) {
+    $pythonCommand = $pythonPath.Source
+}
+else {
+    # Try "python3" - Ubuntu/Linux
+    $python3Path = Get-Command python3 -ErrorAction SilentlyContinue
+
+    if ($null -ne $python3Path) {
+        $pythonCommand = $python3Path.Source
+    }
+    else {
+        # Try Windows Python launcher "py"
+        $pyPath = Get-Command py -ErrorAction SilentlyContinue
+
+        if ($null -ne $pyPath) {
+            $pythonCommand = $pyPath.Source
+        }
+    }
+}
+
+if ($null -eq $pythonCommand) {
+    throw @"
+Python was not found on this machine.
+
+Please verify Python is installed and available in PATH.
+
+Try:
+
+    python --version
+    python3 --version
+"@
+}
+
+# ------------------------------------------------------------
+# Validate Python
+# ------------------------------------------------------------
+
+try {
+    $pythonVersion = & $pythonCommand --version 2>&1
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Python command returned exit code $LASTEXITCODE."
+    }
+
+    Write-Host "Python executable : $pythonCommand" -ForegroundColor Gray
+    Write-Host "Python version    : $pythonVersion" -ForegroundColor Gray
+}
+catch {
+    throw "Python was found but could not be executed. Details: $($_.Exception.Message)"
 }
 
 # ------------------------------------------------------------
@@ -54,9 +104,6 @@ if ($validDatasetIds.Count -eq 0) {
 
 # ------------------------------------------------------------
 # Build mock endpoint
-# IMPORTANT:
-# Use ${SourceApiBaseUrl} so PowerShell does not interpret
-# '?pointname' as part of the variable name.
 # ------------------------------------------------------------
 
 $testDatasetId = $validDatasetIds[0]
@@ -74,11 +121,12 @@ Write-Host "============================================" -ForegroundColor DarkC
 Write-Host ""
 
 Write-Host "Checking mock data service..." -ForegroundColor Cyan
-Write-Host "URL: $SourceApiBaseUrl" -ForegroundColor Gray
-Write-Host "Test endpoint: $mockEndpoint" -ForegroundColor Gray
+Write-Host "URL            : $SourceApiBaseUrl" -ForegroundColor Gray
+Write-Host "Test endpoint  : $mockEndpoint" -ForegroundColor Gray
 Write-Host ""
 
 try {
+
     $response = Invoke-RestMethod `
         -Uri $mockEndpoint `
         -Method Get `
@@ -95,6 +143,7 @@ try {
     Write-Host "Mock data service is reachable." -ForegroundColor Green
 }
 catch {
+
     throw @"
 Mock data service is not reachable at:
 
@@ -102,7 +151,7 @@ $SourceApiBaseUrl
 
 Start the mock service with:
 
-.\scripts\run-mock-data-service.ps1
+./run-mock-data-service.ps1
 
 Details:
 $($_.Exception.Message)
@@ -117,7 +166,7 @@ Write-Host ""
 Write-Host "Running one ingestion cycle..." -ForegroundColor Cyan
 Write-Host "Mongo database : $DbName" -ForegroundColor Gray
 Write-Host "Backend root   : $backendRoot" -ForegroundColor Gray
-Write-Host "Python         : $pythonExe" -ForegroundColor Gray
+Write-Host "Python         : $pythonCommand" -ForegroundColor Gray
 Write-Host "Dataset count  : $($validDatasetIds.Count)" -ForegroundColor Gray
 Write-Host "Datasets       : $($validDatasetIds -join ', ')" -ForegroundColor Gray
 Write-Host ""
@@ -139,7 +188,7 @@ try {
     Write-Host "Starting scheduler ingestion..." -ForegroundColor Cyan
     Write-Host ""
 
-    & $pythonExe `
+    & $pythonCommand `
         -m scheduler.run_scheduler_loop `
         --mongo-uri $MongoUri `
         --db-name $DbName `
