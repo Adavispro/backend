@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class NotificationRecipientResolver {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NotificationRecipientResolver.class);
+
     private final MongoTemplate mongoTemplate;
 
     private static final String USERS_COLLECTION = "mdm_user_profiles";

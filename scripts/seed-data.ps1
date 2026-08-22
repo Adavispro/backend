@@ -174,7 +174,7 @@ if (-not (Invoke-MongoCommand -Uris $mongoUris -Arguments @("/docker-entrypoint-
     throw "Mongo seed operation failed."
 }
 
-if (Test-Path $realtimeExportScript) {
+if ((Test-Path $realtimeExportScript) -and (Test-Path (Join-Path (Get-RepoRoot) "realtime_sample_data"))) {
     Write-Step "Exporting realtime Excel sheets to JSON"
     & $realtimeExportScript
     if ($LASTEXITCODE -ne 0) {
@@ -184,22 +184,8 @@ if (Test-Path $realtimeExportScript) {
 
 if (Test-Path $iiotSeedScript) {
     Write-Step "Applying IIOT sample seed script to MongoDB"
-    $containerIiotSeedScript = "/tmp/seed_data_iiot_file.js"
-    & docker cp $iiotSeedScript "adavis-mongodb:$containerIiotSeedScript"
+    Get-Content -Raw -Path $iiotSeedScript | & docker exec -i adavis-mongodb mongosh "mongodb://admin:Admin123!@localhost:27017/adavis_platform?authSource=admin" --quiet
     if ($LASTEXITCODE -ne 0) {
-        throw "Failed to copy IIOT seed script into adavis-mongodb container."
-    }
-
-    if (Test-Path $realtimeJsonDir) {
-        Write-Step "Copying realtime JSON payloads into MongoDB container"
-        & docker exec adavis-mongodb sh -c "rm -rf /tmp/realtime_sample_data_json && mkdir -p /tmp/realtime_sample_data_json"
-        & docker cp "$realtimeJsonDir/." "adavis-mongodb:/tmp/realtime_sample_data_json/"
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to copy realtime JSON payloads into adavis-mongodb container."
-        }
-    }
-
-    if (-not (Invoke-MongoCommand -Uris $mongoUris -Arguments @($containerIiotSeedScript) -Silent)) {
         throw "IIOT seed operation failed."
     }
 }

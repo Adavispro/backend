@@ -377,7 +377,7 @@ class SchedulerIngestionService:
                 {
                     "$set": {
                         "equipmentId": equipment_code,
-                        "currentState": "Running" if "START" in str(execution_status).upper() or execution_status in ("IN_PROGRESS", "COMPLETED") else "Idle",
+                        "currentState": "Running" if "START" in str(stage_status).upper() or stage_status in ("IN_PROGRESS", "COMPLETED") else "Idle",
                         "stateReason": f"Batch in progress: {batch_no}",
                         "lastBatchNo": batch_no,
                         "lastLotNo": lot_no,

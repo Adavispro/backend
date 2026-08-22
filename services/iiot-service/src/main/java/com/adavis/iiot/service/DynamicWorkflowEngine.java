@@ -27,6 +27,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class DynamicWorkflowEngine {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DynamicWorkflowEngine.class);
+
     private final MongoTemplate mongoTemplate;
     private final NotificationService notificationService;
     private final BatchPdfGeneratorService batchPdfGeneratorService;
@@ -53,10 +55,6 @@ public class DynamicWorkflowEngine {
     public static final String ROLE_APPROVER = "QA_APPROVER";
     public static final String ROLE_SUPERVISOR = "SHIFT_SUPERVISOR";
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class AllowedActionDto {
         private String actionCode;
         private String actionName;
@@ -74,12 +72,102 @@ public class DynamicWorkflowEngine {
         private String toStageCode;
         private String resultingStatus;
         private String returnStageCode;
+
+        public AllowedActionDto() {}
+
+        public static AllowedActionDtoBuilder builder() { return new AllowedActionDtoBuilder(); }
+
+        public static class AllowedActionDtoBuilder {
+            private String actionCode;
+            private String actionName;
+            private String displayName;
+            private String actionType;
+            private String applicableRole;
+            private Boolean requiresEsign;
+            private Boolean requiresComment;
+            private Boolean requiresJustification;
+            private Boolean requiresAdditionalInfo;
+            private Boolean requiresResponse;
+            private Boolean requiresUserSelection;
+            private Boolean requiresConfirmation;
+            private String fromStageCode;
+            private String toStageCode;
+            private String resultingStatus;
+            private String returnStageCode;
+
+            public AllowedActionDtoBuilder actionCode(String v) { this.actionCode = v; return this; }
+            public AllowedActionDtoBuilder actionName(String v) { this.actionName = v; return this; }
+            public AllowedActionDtoBuilder displayName(String v) { this.displayName = v; return this; }
+            public AllowedActionDtoBuilder actionType(String v) { this.actionType = v; return this; }
+            public AllowedActionDtoBuilder applicableRole(String v) { this.applicableRole = v; return this; }
+            public AllowedActionDtoBuilder requiresEsign(Boolean v) { this.requiresEsign = v; return this; }
+            public AllowedActionDtoBuilder requiresComment(Boolean v) { this.requiresComment = v; return this; }
+            public AllowedActionDtoBuilder requiresJustification(Boolean v) { this.requiresJustification = v; return this; }
+            public AllowedActionDtoBuilder requiresAdditionalInfo(Boolean v) { this.requiresAdditionalInfo = v; return this; }
+            public AllowedActionDtoBuilder requiresResponse(Boolean v) { this.requiresResponse = v; return this; }
+            public AllowedActionDtoBuilder requiresUserSelection(Boolean v) { this.requiresUserSelection = v; return this; }
+            public AllowedActionDtoBuilder requiresConfirmation(Boolean v) { this.requiresConfirmation = v; return this; }
+            public AllowedActionDtoBuilder fromStageCode(String v) { this.fromStageCode = v; return this; }
+            public AllowedActionDtoBuilder toStageCode(String v) { this.toStageCode = v; return this; }
+            public AllowedActionDtoBuilder resultingStatus(String v) { this.resultingStatus = v; return this; }
+            public AllowedActionDtoBuilder returnStageCode(String v) { this.returnStageCode = v; return this; }
+
+            public AllowedActionDto build() {
+                AllowedActionDto dto = new AllowedActionDto();
+                dto.actionCode = this.actionCode;
+                dto.actionName = this.actionName;
+                dto.displayName = this.displayName;
+                dto.actionType = this.actionType;
+                dto.applicableRole = this.applicableRole;
+                dto.requiresEsign = this.requiresEsign;
+                dto.requiresComment = this.requiresComment;
+                dto.requiresJustification = this.requiresJustification;
+                dto.requiresAdditionalInfo = this.requiresAdditionalInfo;
+                dto.requiresResponse = this.requiresResponse;
+                dto.requiresUserSelection = this.requiresUserSelection;
+                dto.requiresConfirmation = this.requiresConfirmation;
+                dto.fromStageCode = this.fromStageCode;
+                dto.toStageCode = this.toStageCode;
+                dto.resultingStatus = this.resultingStatus;
+                dto.returnStageCode = this.returnStageCode;
+                return dto;
+            }
+        }
+
+        public String getActionCode() { return actionCode; }
+        public void setActionCode(String actionCode) { this.actionCode = actionCode; }
+        public String getActionName() { return actionName; }
+        public void setActionName(String actionName) { this.actionName = actionName; }
+        public String getDisplayName() { return displayName; }
+        public void setDisplayName(String displayName) { this.displayName = displayName; }
+        public String getActionType() { return actionType; }
+        public void setActionType(String actionType) { this.actionType = actionType; }
+        public String getApplicableRole() { return applicableRole; }
+        public void setApplicableRole(String applicableRole) { this.applicableRole = applicableRole; }
+        public Boolean getRequiresEsign() { return requiresEsign; }
+        public void setRequiresEsign(Boolean requiresEsign) { this.requiresEsign = requiresEsign; }
+        public Boolean getRequiresComment() { return requiresComment; }
+        public void setRequiresComment(Boolean requiresComment) { this.requiresComment = requiresComment; }
+        public Boolean getRequiresJustification() { return requiresJustification; }
+        public void setRequiresJustification(Boolean requiresJustification) { this.requiresJustification = requiresJustification; }
+        public Boolean getRequiresAdditionalInfo() { return requiresAdditionalInfo; }
+        public void setRequiresAdditionalInfo(Boolean requiresAdditionalInfo) { this.requiresAdditionalInfo = requiresAdditionalInfo; }
+        public Boolean getRequiresResponse() { return requiresResponse; }
+        public void setRequiresResponse(Boolean requiresResponse) { this.requiresResponse = requiresResponse; }
+        public Boolean getRequiresUserSelection() { return requiresUserSelection; }
+        public void setRequiresUserSelection(Boolean requiresUserSelection) { this.requiresUserSelection = requiresUserSelection; }
+        public Boolean getRequiresConfirmation() { return requiresConfirmation; }
+        public void setRequiresConfirmation(Boolean requiresConfirmation) { this.requiresConfirmation = requiresConfirmation; }
+        public String getFromStageCode() { return fromStageCode; }
+        public void setFromStageCode(String fromStageCode) { this.fromStageCode = fromStageCode; }
+        public String getToStageCode() { return toStageCode; }
+        public void setToStageCode(String toStageCode) { this.toStageCode = toStageCode; }
+        public String getResultingStatus() { return resultingStatus; }
+        public void setResultingStatus(String resultingStatus) { this.resultingStatus = resultingStatus; }
+        public String getReturnStageCode() { return returnStageCode; }
+        public void setReturnStageCode(String returnStageCode) { this.returnStageCode = returnStageCode; }
     }
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class ActionExecutionRequest {
         private String userId;
         private String userRole;
@@ -96,22 +184,133 @@ public class DynamicWorkflowEngine {
         private String responseNotes;
         private String supervisorName;
         private String esignatureReason;
+
+        public ActionExecutionRequest() {}
+
+        public static ActionExecutionRequestBuilder builder() { return new ActionExecutionRequestBuilder(); }
+
+        public static class ActionExecutionRequestBuilder {
+            private String userId;
+            private String userRole;
+            private String tenantId;
+            private String plantId;
+            private String batchNo;
+            private String lotNo;
+            private String equipmentCode;
+            private String actionCode;
+            private String password;
+            private String comments;
+            private String justification;
+            private String additionalInformation;
+            private String responseNotes;
+            private String supervisorName;
+            private String esignatureReason;
+
+            public ActionExecutionRequestBuilder userId(String v) { this.userId = v; return this; }
+            public ActionExecutionRequestBuilder userRole(String v) { this.userRole = v; return this; }
+            public ActionExecutionRequestBuilder tenantId(String v) { this.tenantId = v; return this; }
+            public ActionExecutionRequestBuilder plantId(String v) { this.plantId = v; return this; }
+            public ActionExecutionRequestBuilder batchNo(String v) { this.batchNo = v; return this; }
+            public ActionExecutionRequestBuilder lotNo(String v) { this.lotNo = v; return this; }
+            public ActionExecutionRequestBuilder equipmentCode(String v) { this.equipmentCode = v; return this; }
+            public ActionExecutionRequestBuilder actionCode(String v) { this.actionCode = v; return this; }
+            public ActionExecutionRequestBuilder password(String v) { this.password = v; return this; }
+            public ActionExecutionRequestBuilder comments(String v) { this.comments = v; return this; }
+            public ActionExecutionRequestBuilder justification(String v) { this.justification = v; return this; }
+            public ActionExecutionRequestBuilder additionalInformation(String v) { this.additionalInformation = v; return this; }
+            public ActionExecutionRequestBuilder responseNotes(String v) { this.responseNotes = v; return this; }
+            public ActionExecutionRequestBuilder supervisorName(String v) { this.supervisorName = v; return this; }
+            public ActionExecutionRequestBuilder esignatureReason(String v) { this.esignatureReason = v; return this; }
+
+            public ActionExecutionRequest build() {
+                ActionExecutionRequest r = new ActionExecutionRequest();
+                r.userId = this.userId;
+                r.userRole = this.userRole;
+                r.tenantId = this.tenantId;
+                r.plantId = this.plantId;
+                r.batchNo = this.batchNo;
+                r.lotNo = this.lotNo;
+                r.equipmentCode = this.equipmentCode;
+                r.actionCode = this.actionCode;
+                r.password = this.password;
+                r.comments = this.comments;
+                r.justification = this.justification;
+                r.additionalInformation = this.additionalInformation;
+                r.responseNotes = this.responseNotes;
+                r.supervisorName = this.supervisorName;
+                r.esignatureReason = this.esignatureReason;
+                return r;
+            }
+        }
+
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+        public String getUserRole() { return userRole; }
+        public void setUserRole(String userRole) { this.userRole = userRole; }
+        public String getTenantId() { return tenantId; }
+        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public String getPlantId() { return plantId; }
+        public void setPlantId(String plantId) { this.plantId = plantId; }
+        public String getBatchNo() { return batchNo; }
+        public void setBatchNo(String batchNo) { this.batchNo = batchNo; }
+        public String getLotNo() { return lotNo; }
+        public void setLotNo(String lotNo) { this.lotNo = lotNo; }
+        public String getEquipmentCode() { return equipmentCode; }
+        public void setEquipmentCode(String equipmentCode) { this.equipmentCode = equipmentCode; }
+        public String getActionCode() { return actionCode; }
+        public void setActionCode(String actionCode) { this.actionCode = actionCode; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+        public String getComments() { return comments; }
+        public void setComments(String comments) { this.comments = comments; }
+        public String getJustification() { return justification; }
+        public void setJustification(String justification) { this.justification = justification; }
+        public String getAdditionalInformation() { return additionalInformation; }
+        public void setAdditionalInformation(String additionalInformation) { this.additionalInformation = additionalInformation; }
+        public String getResponseNotes() { return responseNotes; }
+        public void setResponseNotes(String responseNotes) { this.responseNotes = responseNotes; }
+        public String getSupervisorName() { return supervisorName; }
+        public void setSupervisorName(String supervisorName) { this.supervisorName = supervisorName; }
+        public String getEsignatureReason() { return esignatureReason; }
+        public void setEsignatureReason(String esignatureReason) { this.esignatureReason = esignatureReason; }
     }
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class BulkActionItem {
         private String batchNo;
         private String lotNo;
         private String equipmentCode;
+
+        public BulkActionItem() {}
+        public BulkActionItem(String batchNo, String lotNo, String equipmentCode) {
+            this.batchNo = batchNo;
+            this.lotNo = lotNo;
+            this.equipmentCode = equipmentCode;
+        }
+
+        public static BulkActionItemBuilder builder() { return new BulkActionItemBuilder(); }
+
+        public static class BulkActionItemBuilder {
+            private String batchNo;
+            private String lotNo;
+            private String equipmentCode;
+
+            public BulkActionItemBuilder batchNo(String v) { this.batchNo = v; return this; }
+            public BulkActionItemBuilder lotNo(String v) { this.lotNo = v; return this; }
+            public BulkActionItemBuilder equipmentCode(String v) { this.equipmentCode = v; return this; }
+
+            public BulkActionItem build() {
+                return new BulkActionItem(batchNo, lotNo, equipmentCode);
+            }
+        }
+
+        public String getBatchNo() { return batchNo; }
+        public void setBatchNo(String batchNo) { this.batchNo = batchNo; }
+        public String getLotNo() { return lotNo; }
+        public void setLotNo(String lotNo) { this.lotNo = lotNo; }
+        public String getEquipmentCode() { return equipmentCode; }
+        public void setEquipmentCode(String equipmentCode) { this.equipmentCode = equipmentCode; }
     }
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class BulkActionExecutionRequest {
         private String userId;
         private String userRole;
@@ -126,42 +325,229 @@ public class DynamicWorkflowEngine {
         private String supervisorName;
         private String esignatureReason;
         private List<BulkActionItem> items;
+
+        public BulkActionExecutionRequest() {}
+
+        public static BulkActionExecutionRequestBuilder builder() { return new BulkActionExecutionRequestBuilder(); }
+
+        public static class BulkActionExecutionRequestBuilder {
+            private String userId;
+            private String userRole;
+            private String tenantId;
+            private String plantId;
+            private String actionCode;
+            private String password;
+            private String comments;
+            private String justification;
+            private String additionalInformation;
+            private String responseNotes;
+            private String supervisorName;
+            private String esignatureReason;
+            private List<BulkActionItem> items;
+
+            public BulkActionExecutionRequestBuilder userId(String v) { this.userId = v; return this; }
+            public BulkActionExecutionRequestBuilder userRole(String v) { this.userRole = v; return this; }
+            public BulkActionExecutionRequestBuilder tenantId(String v) { this.tenantId = v; return this; }
+            public BulkActionExecutionRequestBuilder plantId(String v) { this.plantId = v; return this; }
+            public BulkActionExecutionRequestBuilder actionCode(String v) { this.actionCode = v; return this; }
+            public BulkActionExecutionRequestBuilder password(String v) { this.password = v; return this; }
+            public BulkActionExecutionRequestBuilder comments(String v) { this.comments = v; return this; }
+            public BulkActionExecutionRequestBuilder justification(String v) { this.justification = v; return this; }
+            public BulkActionExecutionRequestBuilder additionalInformation(String v) { this.additionalInformation = v; return this; }
+            public BulkActionExecutionRequestBuilder responseNotes(String v) { this.responseNotes = v; return this; }
+            public BulkActionExecutionRequestBuilder supervisorName(String v) { this.supervisorName = v; return this; }
+            public BulkActionExecutionRequestBuilder esignatureReason(String v) { this.esignatureReason = v; return this; }
+            public BulkActionExecutionRequestBuilder items(List<BulkActionItem> v) { this.items = v; return this; }
+
+            public BulkActionExecutionRequest build() {
+                BulkActionExecutionRequest req = new BulkActionExecutionRequest();
+                req.userId = this.userId;
+                req.userRole = this.userRole;
+                req.tenantId = this.tenantId;
+                req.plantId = this.plantId;
+                req.actionCode = this.actionCode;
+                req.password = this.password;
+                req.comments = this.comments;
+                req.justification = this.justification;
+                req.additionalInformation = this.additionalInformation;
+                req.responseNotes = this.responseNotes;
+                req.supervisorName = this.supervisorName;
+                req.esignatureReason = this.esignatureReason;
+                req.items = this.items;
+                return req;
+            }
+        }
+
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+        public String getUserRole() { return userRole; }
+        public void setUserRole(String userRole) { this.userRole = userRole; }
+        public String getTenantId() { return tenantId; }
+        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public String getPlantId() { return plantId; }
+        public void setPlantId(String plantId) { this.plantId = plantId; }
+        public String getActionCode() { return actionCode; }
+        public void setActionCode(String actionCode) { this.actionCode = actionCode; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+        public String getComments() { return comments; }
+        public void setComments(String comments) { this.comments = comments; }
+        public String getJustification() { return justification; }
+        public void setJustification(String justification) { this.justification = justification; }
+        public String getAdditionalInformation() { return additionalInformation; }
+        public void setAdditionalInformation(String additionalInformation) { this.additionalInformation = additionalInformation; }
+        public String getResponseNotes() { return responseNotes; }
+        public void setResponseNotes(String responseNotes) { this.responseNotes = responseNotes; }
+        public String getSupervisorName() { return supervisorName; }
+        public void setSupervisorName(String supervisorName) { this.supervisorName = supervisorName; }
+        public String getEsignatureReason() { return esignatureReason; }
+        public void setEsignatureReason(String esignatureReason) { this.esignatureReason = esignatureReason; }
+        public List<BulkActionItem> getItems() { return items; }
+        public void setItems(List<BulkActionItem> items) { this.items = items; }
     }
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class BulkSuccessItem {
         private String batchNo;
         private String lotNo;
         private String equipmentCode;
         private String newStatus;
         private String message;
+
+        public BulkSuccessItem() {}
+        public BulkSuccessItem(String batchNo, String lotNo, String equipmentCode, String newStatus, String message) {
+            this.batchNo = batchNo;
+            this.lotNo = lotNo;
+            this.equipmentCode = equipmentCode;
+            this.newStatus = newStatus;
+            this.message = message;
+        }
+
+        public static BulkSuccessItemBuilder builder() { return new BulkSuccessItemBuilder(); }
+
+        public static class BulkSuccessItemBuilder {
+            private String batchNo;
+            private String lotNo;
+            private String equipmentCode;
+            private String newStatus;
+            private String message;
+
+            public BulkSuccessItemBuilder batchNo(String v) { this.batchNo = v; return this; }
+            public BulkSuccessItemBuilder lotNo(String v) { this.lotNo = v; return this; }
+            public BulkSuccessItemBuilder equipmentCode(String v) { this.equipmentCode = v; return this; }
+            public BulkSuccessItemBuilder newStatus(String v) { this.newStatus = v; return this; }
+            public BulkSuccessItemBuilder message(String v) { this.message = v; return this; }
+
+            public BulkSuccessItem build() {
+                return new BulkSuccessItem(batchNo, lotNo, equipmentCode, newStatus, message);
+            }
+        }
+
+        public String getBatchNo() { return batchNo; }
+        public void setBatchNo(String batchNo) { this.batchNo = batchNo; }
+        public String getLotNo() { return lotNo; }
+        public void setLotNo(String lotNo) { this.lotNo = lotNo; }
+        public String getEquipmentCode() { return equipmentCode; }
+        public void setEquipmentCode(String equipmentCode) { this.equipmentCode = equipmentCode; }
+        public String getNewStatus() { return newStatus; }
+        public void setNewStatus(String newStatus) { this.newStatus = newStatus; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
     }
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class BulkFailureItem {
         private String batchNo;
         private String lotNo;
         private String equipmentCode;
         private String reason;
         private String errorCode;
+
+        public BulkFailureItem() {}
+        public BulkFailureItem(String batchNo, String lotNo, String equipmentCode, String reason, String errorCode) {
+            this.batchNo = batchNo;
+            this.lotNo = lotNo;
+            this.equipmentCode = equipmentCode;
+            this.reason = reason;
+            this.errorCode = errorCode;
+        }
+
+        public static BulkFailureItemBuilder builder() { return new BulkFailureItemBuilder(); }
+
+        public static class BulkFailureItemBuilder {
+            private String batchNo;
+            private String lotNo;
+            private String equipmentCode;
+            private String reason;
+            private String errorCode;
+
+            public BulkFailureItemBuilder batchNo(String v) { this.batchNo = v; return this; }
+            public BulkFailureItemBuilder lotNo(String v) { this.lotNo = v; return this; }
+            public BulkFailureItemBuilder equipmentCode(String v) { this.equipmentCode = v; return this; }
+            public BulkFailureItemBuilder reason(String v) { this.reason = v; return this; }
+            public BulkFailureItemBuilder errorCode(String v) { this.errorCode = v; return this; }
+
+            public BulkFailureItem build() {
+                return new BulkFailureItem(batchNo, lotNo, equipmentCode, reason, errorCode);
+            }
+        }
+
+        public String getBatchNo() { return batchNo; }
+        public void setBatchNo(String batchNo) { this.batchNo = batchNo; }
+        public String getLotNo() { return lotNo; }
+        public void setLotNo(String lotNo) { this.lotNo = lotNo; }
+        public String getEquipmentCode() { return equipmentCode; }
+        public void setEquipmentCode(String equipmentCode) { this.equipmentCode = equipmentCode; }
+        public String getReason() { return reason; }
+        public void setReason(String reason) { this.reason = reason; }
+        public String getErrorCode() { return errorCode; }
+        public void setErrorCode(String errorCode) { this.errorCode = errorCode; }
     }
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class BulkExecutionResult {
         private int totalRequested;
         private int successCount;
         private int failureCount;
         private List<BulkSuccessItem> successfulItems;
         private List<BulkFailureItem> failedItems;
+
+        public BulkExecutionResult() {}
+        public BulkExecutionResult(int totalRequested, int successCount, int failureCount, List<BulkSuccessItem> successfulItems, List<BulkFailureItem> failedItems) {
+            this.totalRequested = totalRequested;
+            this.successCount = successCount;
+            this.failureCount = failureCount;
+            this.successfulItems = successfulItems;
+            this.failedItems = failedItems;
+        }
+
+        public static BulkExecutionResultBuilder builder() { return new BulkExecutionResultBuilder(); }
+
+        public static class BulkExecutionResultBuilder {
+            private int totalRequested;
+            private int successCount;
+            private int failureCount;
+            private List<BulkSuccessItem> successfulItems;
+            private List<BulkFailureItem> failedItems;
+
+            public BulkExecutionResultBuilder totalRequested(int v) { this.totalRequested = v; return this; }
+            public BulkExecutionResultBuilder successCount(int v) { this.successCount = v; return this; }
+            public BulkExecutionResultBuilder failureCount(int v) { this.failureCount = v; return this; }
+            public BulkExecutionResultBuilder successfulItems(List<BulkSuccessItem> v) { this.successfulItems = v; return this; }
+            public BulkExecutionResultBuilder failedItems(List<BulkFailureItem> v) { this.failedItems = v; return this; }
+
+            public BulkExecutionResult build() {
+                return new BulkExecutionResult(totalRequested, successCount, failureCount, successfulItems, failedItems);
+            }
+        }
+
+        public int getTotalRequested() { return totalRequested; }
+        public void setTotalRequested(int totalRequested) { this.totalRequested = totalRequested; }
+        public int getSuccessCount() { return successCount; }
+        public void setSuccessCount(int successCount) { this.successCount = successCount; }
+        public int getFailureCount() { return failureCount; }
+        public void setFailureCount(int failureCount) { this.failureCount = failureCount; }
+        public List<BulkSuccessItem> getSuccessfulItems() { return successfulItems; }
+        public void setSuccessfulItems(List<BulkSuccessItem> successfulItems) { this.successfulItems = successfulItems; }
+        public List<BulkFailureItem> getFailedItems() { return failedItems; }
+        public void setFailedItems(List<BulkFailureItem> failedItems) { this.failedItems = failedItems; }
     }
 
     // ============================================
@@ -224,8 +610,8 @@ public class DynamicWorkflowEngine {
             return Collections.emptyList();
         }
 
-        // Segregation of duties check: identify prior actors on this batch stage
-        Set<String> priorActors = getPriorActors(instance.getInstanceId(), batchNo, lotNo, equipmentCode);
+        // Segregation of duties check: identify prior submitters / reviewers on this batch stage
+        Set<String> priorActors = getPriorSubmittersAndReviewers(instance.getInstanceId(), batchNo, lotNo, equipmentCode);
         boolean isInitiatorOrReviewer = priorActors.contains(userId.toUpperCase(Locale.ROOT));
 
         List<AllowedActionDto> result = new ArrayList<>();
@@ -243,6 +629,13 @@ public class DynamicWorkflowEngine {
             Document actDoc = mongoTemplate.findOne(actQ, Document.class, ACTIONS_COLLECTION);
 
             String applicableRole = actDoc != null ? actDoc.getString("applicableRole") : stageDoc.getString("assignedRole");
+            if ("REQUEST_ADDITIONAL_INFO".equalsIgnoreCase(actionCode) || "REJECT".equalsIgnoreCase(actionCode)) {
+                if ("REVIEW".equalsIgnoreCase(currentStageCode)) {
+                    applicableRole = "PRODUCTION_REVIEWER";
+                } else if ("APPROVAL".equalsIgnoreCase(currentStageCode)) {
+                    applicableRole = "QA_APPROVER";
+                }
+            }
             if (applicableRole == null) applicableRole = "";
             applicableRole = applicableRole.toUpperCase(Locale.ROOT);
 
@@ -524,6 +917,19 @@ public class DynamicWorkflowEngine {
 
         String targetStatus = targetAction.getResultingStatus();
         String nextStageCode = targetAction.getToStageCode();
+
+        // Handle Return Routing for Provide Additional Information (Stage 2A to Reviewer vs Stage 3A to QA Approver)
+        if ("SUBMIT_RESPONSE".equalsIgnoreCase(actionCode) || "SUBMIT_JUSTIFICATION".equalsIgnoreCase(actionCode) || "PROVIDE_ADDITIONAL_INFO".equalsIgnoreCase(actionCode)) {
+            String returnedFrom = approval.getString("returnedFromStage");
+            if ("APPROVAL".equalsIgnoreCase(returnedFrom)) {
+                nextStageCode = "APPROVAL";
+                targetStatus = "PENDING_APPROVAL";
+            } else {
+                nextStageCode = "REVIEW";
+                targetStatus = "UNDER_REVIEW";
+            }
+        }
+
         Date now = Date.from(Instant.now());
 
         String effectiveComment = !comments.isEmpty() ? comments : (!justification.isEmpty() ? justification : (!additionalInfo.isEmpty() ? additionalInfo : responseNotes));
@@ -544,13 +950,12 @@ public class DynamicWorkflowEngine {
                         batchNo, lotNo, equipmentCode, tenantId, plantId);
                 approval.put("pdfDocumentId", pdfRes.getDocumentId());
                 approval.put("pdfStoragePath", pdfRes.getStoragePath());
-                approval.put("pdfGeneratedAt", Date.from(pdfRes.getGeneratedAt()));
                 approval.put("pdfSha256Checksum", pdfRes.getSha256Checksum());
-                approval.put("pdfStatus", "GENERATED");
+                approval.put("pdfGeneratedAt", now);
+                approval.put("pdfStatus", "READY");
 
                 summary.put("pdfDocumentId", pdfRes.getDocumentId());
                 summary.put("pdfStoragePath", pdfRes.getStoragePath());
-                summary.put("pdfGeneratedAt", Date.from(pdfRes.getGeneratedAt()));
                 summary.put("pdfSha256Checksum", pdfRes.getSha256Checksum());
             } catch (Exception ex) {
                 log.error("Failed to automatically generate PDF on approval for batch={}: {}", batchNo, ex.getMessage(), ex);
@@ -567,7 +972,7 @@ public class DynamicWorkflowEngine {
                 targetStage.put("requestedBy", userId);
                 targetStage.put("requestedAt", now);
             }
-            if ("SUBMIT_RESPONSE".equalsIgnoreCase(actionCode) || "SUBMIT_JUSTIFICATION".equalsIgnoreCase(actionCode)) {
+            if ("SUBMIT_RESPONSE".equalsIgnoreCase(actionCode) || "SUBMIT_JUSTIFICATION".equalsIgnoreCase(actionCode) || "PROVIDE_ADDITIONAL_INFO".equalsIgnoreCase(actionCode)) {
                 approval.put("responseProvidedBy", userId);
                 approval.put("responseProvidedAt", now);
                 approval.put("responseNotes", !responseNotes.isEmpty() ? responseNotes : effectiveComment);
@@ -578,10 +983,16 @@ public class DynamicWorkflowEngine {
         } else if ("REVIEWER_REVIEWED".equalsIgnoreCase(targetStatus) || "PENDING_APPROVAL".equalsIgnoreCase(targetStatus)) {
             approval.put("reviewedBy", userId);
             approval.put("reviewedAt", now);
+            if ("SUBMIT_RESPONSE".equalsIgnoreCase(actionCode) || "SUBMIT_JUSTIFICATION".equalsIgnoreCase(actionCode) || "PROVIDE_ADDITIONAL_INFO".equalsIgnoreCase(actionCode)) {
+                approval.put("responseProvidedBy", userId);
+                approval.put("responseProvidedAt", now);
+                approval.put("responseNotes", !responseNotes.isEmpty() ? responseNotes : effectiveComment);
+            }
             if (!supervisorName.isEmpty()) {
                 targetStage.put("supervisorName", supervisorName);
             }
         } else if ("RETURNED_TO_OPERATOR".equalsIgnoreCase(targetStatus) || "REJECTED".equalsIgnoreCase(targetStatus) || "ADDITIONAL_INFO_REQUESTED".equalsIgnoreCase(targetStatus)) {
+            approval.put("returnedFromStage", targetAction.getFromStageCode());
             approval.put("rejectedBy", userId);
             approval.put("rejectedAt", now);
             approval.put("additionalInfoRequestedBy", userId);
@@ -978,7 +1389,7 @@ public class DynamicWorkflowEngine {
         return def;
     }
 
-    private Set<String> getPriorActors(String instanceId, String batchNo, String lotNo, String equipmentCode) {
+    private Set<String> getPriorSubmittersAndReviewers(String instanceId, String batchNo, String lotNo, String equipmentCode) {
         Set<String> actors = new HashSet<>();
         Query query = new Query();
         if (instanceId != null && !instanceId.isBlank()) {
@@ -991,8 +1402,13 @@ public class DynamicWorkflowEngine {
 
         List<WorkflowActionHistory> list = mongoTemplate.find(query, WorkflowActionHistory.class, HISTORY_COLLECTION);
         for (WorkflowActionHistory h : list) {
-            if (h.getPerformedBy() != null && !h.getPerformedBy().isBlank()) {
-                actors.add(h.getPerformedBy().toUpperCase(Locale.ROOT));
+            String fromStage = h.getFromStageCode() != null ? h.getFromStageCode().toUpperCase(Locale.ROOT) : "";
+            String role = h.getPerformerRole() != null ? h.getPerformerRole().toUpperCase(Locale.ROOT) : "";
+            // Only consider actors who submitted as operator or reviewed as reviewer (excluding QA Approvers)
+            if ("SUBMISSION".equals(fromStage) || "REVIEW".equals(fromStage) || role.contains("OPERATOR") || role.contains("REVIEWER")) {
+                if (h.getPerformedBy() != null && !h.getPerformedBy().isBlank() && !role.contains("APPROVER")) {
+                    actors.add(h.getPerformedBy().toUpperCase(Locale.ROOT));
+                }
             }
         }
         return actors;
@@ -1168,6 +1584,114 @@ public class DynamicWorkflowEngine {
         } catch (Exception e) {
             log.error("Failed to persist failed esign audit event: {}", e.getMessage());
         }
+    }
+
+    public Map<String, Object> claimWorkflowTask(String batchNo, String lotNo, String equipmentCode,
+                                                 String userId, String userRole, String tenantId, String plantId) {
+        WorkflowInstance instance = getOrCreateWorkflowInstance(batchNo, lotNo, equipmentCode, tenantId, plantId, null, userId);
+
+        Instant now = Instant.now();
+        instance.setAssignedTo(userId);
+        instance.setUpdatedAt(now);
+
+        Map<String, Object> ctx = instance.getContext() != null ? new LinkedHashMap<>(instance.getContext()) : new LinkedHashMap<>();
+        ctx.put("activeReviewer", userId);
+        ctx.put("activeReviewerRole", userRole);
+        ctx.put("claimedAt", now.toString());
+        instance.setContext(ctx);
+
+        mongoTemplate.save(instance, INSTANCE_COLLECTION);
+
+        try {
+            Query q = new Query(Criteria.where("batchNo").is(batchNo));
+            Document summary = mongoTemplate.findOne(q, Document.class, BATCH_SUMMARY_COLLECTION);
+            if (summary != null) {
+                @SuppressWarnings("unchecked")
+                List<Document> stages = (List<Document>) summary.get("stages");
+                if (stages != null) {
+                    for (Document stage : stages) {
+                        String eqC = stage.getString("equipmentCode");
+                        String eqI = stage.getString("equipmentId");
+                        String sid = (eqC != null && !eqC.isBlank()) ? eqC : eqI;
+                        if (equipmentCode.equalsIgnoreCase(sid)) {
+                            Document approval = stage.get("approval", Document.class);
+                            if (approval == null) {
+                                approval = new Document();
+                                stage.put("approval", approval);
+                            }
+                            approval.put("assignedTo", userId);
+                            approval.put("activeReviewer", userId);
+                            approval.put("activeReviewerRole", userRole);
+                            approval.put("claimedAt", Date.from(now));
+                            break;
+                        }
+                    }
+                    mongoTemplate.save(summary, BATCH_SUMMARY_COLLECTION);
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Could not update batch summary for task claim: {}", ex.getMessage());
+        }
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Task claimed successfully by " + userId);
+        res.put("assignedTo", userId);
+        res.put("activeReviewer", userId);
+        res.put("activeReviewerRole", userRole);
+        res.put("claimedAt", now.toString());
+        return res;
+    }
+
+    public Map<String, Object> unclaimWorkflowTask(String batchNo, String lotNo, String equipmentCode,
+                                                   String userId, String tenantId) {
+        WorkflowInstance instance = getOrCreateWorkflowInstance(batchNo, lotNo, equipmentCode, tenantId, null, null, userId);
+
+        Instant now = Instant.now();
+        instance.setAssignedTo(null);
+        instance.setUpdatedAt(now);
+
+        Map<String, Object> ctx = instance.getContext() != null ? new LinkedHashMap<>(instance.getContext()) : new LinkedHashMap<>();
+        ctx.remove("activeReviewer");
+        ctx.remove("activeReviewerRole");
+        ctx.remove("claimedAt");
+        instance.setContext(ctx);
+
+        mongoTemplate.save(instance, INSTANCE_COLLECTION);
+
+        try {
+            Query q = new Query(Criteria.where("batchNo").is(batchNo));
+            Document summary = mongoTemplate.findOne(q, Document.class, BATCH_SUMMARY_COLLECTION);
+            if (summary != null) {
+                @SuppressWarnings("unchecked")
+                List<Document> stages = (List<Document>) summary.get("stages");
+                if (stages != null) {
+                    for (Document stage : stages) {
+                        String eqC = stage.getString("equipmentCode");
+                        String eqI = stage.getString("equipmentId");
+                        String sid = (eqC != null && !eqC.isBlank()) ? eqC : eqI;
+                        if (equipmentCode.equalsIgnoreCase(sid)) {
+                            Document approval = stage.get("approval", Document.class);
+                            if (approval != null) {
+                                approval.remove("assignedTo");
+                                approval.remove("activeReviewer");
+                                approval.remove("activeReviewerRole");
+                                approval.remove("claimedAt");
+                            }
+                            break;
+                        }
+                    }
+                    mongoTemplate.save(summary, BATCH_SUMMARY_COLLECTION);
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Could not update batch summary for task unclaim: {}", ex.getMessage());
+        }
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Task released successfully by " + userId);
+        return res;
     }
 
     @SuppressWarnings("unchecked")

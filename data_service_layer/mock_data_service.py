@@ -374,7 +374,8 @@ class MockDataServiceHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         url = urlparse(self.path)
         query_params = parse_qs(url.query)
-        pointname = query_params.get("pointname", [""])[0]
+        pointname_list = query_params.get("PointName") or query_params.get("pointname") or [""]
+        pointname = pointname_list[0] if pointname_list else ""
 
         dataset_id, dataset_name, params = parse_pointname(pointname)
 

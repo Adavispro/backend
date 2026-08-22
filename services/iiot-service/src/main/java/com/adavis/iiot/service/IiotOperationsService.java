@@ -37,10 +37,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class IiotOperationsService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(IiotOperationsService.class);
 
     private static final String DEFAULT_TENANT_ID = "TNT-0001";
     private static final String DEFAULT_PLANT_ID = "PLNT-0001";
@@ -521,6 +522,22 @@ public class IiotOperationsService {
         return reactivateDocumentByBusinessKey(PRODUCT_MASTER_COLLECTION, "productId", productId);
     }
 
+    public Map<String, Object> getPlantTopology(String tenantId) {
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        List<Document> plants = mongoTemplate.find(new Query(), Document.class, "mdm_plants");
+        List<Document> blocks = mongoTemplate.find(new Query(), Document.class, "mdm_blocks");
+        List<Document> areas = mongoTemplate.find(new Query(), Document.class, "mdm_areas");
+        List<Document> rooms = mongoTemplate.find(new Query(), Document.class, "mdm_rooms");
+
+        result.put("plants", plants.stream().map(this::toMap).toList());
+        result.put("blocks", blocks.stream().map(this::toMap).toList());
+        result.put("areas", areas.stream().map(this::toMap).toList());
+        result.put("rooms", rooms.stream().map(this::toMap).toList());
+
+        return result;
+    }
+
     @Scheduled(fixedDelayString = "${iiot.ingestion.scheduler-delay-ms:15000}")
     public void runScheduledBatchIngestion() {
         Query mappingQuery = new Query(Criteria.where("isActive").is(true));
@@ -658,26 +675,13 @@ public class IiotOperationsService {
             throw new BusinessException("Batch summary not found for batch: " + batchNo);
         }
 
-        String storagePath = summary.getString("pdfStoragePath");
-        byte[] pdfBytes;
-        if (storagePath != null && !storagePath.isBlank()) {
-            try {
-                pdfBytes = batchPdfGeneratorService.loadStoredPdfBytes(storagePath);
-            } catch (Exception ex) {
-                log.warn("Stored PDF not accessible at path={}, generating fresh copy: {}", storagePath, ex.getMessage());
-                String effectiveLot = lotNo != null && !lotNo.isBlank() ? lotNo : summary.getString("lotNo");
-                String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : "LINE_SUMMARY";
-                BatchPdfGeneratorService.PdfGenerationResult res = batchPdfGeneratorService.generateAndStoreBatchPdf(
-                        batchNo, effectiveLot, effectiveEq, tenantId, summary.getString("plantId"));
-                pdfBytes = res.getPdfBytes();
-            }
-        } else {
-            String effectiveLot = lotNo != null && !lotNo.isBlank() ? lotNo : summary.getString("lotNo");
-            String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : "LINE_SUMMARY";
-            BatchPdfGeneratorService.PdfGenerationResult res = batchPdfGeneratorService.generateAndStoreBatchPdf(
-                    batchNo, effectiveLot, effectiveEq, tenantId, summary.getString("plantId"));
-            pdfBytes = res.getPdfBytes();
-        }
+        String effectiveLot = lotNo != null && !lotNo.isBlank() ? lotNo : summary.getString("lotNo");
+        String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : summary.getString("equipmentId");
+        if (effectiveEq == null || effectiveEq.isBlank()) effectiveEq = "G5RMG";
+
+        BatchPdfGeneratorService.PdfGenerationResult res = batchPdfGeneratorService.generateAndStoreBatchPdf(
+                batchNo, effectiveLot, effectiveEq, tenantId, summary.getString("plantId"));
+        byte[] pdfBytes = res.getPdfBytes();
 
         // Record Audit Trail for PDF Download
         Document auditEvent = new Document();
@@ -908,7 +912,7 @@ public class IiotOperationsService {
             applyMetaCriteria(query, "meta.productName", stringValue(filter.get("productName")));
         }
         applyDateRangeCriteria(query, filter, "observedAt", "fromDate", "toDate");
-        int limit = toInteger(filter.get("limit"), 1000, 10000);
+        int limit = toInteger(filter.get("limit"), 1000, 100000);
         int offset = toNonNegativeInteger(filter.get("offset"));
         if (offset > 0) {
             query.skip(offset);
@@ -1625,14 +1629,31 @@ public class IiotOperationsService {
         if (from == null && to == null) {
             return;
         }
-        Criteria criteria = Criteria.where(field);
+
+        List<Criteria> orBranches = new ArrayList<>();
+        Criteria primaryCrit = Criteria.where(field);
         if (from != null) {
-            criteria = criteria.gte(Date.from(from));
+            primaryCrit = primaryCrit.gte(Date.from(from));
         }
         if (to != null) {
-            criteria = criteria.lte(Date.from(to));
+            primaryCrit = primaryCrit.lte(Date.from(to));
         }
-        query.addCriteria(criteria);
+        orBranches.add(primaryCrit);
+
+        String fromText = stringValue(filter.get(fromKey));
+        String toText = stringValue(filter.get(toKey));
+        if (fromText != null || toText != null) {
+            Criteria dtCrit = Criteria.where("dt");
+            if (fromText != null && !fromText.isBlank()) {
+                dtCrit = dtCrit.gte(fromText.trim().replace(" ", "T"));
+            }
+            if (toText != null && !toText.isBlank()) {
+                dtCrit = dtCrit.lte(toText.trim().replace(" ", "T") + "Z");
+            }
+            orBranches.add(dtCrit);
+        }
+
+        query.addCriteria(new Criteria().orOperator(orBranches.toArray(new Criteria[0])));
     }
 
     private Instant parseInstantSafe(Object value) {

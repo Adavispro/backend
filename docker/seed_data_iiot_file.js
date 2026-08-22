@@ -88,7 +88,7 @@ function resetCollection(name) {
             db.getCollection(name).deleteMany({});
             return true;
         }
-    } catch (e) {}
+    } catch (e) { }
     return false;
 }
 
@@ -97,7 +97,7 @@ function safeUpsert(collectionName, docs, keyField) {
     try {
         var col = db.getCollection(collectionName);
         var ops = [];
-        docs.forEach(function(doc) {
+        docs.forEach(function (doc) {
             var filter = {};
             filter[keyField] = doc[keyField];
             ops.push({
@@ -123,7 +123,7 @@ function safeUpsert(collectionName, docs, keyField) {
 
 function createEquipmentDefinitions() {
     var defs = [];
-    DATASET_IDS.forEach(function(datasetId) {
+    DATASET_IDS.forEach(function (datasetId) {
         var type = datasetId.slice(-3).toUpperCase();
         var typeMeta = DATASET_TYPE_MAP[type] || DATASET_TYPE_MAP.RMG;
         var lineNo = parseInt(datasetId.replace(/[^0-9]/g, ""), 10) || 0;
@@ -150,7 +150,7 @@ function createEquipmentDefinitions() {
         });
     });
 
-    defs.sort(function(a, b) {
+    defs.sort(function (a, b) {
         return a.equipmentCode.localeCompare(b.equipmentCode);
     });
 
@@ -160,7 +160,7 @@ function createEquipmentDefinitions() {
 function createIndexes() {
     logInfo("Creating indexes...");
     try {
-        EQUIPMENT_MASTER_COLLECTIONS.forEach(function(name) {
+        EQUIPMENT_MASTER_COLLECTIONS.forEach(function (name) {
             db.getCollection(name).createIndex({ tenantId: 1, equipmentId: 1 }, { unique: true });
             db.getCollection(name).createIndex({ plantId: 1, blockId: 1, areaId: 1, roomId: 1 });
             db.getCollection(name).createIndex({ equipmentType: 1 });
@@ -185,7 +185,7 @@ function createIndexes() {
 }
 
 function getProductCatalog(ts) {
-    return MOCK_PRODUCTS.map(function(p) {
+    return MOCK_PRODUCTS.map(function (p) {
         return {
             productId: p.productCode,
             productCode: p.productCode,
@@ -202,14 +202,14 @@ function getProductCatalog(ts) {
 
 function createBatchSummaryDocs(equipmentDefs, productDocs, ts) {
     var defsByCode = {};
-    equipmentDefs.forEach(function(eq) {
+    equipmentDefs.forEach(function (eq) {
         defsByCode[eq.equipmentCode] = eq;
     });
 
     var lineKeys = ["G5", "G6", "G7"];
     var docs = [];
 
-    lineKeys.forEach(function(lineKey, idx) {
+    lineKeys.forEach(function (lineKey, idx) {
         var rmgCode = lineKey + "RMG";
         var fbdCode = lineKey + "FBD";
         var ogbCode = lineKey + "OGB";
@@ -334,7 +334,7 @@ function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
     var paramDocs = [];
     var limitDocs = [];
 
-    parameters.forEach(function(p, idx) {
+    parameters.forEach(function (p, idx) {
         var parameterId = p.code + "_" + pad3(equipmentIndex);
         var parameterLimitCode = "LIM-" + p.suffix + "-" + pad3(equipmentIndex);
 
@@ -398,10 +398,8 @@ function seedMasterData() {
     var batchSummaryDocs = createBatchSummaryDocs(equipmentDefs, productDocs, ts);
 
     var liveStatusDocs = [];
-    equipmentDefs.forEach(function(eq, index) {
+    equipmentDefs.forEach(function (eq, index) {
         var lineId = (eq.equipmentCode || "").slice(0, 2).toUpperCase();
-        var isRunning = index % 3 !== 2;
-        var batchNo = index < 3 ? "UB0026002" : (index < 6 ? "LV0026001" : "BATCH-G7-003");
         equipmentDocs.push({
             equipmentSeqId: 10000 + index + 1,
             tenantId: TENANT_ID,
@@ -428,31 +426,30 @@ function seedMasterData() {
             equipmentLocation: eq.hierarchy.fullPath
         });
 
-        liveStatusDocs.push({
-            equipmentId: eq.equipmentId,
-            currentState: isRunning ? "Running" : "Idle",
-            stateReason: isRunning ? "Auto Cycle Started" : "Waiting for Batch",
-            lastBatchNo: batchNo,
-            lastLotNo: "01 of 05",
-            lastEventAt: ts.toISOString(),
-            heartbeatAt: ts.toISOString(),
-            createdAt: ts,
-            updatedAt: ts
-        });
+        // liveStatusDocs.push({
+        //     equipmentId: eq.equipmentId,
+        //     currentState: isRunning ? "Running" : "Idle",
+        //     stateReason: isRunning ? "Auto Cycle Started" : "Waiting for Batch",
+        //     lastBatchNo: batchNo,
+        //     lastLotNo: "01 of 05",
+        //     lastEventAt: ts.toISOString(),
+        //     heartbeatAt: ts.toISOString(),
+        //     createdAt: ts,
+        //     updatedAt: ts
+        // });
 
         var payload = buildParameterDocs(eq.equipmentId, eq.plantId, index + 1, ts);
         parameterDocs = parameterDocs.concat(payload.params);
         parameterLimitDocs = parameterLimitDocs.concat(payload.limits);
     });
 
-    EQUIPMENT_MASTER_COLLECTIONS.forEach(function(name) {
+    EQUIPMENT_MASTER_COLLECTIONS.forEach(function (name) {
         safeUpsert(name, equipmentDocs, "equipmentId");
     });
-    safeUpsert("iiot_equipment_live_status", liveStatusDocs, "equipmentId");
+    //safeUpsert("iiot_equipment_live_status", liveStatusDocs, "equipmentId");
     safeUpsert("iiot_product_master", productDocs, "productId");
     safeUpsert("iiot_equipment_critical_parameters", parameterDocs, "parameterId");
     safeUpsert("iiot_equipment_critical_parameters_limit", parameterLimitDocs, "parameterLimitId");
-    safeUpsert("iiot_batch_summary", batchSummaryDocs, "batchNo");
 
     logInfo("Master data seeded: equipment=" + equipmentDocs.length + ", products=" + productDocs.length + ", parameters=" + parameterDocs.length + ", limits=" + parameterLimitDocs.length + ", summaries=" + batchSummaryDocs.length + ", liveStatuses=" + liveStatusDocs.length);
 }
@@ -462,15 +459,14 @@ function runSeed() {
 
     var coreCollections = [
         "iiot_equipment_master",
-        "iiot_equiment_master",
-        "iiot_equipment_live_status",
+        // "iiot_equipment_live_status",
         "iiot_equipment_critical_parameters",
         "iiot_equipment_critical_parameters_limit",
-        "iiot_product_master",
-        "iiot_batch_summary"
+        "iiot_product_master"
+
     ];
 
-    coreCollections.forEach(function(name) {
+    coreCollections.forEach(function (name) {
         resetCollection(name);
     });
 
@@ -478,7 +474,7 @@ function runSeed() {
     seedMasterData();
 
     logInfo("Collection counts (master-only):");
-    coreCollections.forEach(function(name) {
+    coreCollections.forEach(function (name) {
         var count = db.getCollection(name).countDocuments({});
         print(" - " + name + ": " + count);
     });

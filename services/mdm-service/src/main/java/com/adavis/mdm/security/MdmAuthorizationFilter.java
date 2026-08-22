@@ -90,6 +90,12 @@ public class MdmAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Read-only topology is needed to scope equipment views for every authenticated role.
+        if (isReadOnlyTopologyQuery(path, request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // 6. Dynamic Authoritative Admin Verification
         if (isUserAuthorizedAdmin(userId)) {
             filterChain.doFilter(request, response);
@@ -117,6 +123,11 @@ public class MdmAuthorizationFilter extends OncePerRequestFilter {
             }
         }
         return false;
+    }
+
+    private boolean isReadOnlyTopologyQuery(String path, String method) {
+        if (!"GET".equalsIgnoreCase(method)) return false;
+        return path.matches("^/api/v1/mdm/(plants|blocks|areas|rooms)$");
     }
 
     private String resolveUserId(HttpServletRequest request) {

@@ -9,6 +9,7 @@ This folder contains the local development workflow for the Adavis Platform.
 - `seed-data.ps1`: resets and seeds MongoDB from `docker/init-mongo.js`.
 - `db-migrate.ps1`: current migration wrapper for the Mongo seed workflow.
 - `run-local.ps1`: starts Docker infrastructure and Spring services.
+- `run-ingestion-once.ps1`: runs one batch, alarm, and audit ingestion cycle using the running mock service.
 - `stop-all.ps1`: stops managed Spring services and Docker containers.
 - `setup-dev.ps1`: one-command setup for check, seed, Docker, and service startup. Use `-BuildFirst` if you also want a full root build.
 
@@ -45,6 +46,20 @@ Stop it with:
 ```powershell
 .\scripts\stop-scheduler-ingestion.ps1
 ```
+
+Run one reusable ingestion cycle while MongoDB and the mock service are already running:
+
+```powershell
+.\scripts\run-ingestion-once.ps1
+```
+
+Run selected datasets only:
+
+```powershell
+.\scripts\run-ingestion-once.ps1 -DatasetIds G5RMG,G6RMG,G5FBD,G5OGB
+```
+
+This command does not start or stop the mock service or the continuous scheduler. It invokes the same scheduler implementation once and ingests batch/lot, alarm, and audit data.
 
 ## Typical usage
 

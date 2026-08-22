@@ -21,6 +21,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class NotificationService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NotificationService.class);
+
     private final MongoTemplate mongoTemplate;
     private final NotificationRecipientResolver recipientResolver;
 

@@ -209,6 +209,12 @@ public class IiotOperationsController {
         return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getEquipmentLiveStatus(equipmentId)));
     }
 
+    @GetMapping("/topology")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPlantTopology(
+            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getPlantTopology(tenantId)));
+    }
+
     @GetMapping("/reports/batch-summary")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getBatchSummary(
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
@@ -332,7 +338,7 @@ public class IiotOperationsController {
             @RequestParam(required = false) String tenantId,
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
         String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
-        List<Map<String, Object>> auditTrail = batchWorkflowService.getWorkflowAuditTrail(batchNo, lotNo, equipmentCode, effectiveTenant);
+        List<Map<String, Object>> auditTrail = dynamicWorkflowEngine.getWorkflowAuditTrail(batchNo, lotNo, equipmentCode, effectiveTenant);
         return ResponseEntity.ok(ApiResponse.success(auditTrail));
     }
 
@@ -480,6 +486,65 @@ public class IiotOperationsController {
         response.put("history", history);
 
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PostMapping("/workflow/claim-task")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> claimWorkflowTask(
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, String> request) {
+
+        String userId = headerUserId;
+        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                userId = jwtTokenProvider.getUserIdFromToken(authHeader.substring(7).trim());
+            } catch (Exception ignored) {}
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = request.getOrDefault("userId", "SYSTEM");
+        }
+
+        String userRole = headerUserRole != null ? headerUserRole : request.getOrDefault("userRole", "");
+        String tenantId = request.getOrDefault("tenantId", headerTenantId != null ? headerTenantId : "TNT-0001");
+        String plantId = request.getOrDefault("plantId", "PLNT-0001");
+        String batchNo = request.getOrDefault("batchNo", "");
+        String lotNo = request.getOrDefault("lotNo", "");
+        String equipmentCode = request.getOrDefault("equipmentCode", "");
+
+        Map<String, Object> result = dynamicWorkflowEngine.claimWorkflowTask(
+                batchNo, lotNo, equipmentCode, userId, userRole, tenantId, plantId);
+
+        return ResponseEntity.ok(ApiResponse.success("Task claimed successfully", result));
+    }
+
+    @PostMapping("/workflow/unclaim-task")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> unclaimWorkflowTask(
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, String> request) {
+
+        String userId = headerUserId;
+        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                userId = jwtTokenProvider.getUserIdFromToken(authHeader.substring(7).trim());
+            } catch (Exception ignored) {}
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = request.getOrDefault("userId", "SYSTEM");
+        }
+
+        String tenantId = request.getOrDefault("tenantId", headerTenantId != null ? headerTenantId : "TNT-0001");
+        String batchNo = request.getOrDefault("batchNo", "");
+        String lotNo = request.getOrDefault("lotNo", "");
+        String equipmentCode = request.getOrDefault("equipmentCode", "");
+
+        Map<String, Object> result = dynamicWorkflowEngine.unclaimWorkflowTask(
+                batchNo, lotNo, equipmentCode, userId, tenantId);
+
+        return ResponseEntity.ok(ApiResponse.success("Task released successfully", result));
     }
 
     @PostMapping("/reports/batch-summary/bulk-approval")

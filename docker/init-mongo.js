@@ -10,7 +10,7 @@ if (typeof process !== 'undefined' && process.env && process.env.MONGO_INITDB_DA
 }
 db = db.getSiblingDB(databaseName);
 
-var DEFAULT_ADAVIS_PASSWORD_HASH = '$2a$10$pTqk117OIRN.neOJ7PzEue3dsv2gu5aSE2HXDFSbzlfNd1Bj3CGBO'; // Password@123
+var DEFAULT_ADAVIS_PASSWORD_HASH = '$2a$10$pzWt1lCtyuKoDTX3cv6ICOvlchKgpk/OAvzZXFbiT6HrodBFtyFxe'; // Adavis@123
 var DEFAULT_PERMISSION_ACTIONS = ['READ', 'WRITE', 'REVIEW', 'APPROVE', 'DEACTIVATE'];
 
 function ensureDatabaseReady() {
@@ -1380,7 +1380,7 @@ upsertManyWithAutoId('mdm_departments', [
         parentDepartmentId: 'DEP-0014',
         path: 'DEP-0014/DEP-0015',
         isActive: true
-    },  
+    },
     {
         departmentId: 'DEP-0016',
         tenantId: 'TNT-0001',
@@ -1398,9 +1398,9 @@ var allBlockDocs = [];
 var allAreaDocs = [];
 var allRoomDocs = [];
 
-Object.keys(plantHierarchyConfig).forEach(function(plantId) {
+Object.keys(plantHierarchyConfig).forEach(function (plantId) {
     var plantConfig = plantHierarchyConfig[plantId] || {};
-    (plantConfig.blocks || []).forEach(function(block) {
+    (plantConfig.blocks || []).forEach(function (block) {
         allBlockDocs.push({
             blockId: block.blockId,
             tenantId: 'TNT-0001',
@@ -1412,7 +1412,7 @@ Object.keys(plantHierarchyConfig).forEach(function(plantId) {
         });
     });
 
-    (plantConfig.areas || []).forEach(function(area) {
+    (plantConfig.areas || []).forEach(function (area) {
         allAreaDocs.push({
             areaId: area.areaId,
             tenantId: 'TNT-0001',
@@ -1425,7 +1425,7 @@ Object.keys(plantHierarchyConfig).forEach(function(plantId) {
         });
     });
 
-    (plantConfig.rooms || []).forEach(function(room) {
+    (plantConfig.rooms || []).forEach(function (room) {
         allRoomDocs.push({
             roomId: room.roomId,
             tenantId: 'TNT-0001',
@@ -1540,389 +1540,126 @@ db.auth_users.updateOne(
 
 
 // ============================================
-// Seed - Kishore User
-// ============================================
-
-db.mdm_user_profiles.updateOne(
-    { userId: 'kishoreginguru' },
-    {
-        $set: {
-            userTrackId: 'USR-0003',
-            tenantId: 'TNT-0001',
-            firstName: 'Kishore',
-            lastName: 'Ginguru',
-            phoneNumber: '+91-9000000002',
-            title: 'IT Administrator',
-            userType: 'INTERNAL_EMPLOYEE',
-            email: 'kishoreginguru@gmail.com',
-            empId: 'EMP-00003',
-            isActive: true,
-            isBlocked: false,
-            isExternal: false,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-db.auth_users.updateOne(
-    { userId: 'kishoreginguru' },
-    {
-        $set: {
-            username: 'kishoreginguru',
-            email: 'kishoreginguru@gmail.com',
-            status: 'ACTIVE',
-            isLocked: false,
-            failedAttempts: 0,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-
-// ============================================
-// Seed - Pallavi User
-// ============================================
-
-db.mdm_user_profiles.updateOne(
-    { userId: 'pallu543' },
-    {
-        $set: {
-            userTrackId: 'USR-0004',
-            tenantId: 'TNT-0001',
-            firstName: 'Pallavi Shetty',
-            lastName: 'Shetty',
-            phoneNumber: '+91-9000000002',
-            title: 'IT Administrator',
-            userType: 'INTERNAL_EMPLOYEE',
-            email: 'pallu543@gmail.com',
-            empId: 'EMP-00004',
-            isActive: true,
-            isBlocked: false,
-            isExternal: false,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-db.auth_users.updateOne(
-    { userId: 'pallu543' },
-    {
-        $set: {
-            username: 'pallu543',
-            email: 'pallu543@gmail.com',
-            status: 'ACTIVE',
-            isLocked: false,
-            failedAttempts: 0,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// ============================================
-// Seed - PRODUCTION_OPERATOR
-// ============================================
-
-db.mdm_user_profiles.updateOne(
-    { userId: 'PRODUCTION_OPERATOR' },
-    {
-        $set: {
-            userTrackId: 'USR-0005',
-            tenantId: 'TNT-0001',
-            firstName: 'Production',
-            lastName: 'Operator',
-            phoneNumber: '+91-9000000005',
-            title: 'Production Operator',
-            userType: 'INTERNAL_EMPLOYEE',
-            email: 'production_operator@adavis.com',
-            empId: 'EMP-00005',
-            isActive: true,
-            isBlocked: false,
-            isExternal: false,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-db.auth_users.updateOne(
-    { userId: 'PRODUCTION_OPERATOR' },
-    {
-        $set: {
-            username: 'production_operator',
-            email: 'production_operator@adavis.com',
-            status: 'ACTIVE',
-            isLocked: false,
-            failedAttempts: 0,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// ============================================
-// Seed - SHIFT_SUPERVISOR
-// ============================================
-
-db.mdm_user_profiles.updateOne(
-    { userId: 'SHIFT_SUPERVISOR' },
-    {
-        $set: {
-            userTrackId: 'USR-0006',
-            tenantId: 'TNT-0001',
-            firstName: 'Shift',
-            lastName: 'Supervisor',
-            phoneNumber: '+91-9000000006',
-            title: 'Shift Supervisor',
-            userType: 'INTERNAL_EMPLOYEE',
-            email: 'shift_supervisor@adavis.com',
-            empId: 'EMP-00006',
-            isActive: true,
-            isBlocked: false,
-            isExternal: false,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-db.auth_users.updateOne(
-    { userId: 'SHIFT_SUPERVISOR' },
-    {
-        $set: {
-            username: 'shift_supervisor',
-            email: 'shift_supervisor@adavis.com',
-            status: 'ACTIVE',
-            isLocked: false,
-            failedAttempts: 0,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:00:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// ============================================
-// Operational Users Seed (12 Canonical Users + Legacy Aliases)
+// Operational Users Seed
 // ============================================
 
 var operationalUsersSeed = [
-    // --- 4 PRODUCTION OPERATORS ---
+    // --- PRODUCTION OPERATORS (PRODUCTION_OPERATOR_GROUP) ---
     {
-        userId: 'OPERATOR_USER_01',
-        username: 'operator_01',
-        email: 'operator_01@adavis.com',
-        userTrackId: 'USR-0007',
+        userId: 'PRODUCTION_OPERATOR_1',
+        username: 'production_operator_1',
+        email: 'production_operator_1@adavis.com',
+        userTrackId: 'USR-0003',
         empId: 'EMP-00101',
         firstName: 'Production',
-        lastName: 'Operator 01',
+        lastName: 'Operator 1',
         phoneNumber: '+91-9876543210',
         title: 'Production Operator',
         groupId: 'GRP-0011'
     },
     {
-        userId: 'OPERATOR_USER_02',
-        username: 'operator_02',
-        email: 'operator_02@adavis.com',
-        userTrackId: 'USR-0010',
+        userId: 'PRODUCTION_OPERATOR_2',
+        username: 'production_operator_2',
+        email: 'production_operator_2@adavis.com',
+        userTrackId: 'USR-0004',
         empId: 'EMP-00102',
-        firstName: 'Alex',
-        lastName: 'Operator 02',
+        firstName: 'Production',
+        lastName: 'Operator 2',
         phoneNumber: '+91-9876543212',
         title: 'Production Operator',
         groupId: 'GRP-0011'
     },
     {
-        userId: 'OPERATOR_USER_03',
-        username: 'operator_03',
-        email: 'operator_03@adavis.com',
-        userTrackId: 'USR-0021',
+        userId: 'PRODUCTION_OPERATOR_3',
+        username: 'production_operator_3',
+        email: 'production_operator_3@adavis.com',
+        userTrackId: 'USR-0005',
         empId: 'EMP-00103',
-        firstName: 'Carlos',
-        lastName: 'Operator 03',
+        firstName: 'Production',
+        lastName: 'Operator 3',
         phoneNumber: '+91-9876543214',
         title: 'Production Operator',
         groupId: 'GRP-0011'
     },
-    {
-        userId: 'OPERATOR_USER_04',
-        username: 'operator_04',
-        email: 'operator_04@adavis.com',
-        userTrackId: 'USR-0022',
-        empId: 'EMP-00104',
-        firstName: 'David',
-        lastName: 'Operator 04',
-        phoneNumber: '+91-9876543215',
-        title: 'Production Operator',
-        groupId: 'GRP-0011'
-    },
 
-    // --- 4 REVIEWERS ---
+    // --- PRODUCTION REVIEWERS (PRODUCTION_REVIEWER_GROUP) ---
     {
-        userId: 'REVIEWER_USER_01',
-        username: 'reviewer_01',
-        email: 'reviewer_01@adavis.com',
-        userTrackId: 'USR-0016',
+        userId: 'PRODUCTION_REVIEWER_1',
+        username: 'production_reviewer_1',
+        email: 'production_reviewer_1@adavis.com',
+        userTrackId: 'USR-0006',
         empId: 'EMP-00201',
-        firstName: 'Elena',
-        lastName: 'Reviewer 01',
+        firstName: 'Production',
+        lastName: 'Reviewer 1',
         phoneNumber: '+91-9876543213',
-        title: 'QA Reviewer',
+        title: 'Production Reviewer',
         groupId: 'GRP-0016'
     },
     {
-        userId: 'REVIEWER_USER_02',
-        username: 'reviewer_02',
-        email: 'reviewer_02@adavis.com',
-        userTrackId: 'USR-0023',
+        userId: 'PRODUCTION_REVIEWER_2',
+        username: 'production_reviewer_2',
+        email: 'production_reviewer_2@adavis.com',
+        userTrackId: 'USR-0007',
         empId: 'EMP-00202',
-        firstName: 'Fiona',
-        lastName: 'Reviewer 02',
+        firstName: 'Production',
+        lastName: 'Reviewer 2',
         phoneNumber: '+91-9876543216',
-        title: 'QA Reviewer',
+        title: 'Production Reviewer',
         groupId: 'GRP-0016'
     },
     {
-        userId: 'REVIEWER_USER_03',
-        username: 'reviewer_03',
-        email: 'reviewer_03@adavis.com',
-        userTrackId: 'USR-0024',
-        empId: 'EMP-00203',
-        firstName: 'George',
-        lastName: 'Reviewer 03',
-        phoneNumber: '+91-9876543217',
-        title: 'QA Reviewer',
-        groupId: 'GRP-0016'
-    },
-    {
-        userId: 'REVIEWER_USER_04',
-        username: 'reviewer_04',
-        email: 'reviewer_04@adavis.com',
-        userTrackId: 'USR-0025',
-        empId: 'EMP-00204',
-        firstName: 'Hannah',
-        lastName: 'Reviewer 04',
-        phoneNumber: '+91-9876543218',
-        title: 'QA Reviewer',
-        groupId: 'GRP-0016'
-    },
-
-    // --- 4 SUPERVISORS / QA APPROVERS ---
-    {
-        userId: 'SUPERVISOR_USER_01',
-        username: 'supervisor_01',
-        email: 'supervisor_01@adavis.com',
+        userId: 'PRODUCTION_REVIEWER_3',
+        username: 'production_reviewer_3',
+        email: 'production_reviewer_3@adavis.com',
         userTrackId: 'USR-0008',
-        empId: 'EMP-00301',
-        firstName: 'Shift',
-        lastName: 'Supervisor 01',
-        phoneNumber: '+91-9876543211',
-        title: 'Shift Supervisor',
-        groupId: 'GRP-0012'
-    },
-    {
-        userId: 'SUPERVISOR_USER_02',
-        username: 'supervisor_02',
-        email: 'supervisor_02@adavis.com',
-        userTrackId: 'USR-0011',
-        empId: 'EMP-00302',
-        firstName: 'Sarah',
-        lastName: 'Supervisor 02',
-        phoneNumber: '+91-9876543219',
-        title: 'Shift Supervisor',
-        groupId: 'GRP-0012'
-    },
-    {
-        userId: 'SUPERVISOR_USER_03',
-        username: 'supervisor_03',
-        email: 'supervisor_03@adavis.com',
-        userTrackId: 'USR-0026',
-        empId: 'EMP-00303',
-        firstName: 'Ian',
-        lastName: 'Supervisor 03',
-        phoneNumber: '+91-9876543220',
-        title: 'Shift Supervisor',
-        groupId: 'GRP-0012'
-    },
-    {
-        userId: 'SUPERVISOR_USER_04',
-        username: 'supervisor_04',
-        email: 'supervisor_04@adavis.com',
-        userTrackId: 'USR-0027',
-        empId: 'EMP-00304',
-        firstName: 'Julia',
-        lastName: 'Supervisor 04',
-        phoneNumber: '+91-9876543221',
-        title: 'Shift Supervisor',
-        groupId: 'GRP-0012'
+        empId: 'EMP-00203',
+        firstName: 'Production',
+        lastName: 'Reviewer 3',
+        phoneNumber: '+91-9876543217',
+        title: 'Production Reviewer',
+        groupId: 'GRP-0016'
     },
 
-    // --- Legacy Aliases for backward test compatibility ---
+    // --- QA APPROVERS (QA_APPROVER_GROUP) ---
     {
-        userId: 'NEW_OPERATOR_02',
-        username: 'new_operator_02',
-        email: 'operator_new02@adavis.com',
-        userTrackId: 'USR-0028',
-        empId: 'EMP-00105',
-        firstName: 'Alex',
-        lastName: 'Operator',
-        phoneNumber: '+91-9876543212',
-        title: 'Production Operator',
-        groupId: 'GRP-0011'
+        userId: 'QA_APPROVER_1',
+        username: 'qa_approver_1',
+        email: 'qa_approver_1@adavis.com',
+        userTrackId: 'USR-0009',
+        empId: 'EMP-00301',
+        firstName: 'QA',
+        lastName: 'Approver 1',
+        phoneNumber: '+91-9876543211',
+        title: 'QA Approver',
+        groupId: 'GRP-0017'
     },
     {
-        userId: 'NEW_SUPERVISOR_02',
-        username: 'new_supervisor_02',
-        email: 'supervisor_new02@adavis.com',
-        userTrackId: 'USR-0029',
-        empId: 'EMP-00106',
-        firstName: 'Sarah',
-        lastName: 'Supervisor',
-        phoneNumber: '+91-9876543213',
-        title: 'Shift Supervisor',
-        groupId: 'GRP-0012'
+        userId: 'QA_APPROVER_2',
+        username: 'qa_approver_2',
+        email: 'qa_approver_2@adavis.com',
+        userTrackId: 'USR-0010',
+        empId: 'EMP-00302',
+        firstName: 'QA',
+        lastName: 'Approver 2',
+        phoneNumber: '+91-9876543219',
+        title: 'QA Approver',
+        groupId: 'GRP-0017'
     },
     {
-        userId: 'NEW_REVIEWER_02',
-        username: 'new_reviewer_02',
-        email: 'reviewer_new02@adavis.com',
-        userTrackId: 'USR-0030',
-        empId: 'EMP-00116',
-        firstName: 'Elena',
-        lastName: 'Reviewer',
-        phoneNumber: '+91-9876543213',
-        title: 'QA Reviewer',
-        groupId: 'GRP-0016'
+        userId: 'QA_APPROVER_3',
+        username: 'qa_approver_3',
+        email: 'qa_approver_3@adavis.com',
+        userTrackId: 'USR-0011',
+        empId: 'EMP-00303',
+        firstName: 'QA',
+        lastName: 'Approver 3',
+        phoneNumber: '+91-9876543220',
+        title: 'QA Approver',
+        groupId: 'GRP-0017'
     }
 ];
 
-operationalUsersSeed.forEach(function(u) {
+operationalUsersSeed.forEach(function (u) {
     db.mdm_user_profiles.updateOne(
         { userId: u.userId },
         {
@@ -1984,10 +1721,8 @@ operationalUsersSeed.forEach(function(u) {
     );
 });
 
-
-
 // ============================================
-// SUPER_ADMIN Credentials
+// Administrator Credentials (Password: Adavis@123)
 // ============================================
 
 db.mdm_user_auth_credentials.updateOne(
@@ -2007,10 +1742,6 @@ db.mdm_user_auth_credentials.updateOne(
     { upsert: true }
 );
 
-// ============================================
-// IT_ADMIN Credentials
-// ============================================
-
 db.mdm_user_auth_credentials.updateOne(
     { userId: 'IT_ADMIN' },
     {
@@ -2027,85 +1758,6 @@ db.mdm_user_auth_credentials.updateOne(
     },
     { upsert: true }
 );
-
-db.mdm_user_auth_credentials.updateOne(
-    { userId: 'kishoreginguru' },
-    {
-        $set: {
-            email: 'kishoreginguru@gmail.com',
-            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
-            mustChangePassword: false,
-            passwordUpdatedAt: ISODate(),
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:05:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-
-db.mdm_user_auth_credentials.updateOne(
-    { userId: 'pallu543' },
-    {
-        $set: {
-            email: 'pallu543@gmail.com',
-            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
-            mustChangePassword: false,
-            passwordUpdatedAt: ISODate(),
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:05:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// ============================================
-// PRODUCTION_OPERATOR Credentials
-// ============================================
-
-db.mdm_user_auth_credentials.updateOne(
-    { userId: 'PRODUCTION_OPERATOR' },
-    {
-        $set: {
-            email: 'production_operator@adavis.com',
-            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
-            mustChangePassword: false,
-            passwordUpdatedAt: ISODate(),
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:05:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// ============================================
-// SHIFT_SUPERVISOR Credentials
-// ============================================
-
-db.mdm_user_auth_credentials.updateOne(
-    { userId: 'SHIFT_SUPERVISOR' },
-    {
-        $set: {
-            email: 'shift_supervisor@adavis.com',
-            passwordHash: DEFAULT_ADAVIS_PASSWORD_HASH,
-            mustChangePassword: false,
-            passwordUpdatedAt: ISODate(),
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-03-01T10:05:00Z')
-        }
-    },
-    { upsert: true }
-);
-
-// (Operational user credentials initialized in operationalUsersSeed loop)
 
 
 var roleSeed = [
@@ -2247,9 +1899,18 @@ var roleSeed = [
     {
         roleId: 'ROLE-0016',
         tenantId: 'TNT-0001',
-        roleName: 'QA Reviewer',
-        description: 'QA Reviewer',
-        roleCode: 'QA_REVIEWER',
+        roleName: 'Production Reviewer',
+        description: 'Production Reviewer',
+        roleCode: 'PRODUCTION_REVIEWER',
+        isActive: true,
+        createdAt: ISODate('2026-01-20T10:30:00Z')
+    },
+    {
+        roleId: 'ROLE-0017',
+        tenantId: 'TNT-0001',
+        roleName: 'QA Approver',
+        description: 'QA Approver',
+        roleCode: 'QA_APPROVER',
         isActive: true,
         createdAt: ISODate('2026-01-20T10:30:00Z')
     }
@@ -2259,11 +1920,16 @@ upsertManyWithAutoId('mdm_roles', roleSeed, 'roleId', { sequenceName: 'roleId', 
 var superAdminRole = db.mdm_roles.findOne({ tenantId: 'TNT-0001', roleCode: 'SUPER_ADMIN' });
 var itAdminRole = db.mdm_roles.findOne({ tenantId: 'TNT-0001', roleCode: 'IT_ADMIN' });
 var productionOperatorRole = db.mdm_roles.findOne({ tenantId: 'TNT-0001', roleCode: 'PRODUCTION_OPERATOR' });
+var productionReviewerRole = db.mdm_roles.findOne({ tenantId: 'TNT-0001', roleCode: 'PRODUCTION_REVIEWER' });
+var qaApproverRole = db.mdm_roles.findOne({ tenantId: 'TNT-0001', roleCode: 'QA_APPROVER' });
 var shiftSupervisorRole = db.mdm_roles.findOne({ tenantId: 'TNT-0001', roleCode: 'SHIFT_SUPERVISOR' });
+
 var superAdminRoleId = superAdminRole && superAdminRole.roleId ? superAdminRole.roleId : 'ROLE-0001';
 var itAdminRoleId = itAdminRole && itAdminRole.roleId ? itAdminRole.roleId : 'ROLE-0002';
 var productionOperatorRoleId = productionOperatorRole && productionOperatorRole.roleId ? productionOperatorRole.roleId : 'ROLE-0008';
 var shiftSupervisorRoleId = shiftSupervisorRole && shiftSupervisorRole.roleId ? shiftSupervisorRole.roleId : 'ROLE-0009';
+var productionReviewerRoleId = productionReviewerRole && productionReviewerRole.roleId ? productionReviewerRole.roleId : 'ROLE-0016';
+var qaApproverRoleId = qaApproverRole && qaApproverRole.roleId ? qaApproverRole.roleId : 'ROLE-0017';
 
 var groupSeed = [
     {
@@ -2359,9 +2025,9 @@ var groupSeed = [
     {
         groupId: 'GRP-0011',
         tenantId: 'TNT-0001',
-        groupName: 'Production Operators',
-        description: 'Production Operators',
-        groupCode: 'PRODUCTION_OPERATOR',
+        groupName: 'Production Operator Group',
+        description: 'Production Operator Group',
+        groupCode: 'PRODUCTION_OPERATOR_GROUP',
         isActive: true,
         createdAt: ISODate('2026-01-20T11:00:00Z')
     },
@@ -2377,9 +2043,18 @@ var groupSeed = [
     {
         groupId: 'GRP-0016',
         tenantId: 'TNT-0001',
-        groupName: 'QA Reviewers',
-        description: 'QA Reviewers',
-        groupCode: 'QA_REVIEWERS',
+        groupName: 'Production Reviewer Group',
+        description: 'Production Reviewer Group',
+        groupCode: 'PRODUCTION_REVIEWER_GROUP',
+        isActive: true,
+        createdAt: ISODate('2026-01-20T11:00:00Z')
+    },
+    {
+        groupId: 'GRP-0017',
+        tenantId: 'TNT-0001',
+        groupName: 'QA Approver Group',
+        description: 'QA Approver Group',
+        groupCode: 'QA_APPROVER_GROUP',
         isActive: true,
         createdAt: ISODate('2026-01-20T11:00:00Z')
     }
@@ -2387,11 +2062,18 @@ var groupSeed = [
 upsertManyWithAutoId('mdm_user_groups', groupSeed, 'groupId', { sequenceName: 'groupId', prefix: 'GRP', padLength: 4 });
 
 var platformAdminGroup = db.mdm_user_groups.findOne({ tenantId: 'TNT-0001', groupCode: 'PLATFORM_ADMIN' });
-var productionOperatorGroup = db.mdm_user_groups.findOne({ tenantId: 'TNT-0001', groupCode: 'PRODUCTION_OPERATOR' });
+var itAdminGroup = db.mdm_user_groups.findOne({ tenantId: 'TNT-0001', groupCode: 'IT_ADMIN' });
+var productionOperatorGroup = db.mdm_user_groups.findOne({ tenantId: 'TNT-0001', groupCode: 'PRODUCTION_OPERATOR_GROUP' });
+var productionReviewerGroup = db.mdm_user_groups.findOne({ tenantId: 'TNT-0001', groupCode: 'PRODUCTION_REVIEWER_GROUP' });
+var qaApproverGroup = db.mdm_user_groups.findOne({ tenantId: 'TNT-0001', groupCode: 'QA_APPROVER_GROUP' });
 var shiftSupervisorGroup = db.mdm_user_groups.findOne({ tenantId: 'TNT-0001', groupCode: 'SHIFT_SUPERVISOR' });
+
 var platformAdminGroupId = platformAdminGroup && platformAdminGroup.groupId ? platformAdminGroup.groupId : 'GRP-0001';
+var itAdminGroupId = itAdminGroup && itAdminGroup.groupId ? itAdminGroup.groupId : 'GRP-0002';
 var productionOperatorGroupId = productionOperatorGroup && productionOperatorGroup.groupId ? productionOperatorGroup.groupId : 'GRP-0011';
 var shiftSupervisorGroupId = shiftSupervisorGroup && shiftSupervisorGroup.groupId ? shiftSupervisorGroup.groupId : 'GRP-0012';
+var productionReviewerGroupId = productionReviewerGroup && productionReviewerGroup.groupId ? productionReviewerGroup.groupId : 'GRP-0016';
+var qaApproverGroupId = qaApproverGroup && qaApproverGroup.groupId ? qaApproverGroup.groupId : 'GRP-0017';
 
 var moduleSeed = [
     { moduleId: 'MOD-0001', moduleCode: 'MOD-MDM', moduleName: 'Master Data Management', displayOrder: 1, isActive: true },
@@ -2442,15 +2124,8 @@ var featureSeed = [
 ];
 upsertManyWithAutoId('mdm_features', featureSeed, 'featureId', { sequenceName: 'featureId', prefix: 'FEAT', padLength: 4 });
 
-upsertOne('mdm_role_assignments_to_user_groups', { groupId: platformAdminGroupId, roleId: superAdminRoleId }, {
-    groupId: platformAdminGroupId,
-    roleId: superAdminRoleId,
-    isActive: true,
-    assignedAt: ISODate('2026-03-01T10:10:00Z'),
-    assignedBy: 'SYSTEM'
-});
-
 upsertMany('mdm_role_assignments_to_user_groups', [
+    { groupId: 'GRP-0001', roleId: 'ROLE-0001', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: 'GRP-0002', roleId: 'ROLE-0002', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: 'GRP-0003', roleId: 'ROLE-0003', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: 'GRP-0004', roleId: 'ROLE-0004', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
@@ -2465,52 +2140,49 @@ upsertMany('mdm_role_assignments_to_user_groups', [
     { groupId: 'GRP-0008', roleId: 'ROLE-0013', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: 'GRP-0009', roleId: 'ROLE-0014', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: 'GRP-0010', roleId: 'ROLE-0015', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
+    { groupId: 'GRP-0011', roleId: 'ROLE-0008', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
+    { groupId: 'GRP-0012', roleId: 'ROLE-0009', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
     { groupId: 'GRP-0016', roleId: 'ROLE-0016', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
-    { groupId: productionOperatorGroupId, roleId: productionOperatorRoleId, isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' },
-    { groupId: shiftSupervisorGroupId, roleId: shiftSupervisorRoleId, isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' }
+    { groupId: 'GRP-0017', roleId: 'ROLE-0017', isActive: true, assignedAt: ISODate('2026-03-01T10:10:00Z'), assignedBy: 'SYSTEM' }
 ], 'roleId');
 
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'SUPER_ADMIN', groupId: platformAdminGroupId }, {
+upsertOne('mdm_user_assignments_to_user_groups', { userId: 'SUPER_ADMIN', groupId: 'GRP-0001' }, {
     userId: 'SUPER_ADMIN',
-    groupId: platformAdminGroupId,
+    groupId: 'GRP-0001',
     isActive: true,
     assignedAt: ISODate('2026-03-01T10:10:00Z'),
     assignedBy: 'SYSTEM'
 });
 
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'kishoreginguru', groupId: platformAdminGroupId }, {
-    userId: 'kishoreginguru',
-    groupId: platformAdminGroupId,
+upsertOne('mdm_user_assignments_to_user_groups', { userId: 'IT_ADMIN', groupId: 'GRP-0002' }, {
+    userId: 'IT_ADMIN',
+    groupId: 'GRP-0002',
     isActive: true,
     assignedAt: ISODate('2026-03-01T10:10:00Z'),
     assignedBy: 'SYSTEM'
 });
 
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'pallu543', groupId: platformAdminGroupId }, {
-    userId: 'pallu543',
-    groupId: platformAdminGroupId,
-    isActive: true,
-    assignedAt: ISODate('2026-03-01T10:10:00Z'),
-    assignedBy: 'SYSTEM'
+upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000001' }, {
+    assignmentId: 'ASGN-000001',
+    tenantId: 'TNT-0001',
+    userId: 'SUPER_ADMIN',
+    plantId: 'PLNT-0001',
+    departmentId: 'DEP-0001',
+    groupId: 'GRP-0001',
+    isActive: true
 });
 
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'PRODUCTION_OPERATOR', groupId: productionOperatorGroupId }, {
-    userId: 'PRODUCTION_OPERATOR',
-    groupId: productionOperatorGroupId,
-    isActive: true,
-    assignedAt: ISODate('2026-03-01T10:10:00Z'),
-    assignedBy: 'SYSTEM'
+upsertOne('mdm_user_context_assignments', { assignmentId: 'ASGN-000002' }, {
+    assignmentId: 'ASGN-000002',
+    tenantId: 'TNT-0001',
+    userId: 'IT_ADMIN',
+    plantId: 'PLNT-0001',
+    departmentId: 'DEP-0001',
+    groupId: 'GRP-0002',
+    isActive: true
 });
 
-upsertOne('mdm_user_assignments_to_user_groups', { userId: 'SHIFT_SUPERVISOR', groupId: shiftSupervisorGroupId }, {
-    userId: 'SHIFT_SUPERVISOR',
-    groupId: shiftSupervisorGroupId,
-    isActive: true,
-    assignedAt: ISODate('2026-03-01T10:10:00Z'),
-    assignedBy: 'SYSTEM'
-});
-
-operationalUsersSeed.forEach(function(u, idx) {
+operationalUsersSeed.forEach(function (u, idx) {
     var assignedGroupId = u.groupId;
     upsertOne('mdm_user_assignments_to_user_groups', { userId: u.userId, groupId: assignedGroupId }, {
         userId: u.userId,
@@ -2540,6 +2212,18 @@ upsertOne('mdm_role_permissions', { roleId: superAdminRoleId, moduleId: 'MOD-000
     buildRolePermissionDocument('TNT-0001', superAdminRoleId, 'MOD-0002', screenSeed, featureSeed)
 );
 
+upsertOne('mdm_role_permissions', { roleId: superAdminRoleId, moduleId: 'MOD-0003', version: 1 },
+    buildRolePermissionDocument('TNT-0001', superAdminRoleId, 'MOD-0003', screenSeed, featureSeed)
+);
+
+upsertOne('mdm_role_permissions', { roleId: itAdminRoleId, moduleId: 'MOD-0001', version: 1 },
+    buildRolePermissionDocument('TNT-0001', itAdminRoleId, 'MOD-0001', screenSeed, featureSeed)
+);
+
+upsertOne('mdm_role_permissions', { roleId: itAdminRoleId, moduleId: 'MOD-0002', version: 1 },
+    buildRolePermissionDocument('TNT-0001', itAdminRoleId, 'MOD-0002', screenSeed, featureSeed)
+);
+
 upsertOne('mdm_role_permissions', { roleId: productionOperatorRoleId, moduleId: 'MOD-0002', version: 1 }, {
     tenantId: 'TNT-0001',
     roleId: productionOperatorRoleId,
@@ -2550,12 +2234,126 @@ upsertOne('mdm_role_permissions', { roleId: productionOperatorRoleId, moduleId: 
     effectiveTo: null,
     screenPermissions: [
         {
+            screenId: 'SCR-0008',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0009',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0010',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
             screenId: 'SCR-0011',
             actions: ['READ', 'WRITE', 'REVIEW'],
             featurePermissions: [
                 {
                     featureId: 'FEAT-0022',
                     actions: ['READ', 'WRITE', 'REVIEW']
+                }
+            ]
+        },
+        {
+            screenId: 'SCR-0012',
+            actions: ['READ'],
+            featurePermissions: []
+        }
+    ]
+});
+
+upsertOne('mdm_role_permissions', { roleId: productionReviewerRoleId, moduleId: 'MOD-0002', version: 1 }, {
+    tenantId: 'TNT-0001',
+    roleId: productionReviewerRoleId,
+    moduleId: 'MOD-0002',
+    version: 1,
+    isActive: true,
+    effectiveFrom: ISODate('2026-03-01T00:00:00Z'),
+    effectiveTo: null,
+    screenPermissions: [
+        {
+            screenId: 'SCR-0008',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0009',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0010',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0011',
+            actions: ['READ', 'REVIEW'],
+            featurePermissions: [
+                {
+                    featureId: 'FEAT-0022',
+                    actions: ['READ', 'REVIEW']
+                }
+            ]
+        },
+        {
+            screenId: 'SCR-0012',
+            actions: ['READ', 'REVIEW'],
+            featurePermissions: [
+                {
+                    featureId: 'FEAT-0023',
+                    actions: ['READ', 'REVIEW']
+                }
+            ]
+        }
+    ]
+});
+
+upsertOne('mdm_role_permissions', { roleId: qaApproverRoleId, moduleId: 'MOD-0002', version: 1 }, {
+    tenantId: 'TNT-0001',
+    roleId: qaApproverRoleId,
+    moduleId: 'MOD-0002',
+    version: 1,
+    isActive: true,
+    effectiveFrom: ISODate('2026-03-01T00:00:00Z'),
+    effectiveTo: null,
+    screenPermissions: [
+        {
+            screenId: 'SCR-0008',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0009',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0010',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0011',
+            actions: ['READ', 'REVIEW'],
+            featurePermissions: [
+                {
+                    featureId: 'FEAT-0022',
+                    actions: ['READ', 'REVIEW']
+                }
+            ]
+        },
+        {
+            screenId: 'SCR-0012',
+            actions: ['READ', 'REVIEW', 'APPROVE'],
+            featurePermissions: [
+                {
+                    featureId: 'FEAT-0023',
+                    actions: ['READ', 'REVIEW', 'APPROVE']
                 }
             ]
         }
@@ -2572,27 +2370,20 @@ upsertOne('mdm_role_permissions', { roleId: shiftSupervisorRoleId, moduleId: 'MO
     effectiveTo: null,
     screenPermissions: [
         {
-            screenId: 'SCR-0012',
-            actions: ['READ', 'REVIEW', 'APPROVE'],
-            featurePermissions: [
-                {
-                    featureId: 'FEAT-0023',
-                    actions: ['READ', 'REVIEW', 'APPROVE']
-                }
-            ]
-        }
-    ]
-});
-
-upsertOne('mdm_role_permissions', { roleId: 'ROLE-0016', moduleId: 'MOD-0002', version: 1 }, {
-    tenantId: 'TNT-0001',
-    roleId: 'ROLE-0016',
-    moduleId: 'MOD-0002',
-    version: 1,
-    isActive: true,
-    effectiveFrom: ISODate('2026-03-01T00:00:00Z'),
-    effectiveTo: null,
-    screenPermissions: [
+            screenId: 'SCR-0008',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0009',
+            actions: ['READ'],
+            featurePermissions: []
+        },
+        {
+            screenId: 'SCR-0010',
+            actions: ['READ'],
+            featurePermissions: []
+        },
         {
             screenId: 'SCR-0011',
             actions: ['READ', 'REVIEW'],
@@ -2605,8 +2396,13 @@ upsertOne('mdm_role_permissions', { roleId: 'ROLE-0016', moduleId: 'MOD-0002', v
         },
         {
             screenId: 'SCR-0012',
-            actions: ['READ'],
-            featurePermissions: []
+            actions: ['READ', 'REVIEW', 'APPROVE'],
+            featurePermissions: [
+                {
+                    featureId: 'FEAT-0023',
+                    actions: ['READ', 'REVIEW', 'APPROVE']
+                }
+            ]
         }
     ]
 });
@@ -2640,13 +2436,13 @@ logInfo('Initializing auto-increment ID sequences...');
 var sequenceDefinitions = [
     { sequenceName: 'tenantId', collectionName: 'mdm_tenants', fieldName: 'tenantId', prefix: 'TNT', padLength: 4, seedValues: ['TNT-0001'] },
     { sequenceName: 'plantId', collectionName: 'mdm_plants', fieldName: 'plantId', prefix: 'PLNT', padLength: 4, seedValues: ['PLNT-0001', 'PLNT-0002'] },
-    { sequenceName: 'blockId', collectionName: 'mdm_blocks', fieldName: 'blockId', prefix: 'BLK', padLength: 4, seedValues: ['BLK-0001', 'BLK-0002', 'BLK-0003', 'BLK-0004' ] },
-    { sequenceName: 'areaId', collectionName: 'mdm_areas', fieldName: 'areaId', prefix: 'AREA', padLength: 4, seedValues: ['AREA-0001', 'AREA-0002', 'AREA-0003', 'AREA-0004', 'AREA-0005', 'AREA-0006', 'AREA-0007', 'AREA-0008', 'AREA-0009', 'AREA-0010', 'AREA-0011' ] },
+    { sequenceName: 'blockId', collectionName: 'mdm_blocks', fieldName: 'blockId', prefix: 'BLK', padLength: 4, seedValues: ['BLK-0001', 'BLK-0002', 'BLK-0003', 'BLK-0004'] },
+    { sequenceName: 'areaId', collectionName: 'mdm_areas', fieldName: 'areaId', prefix: 'AREA', padLength: 4, seedValues: ['AREA-0001', 'AREA-0002', 'AREA-0003', 'AREA-0004', 'AREA-0005', 'AREA-0006', 'AREA-0007', 'AREA-0008', 'AREA-0009', 'AREA-0010', 'AREA-0011'] },
     { sequenceName: 'departmentId', collectionName: 'mdm_departments', fieldName: 'departmentId', prefix: 'DEP', padLength: 4, seedValues: ['DEP-0001', 'DEP-0002', 'DEP-0003', 'DEP-0004', 'DEP-0005', 'DEP-0006', 'DEP-0007', 'DEP-0008', 'DEP-0009', 'DEP-0010', 'DEP-0011', 'DEP-0012', 'DEP-0013', 'DEP-0014', 'DEP-0015', 'DEP-0016'] },
     { sequenceName: 'roomId', collectionName: 'mdm_rooms', fieldName: 'roomId', prefix: 'ROOM', padLength: 4, seedValues: ['ROOM-0001', 'ROOM-0002', 'ROOM-0003', 'ROOM-0004', 'ROOM-0005', 'ROOM-0006', 'ROOM-0007', 'ROOM-0008', 'ROOM-0009', 'ROOM-0010', 'ROOM-0011', 'ROOM-0012', 'ROOM-0013', 'ROOM-0014', 'ROOM-0015', 'ROOM-0016', 'ROOM-0017'] },
-    { sequenceName: 'userTrackId', collectionName: 'mdm_user_profiles', fieldName: 'userTrackId', prefix: 'USR', padLength: 4, seedValues: ['USR-0001', 'USR-0002', 'USR-0003', 'USR-0004', 'USR-0005', 'USR-0006', 'USR-0007', 'USR-0008', 'USR-0010', 'USR-0011', 'USR-0016', 'USR-0021', 'USR-0022', 'USR-0023', 'USR-0024', 'USR-0025', 'USR-0026', 'USR-0027', 'USR-0028', 'USR-0029', 'USR-0030'] },
-    { sequenceName: 'groupId', collectionName: 'mdm_user_groups', fieldName: 'groupId', prefix: 'GRP', padLength: 4, seedValues: ['GRP-0001', 'GRP-0002', 'GRP-0003', 'GRP-0004', 'GRP-0005', 'GRP-0006', 'GRP-0007', 'GRP-0008', 'GRP-0009', 'GRP-0010', 'GRP-0011', 'GRP-0012', 'GRP-0016'] },
-    { sequenceName: 'roleId', collectionName: 'mdm_roles', fieldName: 'roleId', prefix: 'ROLE', padLength: 4, seedValues: ['ROLE-0001', 'ROLE-0002', 'ROLE-0003', 'ROLE-0004', 'ROLE-0005', 'ROLE-0006', 'ROLE-0007', 'ROLE-0008', 'ROLE-0009', 'ROLE-0010', 'ROLE-0011', 'ROLE-0012', 'ROLE-0013', 'ROLE-0014', 'ROLE-0015', 'ROLE-0016'] },
+    { sequenceName: 'userTrackId', collectionName: 'mdm_user_profiles', fieldName: 'userTrackId', prefix: 'USR', padLength: 4, seedValues: ['USR-0001', 'USR-0002', 'USR-0003', 'USR-0004', 'USR-0005', 'USR-0006', 'USR-0007', 'USR-0008', 'USR-0010', 'USR-0011', 'USR-0016', 'USR-0021', 'USR-0022', 'USR-0023', 'USR-0024', 'USR-0025', 'USR-0026', 'USR-0027', 'USR-0028', 'USR-0029', 'USR-0030', 'USR-0031', 'USR-0032', 'USR-0033', 'USR-0034', 'USR-0035', 'USR-0036', 'USR-0037', 'USR-0038', 'USR-0039', 'USR-0040', 'USR-0041', 'USR-0042', 'USR-0043', 'USR-0044'] },
+    { sequenceName: 'groupId', collectionName: 'mdm_user_groups', fieldName: 'groupId', prefix: 'GRP', padLength: 4, seedValues: ['GRP-0001', 'GRP-0002', 'GRP-0003', 'GRP-0004', 'GRP-0005', 'GRP-0006', 'GRP-0007', 'GRP-0008', 'GRP-0009', 'GRP-0010', 'GRP-0011', 'GRP-0012', 'GRP-0016', 'GRP-0017'] },
+    { sequenceName: 'roleId', collectionName: 'mdm_roles', fieldName: 'roleId', prefix: 'ROLE', padLength: 4, seedValues: ['ROLE-0001', 'ROLE-0002', 'ROLE-0003', 'ROLE-0004', 'ROLE-0005', 'ROLE-0006', 'ROLE-0007', 'ROLE-0008', 'ROLE-0009', 'ROLE-0010', 'ROLE-0011', 'ROLE-0012', 'ROLE-0013', 'ROLE-0014', 'ROLE-0015', 'ROLE-0016', 'ROLE-0017'] },
     { sequenceName: 'moduleId', collectionName: 'mdm_modules', fieldName: 'moduleId', prefix: 'MOD', padLength: 4, seedValues: ['MOD-0001', 'MOD-0002', 'MOD-0003'] },
     { sequenceName: 'screenId', collectionName: 'mdm_screens', fieldName: 'screenId', prefix: 'SCR', padLength: 4, seedValues: ['SCR-0001', 'SCR-0002', 'SCR-0003', 'SCR-0004', 'SCR-0005', 'SCR-0006', 'SCR-0007', 'SCR-0008', 'SCR-0009', 'SCR-0010', 'SCR-0011', 'SCR-0012'] },
     { sequenceName: 'featureId', collectionName: 'mdm_features', fieldName: 'featureId', prefix: 'FEAT', padLength: 4, seedValues: ['FEAT-0001', 'FEAT-0002', 'FEAT-0003', 'FEAT-0004', 'FEAT-0005', 'FEAT-0006', 'FEAT-0007', 'FEAT-0008', 'FEAT-0009', 'FEAT-0010', 'FEAT-0011', 'FEAT-0012', 'FEAT-0013', 'FEAT-0014', 'FEAT-0015', 'FEAT-0016', 'FEAT-0017', 'FEAT-0018', 'FEAT-0019', 'FEAT-0020', 'FEAT-0021', 'FEAT-0022', 'FEAT-0023'] },
@@ -2819,7 +2615,7 @@ var workflowActions = [
         actionName: 'Request Additional Information',
         displayName: 'Request Additional Information',
         actionType: 'RETURN',
-        applicableRole: 'QA_APPROVER',
+        applicableRole: 'PRODUCTION_REVIEWER',
         requiresEsign: true,
         requiresComment: true,
         requiresJustification: false,
