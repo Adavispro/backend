@@ -23,34 +23,34 @@ spring:
               - Authorization
       routes:
         - id: auth-service
-          uri: ${GATEWAY_AUTH_SERVICE_URI:http://localhost:9081}
+          uri: ${GATEWAY_AUTH_SERVICE_URI:http://auth-service:9081}
           predicates:
             - Path=/api/v1/auth/**,/api/auth/**
 
         - id: license-service
-          uri: ${GATEWAY_LICENSE_SERVICE_URI:http://localhost:8082}
+          uri: ${GATEWAY_LICENSE_SERVICE_URI:http://license-service:8082}
           predicates:
             - Path=/api/v1/mdm/license/**
 
         - id: audit-service
-          uri: ${GATEWAY_AUDIT_SERVICE_URI:http://localhost:8084}
+          uri: ${GATEWAY_AUDIT_SERVICE_URI:http://audit-service:8084}
           predicates:
             - Path=/api/v1/audit/**
 
         - id: mdm-service
-          uri: ${GATEWAY_MDM_SERVICE_URI:http://localhost:9083}
+          uri: ${GATEWAY_MDM_SERVICE_URI:http://mdm-service:9083}
           predicates:
             - Path=/api/v1/mdm/**,/api/v1/dms/**
 
         - id: iiot-service
-          uri: ${GATEWAY_IIOT_SERVICE_URI:http://localhost:9085}
+          uri: ${GATEWAY_IIOT_SERVICE_URI:http://iiot-service:9085}
           predicates:
             - Path=/api/v1/iiot/**,/api/v1/notifications/**
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:8379}
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:Redis123!}
       timeout: 5000ms
 
@@ -59,16 +59,17 @@ jwt:
 
 services:
   mdm:
-    base-url: ${MDM_SERVICE_BASE_URL:http://localhost:9083}
+    base-url: ${MDM_SERVICE_BASE_URL:http://mdm-service:9083}
   license:
-    base-url: ${LICENSE_SERVICE_BASE_URL:http://localhost:8082}
+    base-url: ${LICENSE_SERVICE_BASE_URL:http://license-service:8082}
 
 gateway:
   routes:
-    auth-service-uri: ${GATEWAY_AUTH_SERVICE_URI:http://localhost:9081}
-    license-service-uri: ${GATEWAY_LICENSE_SERVICE_URI:http://localhost:8082}
-    audit-service-uri: ${GATEWAY_AUDIT_SERVICE_URI:http://localhost:8084}
-    mdm-service-uri: ${GATEWAY_MDM_SERVICE_URI:http://localhost:9083}
+    auth-service-uri: ${GATEWAY_AUTH_SERVICE_URI:http://auth-service:9081}
+    license-service-uri: ${GATEWAY_LICENSE_SERVICE_URI:http://license-service:8082}
+    audit-service-uri: ${GATEWAY_AUDIT_SERVICE_URI:http://audit-service:8084}
+    mdm-service-uri: ${GATEWAY_MDM_SERVICE_URI:http://mdm-service:9083}
+    iiot-service-uri: ${GATEWAY_IIOT_SERVICE_URI:http://iiot-service:9085}
 
 logging:
   level:
