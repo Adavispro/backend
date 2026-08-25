@@ -60,7 +60,7 @@ public class GatewayConfig {
 
                 // IIoT Service - Protected with JWT
                 .route("iiot-service", r -> r
-                        .path("/api/v1/iiot/**")
+                        .path("/api/v1/iiot/**", "/api/v1/notifications/**")
                         .filters(f -> f
                                 .filter(jwtAuthenticationFilter))
                         .uri(iiotServiceUri))

@@ -200,107 +200,6 @@ function getProductCatalog(ts) {
     });
 }
 
-function createBatchSummaryDocs(equipmentDefs, productDocs, ts) {
-    var defsByCode = {};
-    equipmentDefs.forEach(function (eq) {
-        defsByCode[eq.equipmentCode] = eq;
-    });
-
-    var lineKeys = ["G5", "G6", "G7"];
-    var docs = [];
-
-    lineKeys.forEach(function (lineKey, idx) {
-        var rmgCode = lineKey + "RMG";
-        var fbdCode = lineKey + "FBD";
-        var ogbCode = lineKey + "OGB";
-
-        var product = productDocs[idx % productDocs.length] || {
-            productCode: "STAPU1000",
-            productName: "Allopurinol tablets"
-        };
-
-        var startAt = new Date(ts.getTime() - ((idx + 1) * 3 * 60 * 60 * 1000));
-        var midAt = new Date(startAt.getTime() + 60 * 60 * 1000);
-        var endAt = new Date(midAt.getTime() + 60 * 60 * 1000);
-
-        var lineEquipment = defsByCode[rmgCode] || defsByCode[fbdCode] || defsByCode[ogbCode] || {};
-
-        docs.push({
-            tenantId: TENANT_ID,
-            plantId: PLANT_ID,
-            blockId: BLOCK_ID,
-            areaId: AREA_ID,
-            roomId: ROOM_ID,
-            lineId: lineKey,
-            equipmentId: lineEquipment.equipmentId || rmgCode,
-            productCode: product.productCode,
-            productName: product.productName,
-            batchNo: "BATCH-" + lineKey + "-" + pad3(idx + 1),
-            lotNo: "LOT-" + lineKey + "-" + pad3(idx + 1),
-            overallStatus: "IN_PROGRESS",
-            batchStartAt: startAt,
-            batchEndAt: endAt,
-            stages: [
-                {
-                    equipmentType: "RMG",
-                    equipmentCode: rmgCode,
-                    sequenceOrder: 1,
-                    executionStatus: "COMPLETED",
-                    stageStartAt: startAt,
-                    stageEndAt: midAt,
-                    operatorName: "production_operator",
-                    supervisorName: "shift_supervisor",
-                    recordCount: 120,
-                    approval: {
-                        status: "UNDER_REVIEW",
-                        approvedBy: "",
-                        approvedAt: null,
-                        comments: "Awaiting supervisor review"
-                    }
-                },
-                {
-                    equipmentType: "FBD",
-                    equipmentCode: fbdCode,
-                    sequenceOrder: 2,
-                    executionStatus: "IN_PROGRESS",
-                    stageStartAt: midAt,
-                    stageEndAt: endAt,
-                    operatorName: "production_operator",
-                    supervisorName: "shift_supervisor",
-                    recordCount: 60,
-                    approval: {
-                        status: "PENDING",
-                        approvedBy: "",
-                        approvedAt: null,
-                        comments: ""
-                    }
-                },
-                {
-                    equipmentType: "OGB",
-                    equipmentCode: ogbCode,
-                    sequenceOrder: 3,
-                    executionStatus: "NOT_STARTED",
-                    stageStartAt: null,
-                    stageEndAt: null,
-                    operatorName: "",
-                    supervisorName: "shift_supervisor",
-                    recordCount: 0,
-                    approval: {
-                        status: "PENDING",
-                        approvedBy: "",
-                        approvedAt: null,
-                        comments: ""
-                    }
-                }
-            ],
-            createdAt: ts,
-            updatedAt: ts
-        });
-    });
-
-    return docs;
-}
-
 function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
     var eqType = (equipmentId || "").toString().trim().toUpperCase().slice(-3);
     var parameters = [];
@@ -395,7 +294,6 @@ function seedMasterData() {
     var parameterDocs = [];
     var parameterLimitDocs = [];
     var productDocs = getProductCatalog(ts);
-    var batchSummaryDocs = createBatchSummaryDocs(equipmentDefs, productDocs, ts);
 
     var liveStatusDocs = [];
     equipmentDefs.forEach(function (eq, index) {
@@ -451,7 +349,7 @@ function seedMasterData() {
     safeUpsert("iiot_equipment_critical_parameters", parameterDocs, "parameterId");
     safeUpsert("iiot_equipment_critical_parameters_limit", parameterLimitDocs, "parameterLimitId");
 
-    logInfo("Master data seeded: equipment=" + equipmentDocs.length + ", products=" + productDocs.length + ", parameters=" + parameterDocs.length + ", limits=" + parameterLimitDocs.length + ", summaries=" + batchSummaryDocs.length + ", liveStatuses=" + liveStatusDocs.length);
+    logInfo("Master data seeded: equipment=" + equipmentDocs.length + ", products=" + productDocs.length + ", parameters=" + parameterDocs.length + ", limits=" + parameterLimitDocs.length + ", liveStatuses=" + liveStatusDocs.length);
 }
 
 function runSeed() {

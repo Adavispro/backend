@@ -69,6 +69,7 @@ gateway:
     license-service-uri: ${GATEWAY_LICENSE_SERVICE_URI:http://localhost:8082}
     audit-service-uri: ${GATEWAY_AUDIT_SERVICE_URI:http://localhost:8084}
     mdm-service-uri: ${GATEWAY_MDM_SERVICE_URI:http://localhost:9083}
+    iiot-service-uri: ${GATEWAY_IIOT_SERVICE_URI:http://localhost:9085}
 
 logging:
   level:

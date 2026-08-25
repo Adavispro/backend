@@ -233,6 +233,7 @@ services:
       GATEWAY_AUDIT_SERVICE_URI: http://audit-service:8084
       GATEWAY_MDM_SERVICE_URI: http://mdm-service:9083
       GATEWAY_IIOT_SERVICE_URI: http://iiot-service:9085
+      GATEWAY_ROUTES_IIOT_SERVICE_URI: http://iiot-service:9085
       MDM_SERVICE_BASE_URL: http://mdm-service:9083
       LICENSE_SERVICE_BASE_URL: http://license-service:8082
     ports:

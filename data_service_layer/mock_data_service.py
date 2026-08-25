@@ -102,7 +102,7 @@ def build_batch_data(dataset_id: str, batch_no: str, lot_no: str):
 
     family_profiles = {
         "RMG": {
-            "user": "44126",
+            "user": "PRODUCTION_OPERATOR_1",
             "temp_base": 3277,
             "status_flow": [
                 "Batch Started",
@@ -115,7 +115,7 @@ def build_batch_data(dataset_id: str, batch_no: str, lot_no: str):
             ],
         },
         "FBD": {
-            "user": "45210",
+            "user": "PRODUCTION_OPERATOR_2",
             "temp_base": 2850,
             "status_flow": [
                 "Batch Started",
@@ -128,7 +128,7 @@ def build_batch_data(dataset_id: str, batch_no: str, lot_no: str):
             ],
         },
         "OGB": {
-            "user": "46890",
+            "user": "PRODUCTION_OPERATOR_3",
             "temp_base": 3010,
             "status_flow": [
                 "Batch Started",
@@ -318,7 +318,7 @@ def build_alarm_data(dataset_id: str, from_time: str, to_time: str):
 def build_audit_data(dataset_id: str, from_time: str, to_time: str):
     family = dataset_family(dataset_id)
     line = dataset_number(dataset_id)
-    audit_user = {"RMG": "44126", "FBD": "45210", "OGB": "46890"}.get(family, "44126")
+    audit_user = {"RMG": "PRODUCTION_OPERATOR_1", "FBD": "PRODUCTION_OPERATOR_2", "OGB": "PRODUCTION_OPERATOR_3"}.get(family, "PRODUCTION_OPERATOR_1")
     object_prefix = {"RMG": "Recipe: RMG", "FBD": "Recipe: FBD", "OGB": "Recipe: OGB"}.get(family, "Recipe: RMG")
     description_prefix = {
         "RMG": "Mixer synchronization completed",
