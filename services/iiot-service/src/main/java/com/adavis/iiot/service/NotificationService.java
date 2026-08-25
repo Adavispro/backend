@@ -21,15 +21,13 @@ import java.util.*;
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NotificationService.class);
-
     private final MongoTemplate mongoTemplate;
     private final NotificationRecipientResolver recipientResolver;
 
     private static final String NOTIFICATIONS_COLLECTION = "notifications";
 
     /**
-     * Authoritatively emit role-aware and scoped workflow notifications.
+     * Authoritatively emit role-aware, tenant-isolated, and plant-scoped workflow notifications.
      */
     public void emitWorkflowTransitionNotification(String tenantId, String plantId, String batchNo,
                                                    String lotNo, String equipmentCode, String previousStatus,
@@ -39,31 +37,38 @@ public class NotificationService {
             String normTarget = targetStatus != null ? targetStatus.toUpperCase(Locale.ROOT).trim() : "";
             Date now = Date.from(Instant.now());
             String entityId = batchNo + ":" + (equipmentCode != null ? equipmentCode : "STAGE");
+            String effectivePlantId = (plantId != null && !plantId.isBlank()) ? plantId.trim() : "PLNT-0001";
+            String effectiveTenantId = (tenantId != null && !tenantId.isBlank()) ? tenantId.trim() : "TNT-0001";
 
             Set<String> recipients = new LinkedHashSet<>();
             String eventCode = "WORKFLOW_TRANSITION";
             String title = "Batch Workflow Update";
             String message = "Workflow update on batch " + batchNo;
             String severity = "INFO";
+            String deepLink = "/iiot/my-actions?batchNo=" + encode(batchNo);
 
             switch (normTarget) {
                 case "UNDER_REVIEW":
+                case "IN_REVIEW":
                     eventCode = "BATCH_SUBMITTED_FOR_REVIEW";
                     title = "Batch Stage Submitted for QA Review";
                     message = String.format("Batch %s (Lot: %s, Stage: %s) submitted for QA review by %s.",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId);
                     severity = "INFO";
-                    recipients = recipientResolver.resolveQAReviewers(tenantId, plantId, actorUserId);
+                    deepLink = String.format("/iiot/my-actions?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    recipients = recipientResolver.resolveQAReviewers(effectiveTenantId, effectivePlantId, actorUserId);
                     break;
 
                 case "REVIEWER_REVIEWED":
-                    eventCode = "BATCH_REVIEWED";
+                case "PENDING_APPROVAL":
+                    eventCode = "BATCH_PENDING_APPROVAL";
                     title = "Batch Stage Verified & Ready for Approval";
                     message = String.format("Batch %s (Lot: %s, Stage: %s) verified by QA Reviewer %s and awaiting release approval.",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId);
                     severity = "INFO";
+                    deepLink = String.format("/iiot/my-actions?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
                     String assignedSupervisor = stage != null ? stage.getString("supervisorName") : null;
-                    recipients = recipientResolver.resolveShiftSupervisors(tenantId, plantId, assignedSupervisor, actorUserId);
+                    recipients = recipientResolver.resolveShiftSupervisors(effectiveTenantId, effectivePlantId, assignedSupervisor, actorUserId);
                     break;
 
                 case "APPROVED":
@@ -72,7 +77,8 @@ public class NotificationService {
                     message = String.format("Batch %s (Lot: %s, Stage: %s) has been approved for release by Supervisor %s.",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId);
                     severity = "SUCCESS";
-                    recipients = recipientResolver.resolveBatchParticipants(tenantId, plantId, batchNo, equipmentCode, stage, actorUserId);
+                    deepLink = String.format("/iiot/approved-batches?batchNo=%s", encode(batchNo));
+                    recipients = recipientResolver.resolveBatchParticipants(effectiveTenantId, effectivePlantId, batchNo, equipmentCode, stage, actorUserId);
                     break;
 
                 case "REJECTED":
@@ -82,7 +88,43 @@ public class NotificationService {
                     message = String.format("Batch %s (Lot: %s, Stage: %s) was REJECTED by Supervisor %s. Reason: %s",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId, reasonText);
                     severity = "ERROR";
-                    recipients = recipientResolver.resolveBatchParticipants(tenantId, plantId, batchNo, equipmentCode, stage, actorUserId);
+                    deepLink = String.format("/iiot/pending-reports?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    recipients = recipientResolver.resolveBatchParticipants(effectiveTenantId, effectivePlantId, batchNo, equipmentCode, stage, actorUserId);
+                    break;
+
+                case "RETURNED_TO_OPERATOR":
+                case "RETURNED":
+                    eventCode = "BATCH_RETURNED";
+                    title = "Batch Stage Returned for Correction";
+                    String returnReason = (comments != null && !comments.isBlank()) ? comments.trim() : "Returned for operator correction.";
+                    message = String.format("Batch %s (Lot: %s, Stage: %s) was returned for correction by %s. Reason: %s",
+                            batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId, returnReason);
+                    severity = "WARNING";
+                    deepLink = String.format("/iiot/pending-reports?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    recipients = recipientResolver.resolveBatchParticipants(effectiveTenantId, effectivePlantId, batchNo, equipmentCode, stage, actorUserId);
+                    break;
+
+                case "DEFERRED":
+                    eventCode = "BATCH_DEFERRED";
+                    title = "Batch Stage Deferred";
+                    String deferReason = (comments != null && !comments.isBlank()) ? comments.trim() : "Processing deferred.";
+                    message = String.format("Batch %s (Lot: %s, Stage: %s) processing was DEFERRED by %s. Justification: %s",
+                            batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId, deferReason);
+                    severity = "WARNING";
+                    deepLink = String.format("/iiot/deferred-batches?batchNo=%s", encode(batchNo));
+                    recipients = recipientResolver.resolveBatchParticipants(effectiveTenantId, effectivePlantId, batchNo, equipmentCode, stage, actorUserId);
+                    break;
+
+                case "ESCALATED":
+                    eventCode = "BATCH_ESCALATED";
+                    title = "Batch Stage Escalated";
+                    message = String.format("Batch %s (Lot: %s, Stage: %s) was ESCALATED by %s for immediate managerial review.",
+                            batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId);
+                    severity = "WARNING";
+                    deepLink = String.format("/iiot/my-actions?batchNo=%s", encode(batchNo));
+                    recipients = recipientResolver.resolveUsersByRoleCodes(
+                            Set.of("QA_APPROVER", "SHIFT_SUPERVISOR", "PLATFORM_SUPER_ADMIN"),
+                            effectiveTenantId, effectivePlantId, actorUserId);
                     break;
 
                 default:
@@ -92,7 +134,7 @@ public class NotificationService {
 
             if (recipients.isEmpty()) {
                 log.warn("No eligible recipients resolved for workflow event {} on batch={} stage={} tenant={}",
-                        eventCode, batchNo, equipmentCode, tenantId);
+                        eventCode, batchNo, equipmentCode, effectiveTenantId);
                 return;
             }
 
@@ -100,14 +142,14 @@ public class NotificationService {
                 if (recipient == null || recipient.isBlank() || recipient.equalsIgnoreCase("SYSTEM")) continue;
 
                 String notifId = "NOTIF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
-                String idempotencyKey = String.format("%s:%s:%s:%s:%s",
-                        eventCode, batchNo, equipmentCode != null ? equipmentCode : "ALL", normTarget, recipient.toLowerCase(Locale.ROOT));
+                String idempotencyKey = String.format("%s:%s:%s:%s:%s:%s",
+                        effectiveTenantId, effectivePlantId, eventCode, batchNo, equipmentCode != null ? equipmentCode : "ALL", recipient.toUpperCase(Locale.ROOT));
 
                 NotificationDocument doc = NotificationDocument.builder()
                         .notificationId(notifId)
-                        .recipientUserId(recipient)
-                        .tenantId(tenantId != null ? tenantId : "TNT-0001")
-                        .plantId(plantId != null ? plantId : "PLANT-0001")
+                        .recipientUserId(recipient.toUpperCase(Locale.ROOT))
+                        .tenantId(effectiveTenantId)
+                        .plantId(effectivePlantId)
                         .type("WORKFLOW_TRANSITION")
                         .eventCode(eventCode)
                         .title(title)
@@ -119,25 +161,14 @@ public class NotificationService {
                         .equipmentCode(equipmentCode)
                         .workflowState(normTarget)
                         .severity(severity)
+                        .deepLink(deepLink)
                         .isRead(false)
                         .createdAt(now)
                         .actorUserId(actorUserId)
                         .idempotencyKey(idempotencyKey)
                         .build();
 
-                try {
-                    // Check if already created recently for duplicate suppression
-                    Query existQ = new Query(Criteria.where("idempotencyKey").is(idempotencyKey));
-                    if (!mongoTemplate.exists(existQ, NOTIFICATIONS_COLLECTION)) {
-                        mongoTemplate.insert(doc, NOTIFICATIONS_COLLECTION);
-                        log.info("Created notification [{}] for recipient={} event={} batch={}",
-                                notifId, recipient, eventCode, batchNo);
-                    } else {
-                        log.debug("Suppressed duplicate notification for idempotencyKey={}", idempotencyKey);
-                    }
-                } catch (Exception ex) {
-                    log.warn("Failed to persist notification for recipient {}: {}", recipient, ex.getMessage());
-                }
+                persistNotificationIfUnique(doc, idempotencyKey);
             }
 
         } catch (Exception e) {
@@ -154,15 +185,21 @@ public class NotificationService {
         if (assignedUserId == null || assignedUserId.isBlank() || assignedUserId.equalsIgnoreCase("SYSTEM")) return;
 
         Date now = Date.from(Instant.now());
+        String effectivePlantId = (plantId != null && !plantId.isBlank()) ? plantId.trim() : "PLNT-0001";
+        String effectiveTenantId = (tenantId != null && !tenantId.isBlank()) ? tenantId.trim() : "TNT-0001";
+        String canonicalRecipient = recipientResolver.resolveCanonicalUserId(assignedUserId, effectiveTenantId, effectivePlantId);
+        if (canonicalRecipient == null) return;
+
         String notifId = "NOTIF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
-        String idempotencyKey = String.format("ASSIGNMENT:%s:%s:%s",
-                batchNo, equipmentCode != null ? equipmentCode : "ALL", assignedUserId.toLowerCase(Locale.ROOT));
+        String idempotencyKey = String.format("%s:%s:ASSIGNMENT:%s:%s:%s",
+                effectiveTenantId, effectivePlantId, batchNo, equipmentCode != null ? equipmentCode : "ALL", canonicalRecipient);
+        String deepLink = String.format("/iiot/my-actions?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
 
         NotificationDocument doc = NotificationDocument.builder()
                 .notificationId(notifId)
-                .recipientUserId(assignedUserId)
-                .tenantId(tenantId != null ? tenantId : "TNT-0001")
-                .plantId(plantId != null ? plantId : "PLANT-0001")
+                .recipientUserId(canonicalRecipient)
+                .tenantId(effectiveTenantId)
+                .plantId(effectivePlantId)
                 .type("ASSIGNMENT")
                 .eventCode("WORKFLOW_ASSIGNMENT")
                 .title("New Batch Assignment")
@@ -175,26 +212,65 @@ public class NotificationService {
                 .equipmentCode(equipmentCode)
                 .workflowState("ASSIGNED")
                 .severity("INFO")
+                .deepLink(deepLink)
                 .isRead(false)
                 .createdAt(now)
                 .actorUserId(actorUserId)
                 .idempotencyKey(idempotencyKey)
                 .build();
 
-        try {
-            Query existQ = new Query(Criteria.where("idempotencyKey").is(idempotencyKey));
-            if (!mongoTemplate.exists(existQ, NOTIFICATIONS_COLLECTION)) {
-                mongoTemplate.insert(doc, NOTIFICATIONS_COLLECTION);
-            }
-        } catch (Exception ex) {
-            log.warn("Failed to persist assignment notification: {}", ex.getMessage());
+        persistNotificationIfUnique(doc, idempotencyKey);
+    }
+
+    /**
+     * Authoritatively emit critical equipment/machine alarm notification.
+     */
+    public void emitAlarmNotification(String tenantId, String plantId, String equipmentCode,
+                                      String alarmCode, String severity, String message, String actorUserId) {
+        if (equipmentCode == null || equipmentCode.isBlank()) return;
+
+        Date now = Date.from(Instant.now());
+        String effectivePlantId = (plantId != null && !plantId.isBlank()) ? plantId.trim() : "PLNT-0001";
+        String effectiveTenantId = (tenantId != null && !tenantId.isBlank()) ? tenantId.trim() : "TNT-0001";
+
+        Set<String> recipients = recipientResolver.resolveShiftSupervisors(effectiveTenantId, effectivePlantId, null, actorUserId);
+        if (recipients.isEmpty()) return;
+
+        String deepLink = String.format("/iiot/reports/alarm-events?equipmentId=%s", encode(equipmentCode));
+
+        for (String recipient : recipients) {
+            String notifId = "NOTIF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
+            String idempotencyKey = String.format("%s:%s:ALARM:%s:%s:%s",
+                    effectiveTenantId, effectivePlantId, equipmentCode, alarmCode != null ? alarmCode : "GEN", recipient);
+
+            NotificationDocument doc = NotificationDocument.builder()
+                    .notificationId(notifId)
+                    .recipientUserId(recipient)
+                    .tenantId(effectiveTenantId)
+                    .plantId(effectivePlantId)
+                    .type("ALARM")
+                    .eventCode("MACHINE_ALARM")
+                    .title("Critical Machine Alarm: " + equipmentCode)
+                    .message(message != null ? message : "Process alarm triggered on " + equipmentCode)
+                    .entityType("EQUIPMENT")
+                    .entityId(equipmentCode)
+                    .equipmentCode(equipmentCode)
+                    .severity(severity != null ? severity.toUpperCase(Locale.ROOT) : "ERROR")
+                    .deepLink(deepLink)
+                    .isRead(false)
+                    .createdAt(now)
+                    .actorUserId(actorUserId)
+                    .idempotencyKey(idempotencyKey)
+                    .build();
+
+            persistNotificationIfUnique(doc, idempotencyKey);
         }
     }
 
     /**
-     * Query paginated notifications for the authenticated user.
+     * Query paginated notifications for authenticated user with strict tenant and plant scoping.
      */
-    public Map<String, Object> getUserNotifications(String userId, String tenantId, Boolean unreadOnly, int page, int limit) {
+    public Map<String, Object> getUserNotifications(String userId, String tenantId, String plantId, Boolean unreadOnly, int page, int limit) {
         if (userId == null || userId.isBlank()) {
             throw new UnauthorizedException("User ID is required to fetch notifications");
         }
@@ -204,9 +280,17 @@ public class NotificationService {
 
         if (tenantId != null && !tenantId.isBlank()) {
             query.addCriteria(new Criteria().orOperator(
-                    Criteria.where("tenantId").is(tenantId),
+                    Criteria.where("tenantId").is(tenantId.trim()),
                     Criteria.where("tenantId").exists(false),
                     Criteria.where("tenantId").is(null)
+            ));
+        }
+
+        if (plantId != null && !plantId.isBlank()) {
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("plantId").is(plantId.trim()),
+                    Criteria.where("plantId").exists(false),
+                    Criteria.where("plantId").is(null)
             ));
         }
 
@@ -221,8 +305,7 @@ public class NotificationService {
         query.skip(skip).limit(limit);
 
         List<NotificationDocument> items = mongoTemplate.find(query, NotificationDocument.class, NOTIFICATIONS_COLLECTION);
-
-        long unreadCount = getUnreadCount(userId, tenantId);
+        long unreadCount = getUnreadCount(userId, tenantId, plantId);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("items", items);
@@ -230,15 +313,15 @@ public class NotificationService {
         result.put("unreadCount", unreadCount);
         result.put("page", page);
         result.put("limit", limit);
-        result.put("totalPages", (int) Math.ceil((double) totalCount / limit));
+        result.put("totalPages", (int) Math.ceil((double) totalCount / Math.max(1, limit)));
 
         return result;
     }
 
     /**
-     * Get count of unread notifications for the user.
+     * Get count of unread notifications for the user with tenant and plant scoping.
      */
-    public long getUnreadCount(String userId, String tenantId) {
+    public long getUnreadCount(String userId, String tenantId, String plantId) {
         if (userId == null || userId.isBlank()) return 0;
 
         Query query = new Query();
@@ -247,9 +330,17 @@ public class NotificationService {
 
         if (tenantId != null && !tenantId.isBlank()) {
             query.addCriteria(new Criteria().orOperator(
-                    Criteria.where("tenantId").is(tenantId),
+                    Criteria.where("tenantId").is(tenantId.trim()),
                     Criteria.where("tenantId").exists(false),
                     Criteria.where("tenantId").is(null)
+            ));
+        }
+
+        if (plantId != null && !plantId.isBlank()) {
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("plantId").is(plantId.trim()),
+                    Criteria.where("plantId").exists(false),
+                    Criteria.where("plantId").is(null)
             ));
         }
 
@@ -257,14 +348,14 @@ public class NotificationService {
     }
 
     /**
-     * Mark a single notification as read with server-side ownership authorization.
+     * Mark a single notification as read with server-side ownership authorization and tenant/plant verification.
      */
-    public Map<String, Object> markAsRead(String notificationId, String userId) {
+    public Map<String, Object> markAsRead(String notificationId, String userId, String tenantId, String plantId) {
         if (notificationId == null || notificationId.isBlank()) {
             throw new BusinessException("Notification ID is required");
         }
 
-        Query query = new Query(Criteria.where("notificationId").is(notificationId));
+        Query query = new Query(Criteria.where("notificationId").is(notificationId.trim()));
         NotificationDocument doc = mongoTemplate.findOne(query, NotificationDocument.class, NOTIFICATIONS_COLLECTION);
 
         if (doc == null) {
@@ -275,6 +366,13 @@ public class NotificationService {
         if (userId != null && !userId.isBlank() && !userId.equalsIgnoreCase("SYSTEM")) {
             if (doc.getRecipientUserId() != null && !doc.getRecipientUserId().equalsIgnoreCase(userId.trim())) {
                 throw new UnauthorizedException("You are not authorized to mark another user's notification as read");
+            }
+        }
+
+        // Verify tenant isolation
+        if (tenantId != null && !tenantId.isBlank()) {
+            if (doc.getTenantId() != null && !doc.getTenantId().isBlank() && !doc.getTenantId().equalsIgnoreCase(tenantId.trim())) {
+                throw new UnauthorizedException("Notification belongs to another organization");
             }
         }
 
@@ -292,9 +390,9 @@ public class NotificationService {
     }
 
     /**
-     * Mark all unread notifications for user as read.
+     * Mark all unread notifications for user as read within current plant/tenant scope.
      */
-    public Map<String, Object> markAllAsRead(String userId, String tenantId) {
+    public Map<String, Object> markAllAsRead(String userId, String tenantId, String plantId) {
         if (userId == null || userId.isBlank()) {
             throw new UnauthorizedException("User ID is required");
         }
@@ -305,9 +403,17 @@ public class NotificationService {
 
         if (tenantId != null && !tenantId.isBlank()) {
             query.addCriteria(new Criteria().orOperator(
-                    Criteria.where("tenantId").is(tenantId),
+                    Criteria.where("tenantId").is(tenantId.trim()),
                     Criteria.where("tenantId").exists(false),
                     Criteria.where("tenantId").is(null)
+            ));
+        }
+
+        if (plantId != null && !plantId.isBlank()) {
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("plantId").is(plantId.trim()),
+                    Criteria.where("plantId").exists(false),
+                    Criteria.where("plantId").is(null)
             ));
         }
 
@@ -319,6 +425,31 @@ public class NotificationService {
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("updatedCount", updateResult.getModifiedCount());
         res.put("userId", userId);
+        if (plantId != null) res.put("plantId", plantId);
         return res;
+    }
+
+    private void persistNotificationIfUnique(NotificationDocument doc, String idempotencyKey) {
+        try {
+            Query existQ = new Query(Criteria.where("idempotencyKey").is(idempotencyKey));
+            if (!mongoTemplate.exists(existQ, NOTIFICATIONS_COLLECTION)) {
+                mongoTemplate.insert(doc, NOTIFICATIONS_COLLECTION);
+                log.info("Emitted notification [{}] for recipient={} event={}",
+                        doc.getNotificationId(), doc.getRecipientUserId(), doc.getEventCode());
+            } else {
+                log.debug("Suppressed duplicate notification for idempotencyKey={}", idempotencyKey);
+            }
+        } catch (Exception ex) {
+            log.warn("Failed to persist notification for recipient {}: {}", doc.getRecipientUserId(), ex.getMessage());
+        }
+    }
+
+    private String encode(String val) {
+        if (val == null) return "";
+        try {
+            return java.net.URLEncoder.encode(val, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return val;
+        }
     }
 }

@@ -180,6 +180,16 @@ public class DynamicBatchWorkflowExecutionTest {
 
         when(mongoTemplate.findOne(any(Query.class), eq(WorkflowInstance.class), eq("iiot_workflow_instances")))
                 .thenReturn(instance);
+        Document summaryDoc = new Document("batchNo", "B-2026-001")
+                .append("lotNo", "01 of 05")
+                .append("equipmentCode", "G5RMG")
+                .append("tenantId", "TNT-0001")
+                .append("plantId", "PLNT-0001")
+                .append("stages", List.of(new Document("equipmentCode", "G5RMG")
+                        .append("status", "REVIEWER_REVIEWED")
+                        .append("operatorName", "USR-0001")));
+        when(mongoTemplate.findOne(any(Query.class), eq(Document.class), eq("iiot_batch_summary")))
+                .thenReturn(summaryDoc);
 
         Document authCreds = new Document("userId", "USR-0001")
                 .append("passwordHash", validPasswordHash);
@@ -189,6 +199,8 @@ public class DynamicBatchWorkflowExecutionTest {
         WorkflowActionHistory historyRecord = WorkflowActionHistory.builder()
                 .performedBy("USR-0001")
                 .actionCode("SEND_FOR_REVIEW")
+                .fromStageCode("SUBMISSION")
+                .performerRole("PRODUCTION_OPERATOR")
                 .build();
         when(mongoTemplate.find(any(Query.class), eq(WorkflowActionHistory.class), eq("iiot_workflow_action_history")))
                 .thenReturn(List.of(historyRecord));

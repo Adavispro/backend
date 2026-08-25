@@ -11,6 +11,10 @@ STATE_FILE="$STATE_DIR/services.pid"
 
 mkdir -p "$LOG_DIR" "$STATE_DIR"
 
+export JAVA_HOME="${JAVA_HOME:-$HOME/.local/share/jvm/jdk-21}"
+export PATH="$JAVA_HOME/bin:$HOME/.local/bin:$PATH"
+export DOCKER_HOST="${DOCKER_HOST:-unix:///run/user/1000/podman/podman.sock}"
+
 BUILD_FIRST="${BUILD_FIRST:-0}"
 
 require_cmd() {
@@ -20,64 +24,96 @@ require_cmd() {
   fi
 }
 
-wait_for_url() {
-  local url="$1"
-  local timeout="${2:-180}"
+wait_for_service() {
+  local name="$1"
+  local url="$2"
+  local timeout="${3:-180}"
   local deadline=$((SECONDS + timeout))
+  echo "Waiting for $name to be UP at $url..."
   while (( SECONDS < deadline )); do
-    if curl -fsS "$url" | grep -q '"status":"UP"'; then
+    if curl -fsS "$url" 2>/dev/null | grep -q '"status":"UP"'; then
+      echo "Service $name is UP."
       return 0
     fi
-    sleep 3
+    sleep 2
   done
+  echo "Service $name failed health check. Last 50 log lines:" >&2
+  tail -n 50 "$LOG_DIR/$name.log" >&2 || true
   return 1
 }
 
-seed_db() {
-  local temp_js
-  temp_js="$(mktemp)"
-  {
-    echo "db = db.getSiblingDB('adavis_platform');"
-    echo "db.dropDatabase();"
-    cat "$REPO_ROOT/docker/init-mongo.js"
-  } > "$temp_js"
-  docker exec -i adavis-mongodb mongosh "mongodb://admin:Admin123!@localhost:27017/adavis_platform?authSource=admin" --quiet < "$temp_js"
-  rm -f "$temp_js"
-
-  if [[ -f "$REPO_ROOT/docker/seed_data_iiot_file.js" ]]; then
-    docker exec -i adavis-mongodb mongosh "mongodb://admin:Admin123!@localhost:27017/adavis_platform?authSource=admin" --quiet < "$REPO_ROOT/docker/seed_data_iiot_file.js"
-  fi
-}
-
-start_service() {
+launch_service() {
   local name="$1"
   local path="$2"
-  local url="$3"
-  nohup bash -lc "cd '$REPO_ROOT/$path' && mvn spring-boot:run -DskipTests" > "$LOG_DIR/$name.log" 2>&1 &
+  local jar_file="$REPO_ROOT/$path/target/$name-1.0.0-SNAPSHOT.jar"
+
+  echo "Launching $name in background..."
+  if [[ -f "$jar_file" && "$BUILD_FIRST" != "1" ]]; then
+    (cd "$REPO_ROOT/$path" && exec java -jar "target/$name-1.0.0-SNAPSHOT.jar") > "$LOG_DIR/$name.log" 2>&1 &
+  else
+    (cd "$REPO_ROOT/$path" && exec mvn spring-boot:run -DskipTests) > "$LOG_DIR/$name.log" 2>&1 &
+  fi
   local pid=$!
   echo "$name:$pid" >> "$STATE_FILE"
-  if ! wait_for_url "$url" 180; then
-    echo "Service $name failed health check. See $LOG_DIR/$name.log" >&2
-    exit 1
-  fi
 }
 
-require_cmd docker
-require_cmd mvn
 require_cmd java
 require_cmd curl
 
-docker compose -f "$COMPOSE_FILE" up -d
+echo "Ensuring infrastructure containers are running..."
+if command -v docker-compose >/dev/null 2>&1; then
+  docker-compose -f "$COMPOSE_FILE" up -d
+elif command -v podman-compose >/dev/null 2>&1; then
+  podman-compose -f "$COMPOSE_FILE" up -d
+else
+  podman compose -f "$COMPOSE_FILE" up -d
+fi
+
 if [[ "$BUILD_FIRST" == "1" ]]; then
+  echo "Building all modules..."
   mvn -f "$REPO_ROOT/pom.xml" clean install -DskipTests
 fi
-seed_db
+
+"$SCRIPT_DIR/seed-data.sh"
 
 : > "$STATE_FILE"
-start_service auth-service services/auth-service http://localhost:9081/actuator/health
-start_service mdm-service services/mdm-service http://localhost:9083/actuator/health
-start_service license-service services/license-service http://localhost:8082/actuator/health
-start_service audit-service services/audit-service http://localhost:8084/actuator/health
-start_service api-gateway services/api-gateway http://localhost:9080/actuator/health
+launch_service auth-service services/auth-service
+launch_service license-service services/license-service
+launch_service audit-service services/audit-service
+launch_service mdm-service services/mdm-service
+launch_service iiot-service services/iiot-service
+launch_service api-gateway services/api-gateway
 
-echo "Local stack is ready. Logs are under $LOG_DIR"
+wait_for_service auth-service http://localhost:9081/actuator/health
+wait_for_service license-service http://localhost:8082/actuator/health
+wait_for_service audit-service http://localhost:8084/actuator/health
+wait_for_service mdm-service http://localhost:9083/actuator/health
+wait_for_service iiot-service http://localhost:9085/actuator/health
+wait_for_service api-gateway http://localhost:9080/actuator/health
+
+echo "============================================"
+echo "Backend microservices are running and healthy!"
+echo "API Gateway:     http://localhost:9080"
+echo "Auth Service:    http://localhost:9081"
+echo "License Service: http://localhost:8082"
+echo "MDM Service:     http://localhost:9083"
+echo "Audit Service:   http://localhost:8084"
+echo "IIOT Service:    http://localhost:9085"
+echo "Logs are located in: $LOG_DIR"
+echo "============================================"
+
+# Trap signals for graceful shutdown
+cleanup() {
+  echo "Shutting down services..."
+  if [[ -f "$STATE_FILE" ]]; then
+    while IFS=: read -r name pid; do
+      if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+        kill "$pid" 2>/dev/null || true
+      fi
+    done < "$STATE_FILE"
+    rm -f "$STATE_FILE"
+  fi
+}
+trap cleanup SIGINT SIGTERM EXIT
+
+wait

@@ -10,7 +10,8 @@ import java.util.Date;
 
 @Document(collection = "notifications")
 @CompoundIndexes({
-    @CompoundIndex(name = "idx_recipient_read_created", def = "{'recipientUserId': 1, 'isRead': 1, 'createdAt': -1}"),
+    @CompoundIndex(name = "idx_recipient_tenant_plant_read_created", def = "{'recipientUserId': 1, 'tenantId': 1, 'plantId': 1, 'isRead': 1, 'createdAt': -1}"),
+    @CompoundIndex(name = "idx_tenant_plant_created", def = "{'tenantId': 1, 'plantId': 1, 'createdAt': -1}"),
     @CompoundIndex(name = "idx_idempotency", def = "{'idempotencyKey': 1}", unique = true, sparse = true)
 })
 public class NotificationDocument {
@@ -27,7 +28,9 @@ public class NotificationDocument {
     @Indexed
     private String tenantId;
 
+    @Indexed
     private String plantId;
+
     private String type;
     private String eventCode;
     private String title;
@@ -43,6 +46,7 @@ public class NotificationDocument {
     private Date createdAt;
     private Date readAt;
     private String actorUserId;
+    private String deepLink;
     private String idempotencyKey;
 
     public NotificationDocument() {}
@@ -72,6 +76,7 @@ public class NotificationDocument {
         private Date createdAt;
         private Date readAt;
         private String actorUserId;
+        private String deepLink;
         private String idempotencyKey;
 
         public NotificationDocumentBuilder id(String v) { this.id = v; return this; }
@@ -94,6 +99,7 @@ public class NotificationDocument {
         public NotificationDocumentBuilder createdAt(Date v) { this.createdAt = v; return this; }
         public NotificationDocumentBuilder readAt(Date v) { this.readAt = v; return this; }
         public NotificationDocumentBuilder actorUserId(String v) { this.actorUserId = v; return this; }
+        public NotificationDocumentBuilder deepLink(String v) { this.deepLink = v; return this; }
         public NotificationDocumentBuilder idempotencyKey(String v) { this.idempotencyKey = v; return this; }
 
         public NotificationDocument build() {
@@ -118,6 +124,7 @@ public class NotificationDocument {
             doc.createdAt = this.createdAt;
             doc.readAt = this.readAt;
             doc.actorUserId = this.actorUserId;
+            doc.deepLink = this.deepLink;
             doc.idempotencyKey = this.idempotencyKey;
             return doc;
         }
@@ -163,6 +170,8 @@ public class NotificationDocument {
     public void setReadAt(Date readAt) { this.readAt = readAt; }
     public String getActorUserId() { return actorUserId; }
     public void setActorUserId(String actorUserId) { this.actorUserId = actorUserId; }
+    public String getDeepLink() { return deepLink; }
+    public void setDeepLink(String deepLink) { this.deepLink = deepLink; }
     public String getIdempotencyKey() { return idempotencyKey; }
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
 }

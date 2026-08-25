@@ -28,6 +28,7 @@
         <lombok.version>1.18.34</lombok.version>
         <jwt.version>0.12.5</jwt.version>
         <testcontainers.version>1.19.8</testcontainers.version>
+        <skipTests>false</skipTests>
     </properties>
 
     <modules>

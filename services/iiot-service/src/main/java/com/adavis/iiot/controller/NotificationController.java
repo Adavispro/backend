@@ -16,8 +16,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NotificationController {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NotificationController.class);
-
     private final NotificationService notificationService;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -41,70 +39,109 @@ public class NotificationController {
         return (paramUserId != null && !paramUserId.isBlank()) ? paramUserId.trim() : "";
     }
 
-    private String resolveTenantId(String headerTenantId, String paramTenantId) {
+    private String resolveTenantId(String headerTenantId, String authHeader, String paramTenantId) {
         if (headerTenantId != null && !headerTenantId.isBlank()) {
             return headerTenantId.trim();
         }
         return (paramTenantId != null && !paramTenantId.isBlank()) ? paramTenantId.trim() : "";
     }
 
+    private String resolvePlantId(String headerPlantId, String headerSelectedPlantId, String paramPlantId) {
+        if (headerPlantId != null && !headerPlantId.isBlank()) {
+            return headerPlantId.trim();
+        }
+        if (headerSelectedPlantId != null && !headerSelectedPlantId.isBlank()) {
+            return headerSelectedPlantId.trim();
+        }
+        return (paramPlantId != null && !paramPlantId.isBlank()) ? paramPlantId.trim() : "";
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> getNotifications(
             @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-Plant-Id", required = false) String headerPlantId,
+            @RequestHeader(value = "X-Selected-Plant-Id", required = false) String headerSelectedPlantId,
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "userId", required = false) String paramUserId,
             @RequestParam(value = "tenantId", required = false) String paramTenantId,
+            @RequestParam(value = "plantId", required = false) String paramPlantId,
+            @RequestParam(value = "selectedPlantId", required = false) String paramSelectedPlantId,
             @RequestParam(value = "unreadOnly", required = false, defaultValue = "false") Boolean unreadOnly,
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @RequestParam(value = "limit", required = false, defaultValue = "20") int limit) {
 
         String userId = resolveUserId(headerUserId, authHeader, paramUserId);
-        String tenantId = resolveTenantId(headerTenantId, paramTenantId);
+        String tenantId = resolveTenantId(headerTenantId, authHeader, paramTenantId);
+        String effectivePlantId = resolvePlantId(headerPlantId, headerSelectedPlantId,
+                (paramPlantId != null && !paramPlantId.isBlank()) ? paramPlantId : paramSelectedPlantId);
 
         return ResponseEntity.ok(ApiResponse.success(
-                notificationService.getUserNotifications(userId, tenantId, unreadOnly, page, limit)));
+                notificationService.getUserNotifications(userId, tenantId, effectivePlantId, unreadOnly, page, limit)));
     }
 
     @GetMapping("/unread-count")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUnreadCount(
             @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-Plant-Id", required = false) String headerPlantId,
+            @RequestHeader(value = "X-Selected-Plant-Id", required = false) String headerSelectedPlantId,
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "userId", required = false) String paramUserId,
-            @RequestParam(value = "tenantId", required = false) String paramTenantId) {
+            @RequestParam(value = "tenantId", required = false) String paramTenantId,
+            @RequestParam(value = "plantId", required = false) String paramPlantId,
+            @RequestParam(value = "selectedPlantId", required = false) String paramSelectedPlantId) {
 
         String userId = resolveUserId(headerUserId, authHeader, paramUserId);
-        String tenantId = resolveTenantId(headerTenantId, paramTenantId);
+        String tenantId = resolveTenantId(headerTenantId, authHeader, paramTenantId);
+        String effectivePlantId = resolvePlantId(headerPlantId, headerSelectedPlantId,
+                (paramPlantId != null && !paramPlantId.isBlank()) ? paramPlantId : paramSelectedPlantId);
 
-        long unreadCount = notificationService.getUnreadCount(userId, tenantId);
-        return ResponseEntity.ok(ApiResponse.success(Map.of("unreadCount", unreadCount, "userId", userId)));
+        long unreadCount = notificationService.getUnreadCount(userId, tenantId, effectivePlantId);
+        return ResponseEntity.ok(ApiResponse.success(Map.of(
+                "unreadCount", unreadCount,
+                "userId", userId,
+                "plantId", effectivePlantId
+        )));
     }
 
     @PostMapping("/{notificationId}/read")
     public ResponseEntity<ApiResponse<Map<String, Object>>> markAsRead(
             @PathVariable String notificationId,
             @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-Plant-Id", required = false) String headerPlantId,
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(value = "userId", required = false) String paramUserId) {
+            @RequestParam(value = "userId", required = false) String paramUserId,
+            @RequestParam(value = "tenantId", required = false) String paramTenantId,
+            @RequestParam(value = "plantId", required = false) String paramPlantId) {
 
         String userId = resolveUserId(headerUserId, authHeader, paramUserId);
+        String tenantId = resolveTenantId(headerTenantId, authHeader, paramTenantId);
+        String effectivePlantId = resolvePlantId(headerPlantId, null, paramPlantId);
+
         return ResponseEntity.ok(ApiResponse.success("Notification marked as read",
-                notificationService.markAsRead(notificationId, userId)));
+                notificationService.markAsRead(notificationId, userId, tenantId, effectivePlantId)));
     }
 
     @PostMapping("/mark-all-read")
     public ResponseEntity<ApiResponse<Map<String, Object>>> markAllAsRead(
             @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-Plant-Id", required = false) String headerPlantId,
+            @RequestHeader(value = "X-Selected-Plant-Id", required = false) String headerSelectedPlantId,
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "userId", required = false) String paramUserId,
-            @RequestParam(value = "tenantId", required = false) String paramTenantId) {
+            @RequestParam(value = "tenantId", required = false) String paramTenantId,
+            @RequestParam(value = "plantId", required = false) String paramPlantId,
+            @RequestParam(value = "selectedPlantId", required = false) String paramSelectedPlantId) {
 
         String userId = resolveUserId(headerUserId, authHeader, paramUserId);
-        String tenantId = resolveTenantId(headerTenantId, paramTenantId);
+        String tenantId = resolveTenantId(headerTenantId, authHeader, paramTenantId);
+        String effectivePlantId = resolvePlantId(headerPlantId, headerSelectedPlantId,
+                (paramPlantId != null && !paramPlantId.isBlank()) ? paramPlantId : paramSelectedPlantId);
 
         return ResponseEntity.ok(ApiResponse.success("All notifications marked as read",
-                notificationService.markAllAsRead(userId, tenantId)));
+                notificationService.markAllAsRead(userId, tenantId, effectivePlantId)));
     }
 }

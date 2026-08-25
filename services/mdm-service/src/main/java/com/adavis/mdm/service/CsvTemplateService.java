@@ -28,54 +28,54 @@ public class CsvTemplateService {
     private static final Map<BulkType, List<List<String>>> SAMPLE_ROWS = new LinkedHashMap<>();
 
     static {
-        // TENANT
-        HEADERS.put(BulkType.TENANT, List.of("tenantId", "tenantCode", "tenantName", "status", "contactEmail", "contactPhone", "region"));
+        // TENANT - Business fields only (tenantId is auto-generated)
+        HEADERS.put(BulkType.TENANT, List.of("tenantCode", "tenantName", "status", "contactEmail", "contactPhone", "region", "domain"));
         SAMPLE_ROWS.put(BulkType.TENANT, List.of(
-                List.of("TNT-0002", "ACME_PHARMA", "Acme Pharmaceuticals Ltd", "ACTIVE", "admin@acmepharma.com", "+1-555-0199", "North America")
+                List.of("ACME_PHARMA", "Acme Pharmaceuticals Ltd", "ACTIVE", "admin@acmepharma.com", "+1-555-0199", "North America", "https://acmepharma.com")
         ));
 
-        // PLANT
-        HEADERS.put(BulkType.PLANT, List.of("plantId", "tenantId", "plantCode", "plantName", "type", "isActive", "blockId", "blockName", "areaId", "areaName", "roomId", "roomName"));
+        // PLANT - Business fields only (plantId, blockId, areaId, roomId are auto-generated)
+        HEADERS.put(BulkType.PLANT, List.of("plantCode", "plantName", "type", "isActive", "blockCode", "blockName", "areaCode", "areaName", "roomCode", "roomName"));
         SAMPLE_ROWS.put(BulkType.PLANT, List.of(
-                List.of("PLNT-0002", "TNT-0001", "BLR-01", "Formulation Plant - Bangalore", "Manufacturing", "true", "BLK-0002", "Granulation Block B", "AREA-0002", "Granulation Area 2", "ROOM-0002", "Granulation Suite 102")
+                List.of("BLR-01", "Formulation Plant - Bangalore", "Manufacturing", "true", "BLK-0002", "Granulation Block B", "AREA-0002", "Granulation Area 2", "ROOM-0002", "Granulation Suite 102")
         ));
 
-        // DEPARTMENT
-        HEADERS.put(BulkType.DEPARTMENT, List.of("departmentId", "tenantId", "departmentCode", "departmentName", "description", "isActive"));
+        // DEPARTMENT - Business fields only (departmentId is auto-generated)
+        HEADERS.put(BulkType.DEPARTMENT, List.of("departmentCode", "departmentName", "description", "plantCode", "parentDepartmentCode", "isActive"));
         SAMPLE_ROWS.put(BulkType.DEPARTMENT, List.of(
-                List.of("DEP-0003", "TNT-0001", "QA-DEPT", "Quality Assurance", "QA and Compliance Department", "true"),
-                List.of("DEP-0004", "TNT-0001", "QC-DEPT", "Quality Control", "Analytical Testing & QC", "true")
+                List.of("QA-DEPT", "Quality Assurance", "QA and Compliance Department", "HYD-01", "", "true"),
+                List.of("QC-DEPT", "Quality Control", "Analytical Testing & QC", "HYD-01", "QA-DEPT", "true")
         ));
 
-        // ROLE
-        HEADERS.put(BulkType.ROLE, List.of("roleId", "tenantId", "roleCode", "roleName", "description", "isActive"));
+        // ROLE - Business fields only (roleId is auto-generated)
+        HEADERS.put(BulkType.ROLE, List.of("roleCode", "roleName", "description", "isActive"));
         SAMPLE_ROWS.put(BulkType.ROLE, List.of(
-                List.of("ROLE-0010", "TNT-0001", "QA_REVIEWER", "QA Reviewer", "Quality Assurance Batch Reviewer", "true")
+                List.of("QA_REVIEWER", "QA Reviewer", "Quality Assurance Batch Reviewer", "true")
         ));
 
-        // USER
-        HEADERS.put(BulkType.USER, List.of("userId", "tenantId", "username", "email", "firstName", "lastName", "departmentId", "designation", "initialPassword", "title", "userType", "empId", "isActive"));
+        // USER - Business fields only (userId and userTrackId are auto-generated / derived)
+        HEADERS.put(BulkType.USER, List.of("username", "email", "firstName", "lastName", "departmentCode", "designation", "initialPassword", "title", "userType", "empId", "isActive"));
         SAMPLE_ROWS.put(BulkType.USER, List.of(
-                List.of("OPERATOR_NEW_03", "TNT-0001", "operator_new_03", "op03@adavis.com", "John", "Doe", "DEP-0002", "Production Operator", "Password@123", "Mr.", "Internal", "EMP-00107", "true")
+                List.of("operator_new_03", "op03@adavis.com", "John", "Doe", "PROD", "Production Operator", "Password@123", "Mr.", "Internal", "EMP-00107", "true")
         ));
 
-        // USER_GROUP
-        HEADERS.put(BulkType.USER_GROUP, List.of("groupId", "tenantId", "groupCode", "groupName", "description", "isActive"));
+        // USER_GROUP - Business fields only (groupId is auto-generated)
+        HEADERS.put(BulkType.USER_GROUP, List.of("groupCode", "groupName", "description", "isActive"));
         SAMPLE_ROWS.put(BulkType.USER_GROUP, List.of(
-                List.of("GRP-0013", "TNT-0001", "QA_REVIEWERS", "QA Reviewers", "Quality assurance and batch reviewers", "true")
+                List.of("QA_REVIEWERS", "QA Reviewers", "Quality assurance and batch reviewers", "true")
         ));
 
-        // USER_GROUP_ASSIGNMENT
-        HEADERS.put(BulkType.USER_GROUP_ASSIGNMENT, List.of("userId", "groupId", "assignedBy", "reason", "isActive"));
+        // USER_GROUP_ASSIGNMENT - Business references (assignmentId is auto-generated)
+        HEADERS.put(BulkType.USER_GROUP_ASSIGNMENT, List.of("username", "groupCode", "assignedBy", "reason", "isActive"));
         SAMPLE_ROWS.put(BulkType.USER_GROUP_ASSIGNMENT, List.of(
-                List.of("OPERATOR_NEW_03", "GRP-0011", "SUPER_ADMIN", "Operator assignment", "true")
+                List.of("operator_new_03", "QA_REVIEWERS", "SUPER_ADMIN", "Operator assignment", "true")
         ));
 
-        // IIOT_MASTER
-        HEADERS.put(BulkType.IIOT_MASTER, List.of("equipmentId", "tenantId", "plantId", "equipmentCode", "equipmentName", "equipmentType", "lineId", "roomId", "status", "isActive"));
+        // IIOT_MASTER - Business fields only (equipmentId is set to equipmentCode / auto-generated)
+        HEADERS.put(BulkType.IIOT_MASTER, List.of("equipmentCode", "equipmentName", "equipmentType", "lineId", "roomCode", "status", "isActive"));
         SAMPLE_ROWS.put(BulkType.IIOT_MASTER, List.of(
-                List.of("G8RMG", "TNT-0001", "PLNT-0001", "G8RMG", "Rapid Mixer Granulator G8", "RMG", "G8", "ROOM-0001", "ACTIVE", "true"),
-                List.of("G8FBD", "TNT-0001", "PLNT-0001", "G8FBD", "Fluid Bed Dryer G8", "FBD", "G8", "ROOM-0001", "ACTIVE", "true")
+                List.of("G8RMG", "Rapid Mixer Granulator G8", "RMG", "G8", "ROOM-0001", "ACTIVE", "true"),
+                List.of("G8FBD", "Fluid Bed Dryer G8", "FBD", "G8", "ROOM-0001", "ACTIVE", "true")
         ));
     }
 
