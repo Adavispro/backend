@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """Mock data service that mimics the source API used by the scheduler.
 
-This temporary service is designed to match the endpoint pattern defined in:
+Matches endpoints defined in:
 - data_service_layer/script_requirement.md
 - scheduler/requirement.md
+- reference_documents/reports (RMG.pdf, FBD.pdf, BLE.pdf, COAT.pdf)
 
-It exposes sample data for:
+Exposes sample data for:
 - BATCHDETAILS
 - BATCHDATA
 - ALARMDATA
 - AUDITDATA
-
-It is intentionally simple and dependency-free so that the rest of the application
-can be implemented against a stable contract before the real external API is wired in.
+- PARAMETERSETTINGS
 """
 
 from __future__ import annotations
 
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
@@ -25,8 +25,43 @@ from urllib.parse import parse_qs, urlparse
 HOST = "0.0.0.0"
 PORT = 8000
 
+# Try to load extracted reference data from reference_documents/extracted_equipment_data.json
+EXTRACTED_DATA_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "reference_documents",
+    "extracted_equipment_data.json",
+)
+
+REFERENCE_DOC_DATA: dict[str, dict] = {}
+if os.path.exists(EXTRACTED_DATA_PATH):
+    try:
+        with open(EXTRACTED_DATA_PATH, "r", encoding="utf-8") as f:
+            REFERENCE_DOC_DATA = json.load(f)
+    except Exception as e:
+        print(f"Warning: Failed to load {EXTRACTED_DATA_PATH}: {e}", file=sys.stderr)
+
 
 def dataset_family(dataset_id: str) -> str:
+    cleaned = (
+        (dataset_id or "G5RMG")
+        .upper()
+        .replace("PB3", "")
+        .replace("C0219", "RMG")
+        .replace("C0220", "FBD")
+        .replace("C0222", "BLE")
+        .replace("C0223", "COAT")
+        .replace("C0224", "CIP")
+    )
+    if "RMG" in cleaned:
+        return "RMG"
+    if "FBD" in cleaned:
+        return "FBD"
+    if "BLE" in cleaned or "OCB" in cleaned or "OGB" in cleaned:
+        return "BLE"
+    if "COAT" in cleaned:
+        return "COAT"
+    if "CIP" in cleaned:
+        return "CIP"
     return (dataset_id or "G5RMG")[-3:].upper()
 
 
@@ -40,7 +75,8 @@ def parse_pointname(pointname: str):
     """Return the dataset id, dataset name, and parameter map from a source pointname string.
 
     Examples:
-        db:G5RMG.BATCHDATA<@BATCH_NO='VI0026050', @LOT_NO='01 of 05 STEP-1'>
+        db:G5RMG.BATCHDATA<@BATCH_NO='NL0026008', @LOT_NO='01 of 05'>
+        db:G5RMG.PARAMETERSETTINGS<@BATCH_NO='NL0026008', @LOT_NO='01 of 05'>
         db:G5RMG.ALARMDATA<@FROMTIME='2026-08-13 06:57:45', @TOTIME='2026-08-13 13:39:54'>
     """
     name = pointname.strip()
@@ -69,335 +105,581 @@ def parse_pointname(pointname: str):
 
 
 def build_batch_details(dataset_id: str):
-    # Keep product code and batch number common across RMG/FBD/OGB.
-    common_specs = [
-        ("Allopurinol tablets", "STAPU1000", "UB0026002"),
-        ("Levetiracetam tablets", "STLEV5000", "LV0026001"),
+    family = dataset_family(dataset_id)
+    # CIP excluded from active data load
+    if family == "CIP":
+        return []
+
+    # RMG, FBD, BLE, COAT: 1 batch and 1 lot matching reference document
+    return [
+        {
+            "PRODUCT_NAME": "Finasteride USP 5 mg",
+            "PRODUCT_CODE": "STFS7000",
+            "RECIPE_NAME": "STFS7000",
+            "BATCH_NO": "NL0026008",
+            "LOT_NO": "01 of 05",
+            "BATCH_SIZE_KG": 900.0,
+        }
     ]
 
-    details = []
-    for product_name, product_code, batch_no in common_specs:
-        for lot_index in range(1, 6):
-            details.append(
-                {
-                    "PRODUCT_NAME": product_name,
-                    "PRODUCT_CODE": product_code,
-                    "BATCH_NO": batch_no,
-                    "LOT_NO": f"{lot_index:02d} of 05",
-                }
-            )
 
-    return details
+def build_parameter_settings(dataset_id: str, batch_no: str, lot_no: str):
+    family = dataset_family(dataset_id)
+    ref = REFERENCE_DOC_DATA.get(family, {})
+    if ref and "parameterSettings" in ref:
+        return ref["parameterSettings"]
+
+    if family == "RMG":
+        return {
+            "dryCycle1": {
+                "DRY CYCLE1 IMPELLER SLOW SET (Sec)": 600,
+                "DRY CYCLE1 IMPELLER FAST SET (Sec)": 0,
+                "DRY CYCLE1 CHOPPER DELAY (Sec)": 0,
+                "DRY CYCLE1 CHOPPER SLOW SET (Sec)": 0,
+                "DRY CYCLE1 CHOPPER FAST SET (Sec)": 0,
+            },
+            "wetCycle1": {
+                "WET CYCLE1 IMPELLER SLOW SET (Sec)": 180,
+                "WET CYCLE1 IMPELLER FAST SET (Sec)": 0,
+                "WET CYCLE1 CHOPPER DELAY (Sec)": 0,
+                "WET CYCLE1 CHOPPER SLOW SET (Sec)": 0,
+                "WET CYCLE1 CHOPPER FAST SET (Sec)": 0,
+                "WET CYCLE1 PUMP1 ON DELAY (Sec)": 0,
+                "WET CYCLE1 PUMP1 SET (Sec)": 180,
+                "WET CYCLE1 PUMP1 RPM": 240,
+            },
+            "wetCycle2": {
+                "WET CYCLE2 IMPELLER SLOW SET (Sec)": 180,
+                "WET CYCLE2 IMPELLER FAST SET (Sec)": 0,
+                "WET CYCLE2 CHOPPER DELAY (Sec)": 0,
+                "WET CYCLE2 CHOPPER SLOW SET (Sec)": 180,
+                "WET CYCLE2 CHOPPER FAST SET (Sec)": 0,
+                "WET CYCLE2 PUMP1 ON DELAY (Sec)": 0,
+                "WET CYCLE2 PUMP1 SET (Sec)": 0,
+                "WET CYCLE2 PUMP1 RPM": 0,
+            },
+            "wetCycle3": {
+                "WET CYCLE3 IMPELLER SLOW SET (Sec)": 480,
+                "WET CYCLE3 IMPELLER FAST SET (Sec)": 0,
+                "WET CYCLE3 CHOPPER DELAY (Sec)": 0,
+                "WET CYCLE3 CHOPPER SLOW SET (Sec)": 480,
+                "WET CYCLE3 CHOPPER FAST SET (Sec)": 0,
+                "WET CYCLE3 PUMP1 ON DELAY (Sec)": 0,
+                "WET CYCLE3 PUMP1 SET (Sec)": 0,
+                "WET CYCLE3 PUMP1 RPM": 0,
+            },
+            "unloadingParameters": {
+                "IMPELLER": "SLOW",
+                "CHOPPER": "SLOW",
+            },
+        }
+
+    if family == "BLE":
+        return {
+            "SELECT NUMBER OF MIXINGS": 2,
+            "FIRST MIXING TIME (MIN)": 15,
+            "SECOND MIXING TIME (MIN)": 5,
+            "THIRD MIXING TIME (MIN)": 0,
+            "FOURTH MIXING TIME (MIN)": 0,
+            "BLENDING SPEED (RPM)": 5,
+            "VACUUM ON TIME (MIN)": 100,
+            "PURGE ON TIME (Sec)": 5,
+        }
+
+    if family == "COAT":
+        return {
+            "PRE_HEATING": {
+                "INLET AIR TEMP SET (C)": 65,
+                "BED TEMP SET (C)": 42,
+                "PAN SPEED SET (RPM)": 3,
+                "DRYING TIME (MIN)": 15,
+            },
+            "SPRAYING_CYCLE": {
+                "INLET AIR TEMP SET (C)": 65,
+                "BED TEMP SET (C)": 44,
+                "PAN SPEED SET (RPM)": 8,
+                "SPRAY RATE SET (G/MIN)": 120,
+                "ATOMIZING AIR PRESSURE (BAR)": 2.5,
+                "PATTERN AIR PRESSURE (BAR)": 2.0,
+                "PROCESS TIME (MIN)": 180,
+            },
+            "POST_DRYING": {
+                "INLET AIR TEMP SET (C)": 50,
+                "BED TEMP SET (C)": 40,
+                "PAN SPEED SET (RPM)": 3,
+                "DRYING TIME (MIN)": 30,
+            },
+        }
+
+    # FBD
+    return {
+        "PROCESS TIME (MIN)": 300,
+        "AIR DRY TIME (MIN)": 5,
+        "COOLING TIME (MIN)": 0,
+        "SHAKE INTERVAL (MIN)": 10,
+        "SHAKE DURATION (SEC)": 30,
+        "END SHAKE TIME (SEC)": 30,
+        "INLET TEMPERATURE (C)": 60,
+        "INLET TEMPERATURE HIGH (C)": 64,
+        "OUTLET TEMPERATURE (C)": 48,
+        "PRINT INTERVAL (MIN)": 5,
+    }
+
+
+def _to_iso(dt_str: str) -> str:
+    """Convert 'DD/MM/YYYY HH:MM:SS' to 'YYYY-MM-DDTHH:MM:SS'."""
+    s = str(dt_str or "").strip()
+    if not s:
+        return "2026-02-09T18:00:00"
+    if "T" in s:
+        return s
+    if "/" in s:
+        parts = s.split()
+        date_parts = parts[0].split("/")
+        time_part = parts[1] if len(parts) > 1 else "00:00:00"
+        if len(date_parts) == 3:
+            day, month, year = date_parts
+            return f"{year}-{month.zfill(2)}-{day.zfill(2)}T{time_part}"
+    return s
 
 
 def build_batch_data(dataset_id: str, batch_no: str, lot_no: str):
     family = dataset_family(dataset_id)
-    line = dataset_number(dataset_id)
+    if family == "CIP":
+        return []
 
-    lot_prefix = str(lot_no or "").strip().split(" ")[0]
-    try:
-        lot_index = int(lot_prefix)
-    except ValueError:
-        lot_index = 1
+    user_name = {
+        "RMG": "91525 (PB3 RMGC0219 Operator)",
+        "FBD": "91525 (PB3 FBDC0220 Operator)",
+        "BLE": "91525 (PB3 OCBC0222 Operator)",
+        "COAT": "91525 (PB3 COATC0223 Operator)",
+    }.get(family, "91525 (PB3 Operator)")
 
-    family_profiles = {
-        "RMG": {
-            "user": "PRODUCTION_OPERATOR_1",
-            "temp_base": 3277,
-            "status_flow": [
-                "Batch Started",
-                "Auto Cycle Started",
-                "Dry Mix Started",
-                "Dry Mix Over",
-                "Wet Mix Started",
-                "Wet Mix Running",
-                "Batch Completed",
-            ],
-        },
-        "FBD": {
-            "user": "PRODUCTION_OPERATOR_2",
-            "temp_base": 2850,
-            "status_flow": [
-                "Batch Started",
-                "Tray Loading Started",
-                "Drying Started",
-                "Drying Running",
-                "Cooling Started",
-                "Cooling Running",
-                "Batch Completed",
-            ],
-        },
-        "OGB": {
-            "user": "PRODUCTION_OPERATOR_3",
-            "temp_base": 3010,
-            "status_flow": [
-                "Batch Started",
-                "Granulation Started",
-                "Binder Addition Started",
-                "Granulation Running",
-                "Sizing Started",
-                "Sizing Running",
-                "Batch Completed",
-            ],
-        },
-    }
-    profile = family_profiles.get(family, family_profiles["RMG"])
-    status_flow = profile["status_flow"]
-    temp_base = profile["temp_base"] + line
-    user_name = profile["user"]
+    # 1. RMG Telemetry
+    if family == "RMG":
+        rmg_raw = [
+            ("09/02/2026 18:02:40", "DRY CYCLE 1 IMPELLER SLOW START", 24.5, 0, 75.0, 0.0, 28.5),
+            ("09/02/2026 18:12:40", "DRY CYCLE 1 IMPELLER SLOW STOP", 25.1, 600, 75.0, 0.0, 29.0),
+            ("09/02/2026 18:16:03", "WET CYCLE 1 IMPELLER SLOW START", 26.2, 0, 75.0, 0.0, 29.5),
+            ("09/02/2026 18:16:03", "WET CYCLE 1 PUMP 1 START", 26.2, 0, 75.0, 0.0, 29.5),
+            ("09/02/2026 18:18:38", "WET CYCLE 1 IMPELLER SLOW STOP", 30.5, 155, 75.0, 0.0, 30.0),
+            ("09/02/2026 18:18:38", "WET CYCLE 1 PUMP 1 STOP", 30.5, 155, 75.0, 0.0, 30.0),
+            ("09/02/2026 18:19:50", "WET CYCLE 1 IMPELLER SLOW START", 27.0, 0, 75.0, 0.0, 30.1),
+            ("09/02/2026 18:19:50", "WET CYCLE 1 PUMP 1 START", 27.0, 0, 75.0, 0.0, 30.1),
+            ("09/02/2026 18:20:15", "WET CYCLE 1 IMPELLER SLOW STOP", 30.4, 25, 75.0, 0.0, 30.2),
+            ("09/02/2026 18:20:15", "WET CYCLE 1 PUMP 1 STOP", 30.4, 25, 75.0, 0.0, 30.2),
+            ("09/02/2026 18:22:26", "WET CYCLE 2 IMPELLER SLOW START", 28.0, 0, 75.0, 1500.0, 30.5),
+            ("09/02/2026 18:22:26", "WET CYCLE 2 CHOPPER SLOW START", 28.0, 0, 75.0, 1500.0, 30.5),
+            ("09/02/2026 18:23:24", "WET CYCLE 2 IMPELLER SLOW STOP", 30.6, 58, 75.0, 1500.0, 30.8),
+            ("09/02/2026 18:23:24", "WET CYCLE 2 CHOPPER SLOW STOP", 30.6, 58, 75.0, 1500.0, 30.8),
+            ("09/02/2026 18:26:03", "WET CYCLE 2 IMPELLER SLOW START", 28.5, 0, 75.0, 1500.0, 31.0),
+            ("09/02/2026 18:26:03", "WET CYCLE 2 CHOPPER SLOW START", 28.5, 0, 75.0, 1500.0, 31.0),
+            ("09/02/2026 18:27:06", "WET CYCLE 2 IMPELLER SLOW STOP", 30.6, 63, 75.0, 1500.0, 31.2),
+            ("09/02/2026 18:27:06", "WET CYCLE 2 CHOPPER SLOW STOP", 30.6, 63, 75.0, 1500.0, 31.2),
+            ("09/02/2026 18:29:09", "WET CYCLE 2 IMPELLER SLOW START", 28.8, 0, 75.0, 1500.0, 31.4),
+            ("09/02/2026 18:29:09", "WET CYCLE 2 CHOPPER SLOW START", 28.8, 0, 75.0, 1500.0, 31.4),
+            ("09/02/2026 18:30:08", "WET CYCLE 2 IMPELLER SLOW STOP", 30.7, 59, 75.0, 1500.0, 31.5),
+            ("09/02/2026 18:30:08", "WET CYCLE 2 CHOPPER SLOW STOP", 30.7, 59, 75.0, 1500.0, 31.5),
+            ("09/02/2026 18:31:02", "WET CYCLE 3 IMPELLER SLOW START", 29.0, 0, 75.0, 1500.0, 31.8),
+            ("09/02/2026 18:31:02", "WET CYCLE 3 CHOPPER SLOW START", 29.0, 0, 75.0, 1500.0, 31.8),
+            ("09/02/2026 18:39:02", "WET CYCLE 3 IMPELLER SLOW STOP", 31.0, 480, 75.0, 1500.0, 32.0),
+            ("09/02/2026 18:39:02", "WET CYCLE 3 CHOPPER SLOW STOP", 31.0, 480, 75.0, 1500.0, 32.0),
+        ]
+        return [
+            {
+                "DT": _to_iso(t),
+                "Time": t,
+                "Batch_No": batch_no,
+                "Lot_No": lot_no,
+                "Status": status,
+                "User_Name": user_name,
+                "EquipmentCode": dataset_id,
+                "EquipmentType": "RMG",
+                "Agitator_Speed": ag_spd,
+                "Agitator_Current": cur,
+                "Granulator_Speed": chp_spd,
+                "Granulator_Current": 6.5 if chp_spd > 0 else 0.0,
+                "Product_Bed_Temp": p_temp,
+                "Duration_Sec": dur,
+            }
+            for (t, status, cur, dur, ag_spd, chp_spd, p_temp) in rmg_raw
+        ]
 
-    batch_variation_seed = sum(ord(ch) for ch in str(batch_no or "")) % 11
-    lot_variation_seed = lot_index
+    # 2. FBD Telemetry
+    if family == "FBD":
+        fbd_raw = [
+            ("09/02/2026 19:30:01", "DRYING START", 27.0, 25.0),
+            ("09/02/2026 19:35:01", "DRYING RUNNING", 35.0, 20.0),
+            ("09/02/2026 19:48:45", "DRYING RUNNING", 29.0, 23.0),
+            ("09/02/2026 19:50:45", "DRYING RUNNING", 48.0, 20.0),
+            ("09/02/2026 19:51:21", "DRYING RUNNING", 64.0, 21.0),
+            ("09/02/2026 19:55:05", "DRYING RUNNING", 55.0, 22.0),
+            ("09/02/2026 20:00:05", "DRYING RUNNING", 56.0, 23.0),
+            ("09/02/2026 20:05:05", "DRYING RUNNING", 52.0, 23.0),
+            ("09/02/2026 20:10:05", "DRYING RUNNING", 55.0, 23.0),
+            ("09/02/2026 20:15:05", "DRYING RUNNING", 51.0, 23.0),
+            ("09/02/2026 20:20:05", "DRYING RUNNING", 56.0, 23.0),
+            ("09/02/2026 20:25:05", "DRYING RUNNING", 51.0, 23.0),
+            ("09/02/2026 20:30:05", "DRYING RUNNING", 55.0, 23.0),
+            ("09/02/2026 20:35:05", "DRYING RUNNING", 52.0, 23.0),
+            ("09/02/2026 22:40:11", "DRYING RUNNING", 60.0, 30.0),
+            ("09/02/2026 22:45:11", "DRYING RUNNING", 63.0, 37.0),
+            ("09/02/2026 22:45:11", "DRYING RUNNING", 64.0, 37.0),
+            ("09/02/2026 22:45:57", "DRYING RUNNING", 63.0, 37.0),
+            ("09/02/2026 22:46:13", "DRYING COMPLETED", 63.0, 37.0),
+        ]
+        return [
+            {
+                "DT": _to_iso(t),
+                "Time": t,
+                "Batch_No": batch_no,
+                "Lot_No": lot_no,
+                "Status": status,
+                "User_Name": user_name,
+                "EquipmentCode": dataset_id,
+                "EquipmentType": "FBD",
+                "Inlet_Temp": in_t,
+                "Outlet_Temp": out_t,
+            }
+            for (t, status, in_t, out_t) in fbd_raw
+        ]
 
-    if family in {"FBD", "OGB"}:
-        # Enforce sequential lot progression for dryer/granulation families:
-        # when the current active lot is in progress, downstream lots have not started yet.
-        active_lot_index = max(1, min(5, line - 2))
-        if lot_index > active_lot_index:
-            return []
-        include_completed = lot_index < active_lot_index
-    else:
-        include_completed = True
+    # 3. BLE Telemetry
+    if family == "BLE":
+        ble_raw = [
+            ("11/02/2026 10:21:02", "MIXING 1 STARTED", 5.0),
+            ("11/02/2026 10:36:02", "MIXING 1 COMPLETED", 5.0),
+            ("11/02/2026 10:55:01", "MIXING 2 STARTED", 5.0),
+            ("11/02/2026 11:00:01", "BLENDING OVER", 5.0),
+        ]
+        return [
+            {
+                "DT": _to_iso(t),
+                "Time": t,
+                "Batch_No": batch_no,
+                "Lot_No": lot_no,
+                "Status": status,
+                "User_Name": user_name,
+                "EquipmentCode": dataset_id,
+                "EquipmentType": "BLE",
+                "Blending_Speed": rpm,
+            }
+            for (t, status, rpm) in ble_raw
+        ]
 
-    final_status = status_flow[6] if include_completed else status_flow[5]
-
-    timeline = [
-        ("2026-08-13T06:57:45.673", 0, 0),
-        ("2026-08-13T06:57:50.200", 0, 1),
-        ("2026-08-13T06:57:51.183", 0, 2),
-        ("2026-08-13T07:07:51.000", 305, 3),
-        ("2026-08-13T07:12:15.000", 520, 4),
-        ("2026-08-13T07:15:00.000", 840, 5),
-        ("2026-08-13T07:20:00.000", 1340, 6),
+    # 4. COAT Telemetry
+    coat_raw = [
+        ("12/02/2026 08:35:00", "PRE-HEATING STARTED", 52.0, 38.0, 3.0, 0.0, 0.0),
+        ("12/02/2026 08:50:00", "PRE-HEATING COMPLETED", 65.0, 42.0, 3.0, 0.0, 0.0),
+        ("12/02/2026 08:55:00", "SPRAYING CYCLE 1 START", 65.0, 43.5, 8.0, 118.0, 2.5),
+        ("12/02/2026 09:55:00", "SPRAYING RUNNING", 65.5, 44.0, 8.0, 120.0, 2.5),
+        ("12/02/2026 11:55:00", "SPRAYING COMPLETED", 64.8, 44.2, 8.0, 120.0, 2.5),
+        ("12/02/2026 12:00:00", "POST DRYING START", 50.0, 41.0, 3.0, 0.0, 0.0),
+        ("12/02/2026 12:30:00", "POST DRYING COMPLETED", 48.0, 38.5, 3.0, 0.0, 0.0),
     ]
-
-    family_telemetry = {
-        "RMG": [
-            {"Ag_Amps": 0, "Ag_Speed": 0, "Chp_Amps": 0, "Chp_Speed": 0, "Dosing_Speed": 0, "WMD_Speed": 0, "Heater_Temp": temp_base},
-            {"Ag_Amps": 0, "Ag_Speed": 0, "Chp_Amps": 0, "Chp_Speed": 0, "Dosing_Speed": 0, "WMD_Speed": 0, "Heater_Temp": temp_base},
-            {"Ag_Amps": 0, "Ag_Speed": 0, "Chp_Amps": 0, "Chp_Speed": 0, "Dosing_Speed": 0, "WMD_Speed": 0, "Heater_Temp": temp_base},
-            {"Ag_Amps": 12.3, "Ag_Speed": 30.4, "Chp_Amps": 15.2, "Chp_Speed": 47.5, "Dosing_Speed": 25.6, "WMD_Speed": 18.7, "Heater_Temp": temp_base + 24},
-            {"Ag_Amps": 15.8, "Ag_Speed": 33.9, "Chp_Amps": 16.1, "Chp_Speed": 49.6, "Dosing_Speed": 29.9, "WMD_Speed": 20.1, "Heater_Temp": temp_base + 38},
-            {"Ag_Amps": 18.6, "Ag_Speed": 36.0, "Chp_Amps": 17.9, "Chp_Speed": 52.1, "Dosing_Speed": 31.7, "WMD_Speed": 22.5, "Heater_Temp": temp_base + 53},
-            {"Ag_Amps": 19.3, "Ag_Speed": 38.2, "Chp_Amps": 18.5, "Chp_Speed": 53.4, "Dosing_Speed": 32.1, "WMD_Speed": 23.8, "Heater_Temp": temp_base + 68},
-        ],
-        "FBD": [
-            {"Inlet_Temp": temp_base - 20, "Outlet_Temp": temp_base - 35, "Bed_Temp": temp_base - 45, "Blower_Amps": 0, "Exhaust_Fan_Speed": 0, "Damper_Position": 0, "Steam_Pressure": 0},
-            {"Inlet_Temp": temp_base - 18, "Outlet_Temp": temp_base - 33, "Bed_Temp": temp_base - 42, "Blower_Amps": 6.2, "Exhaust_Fan_Speed": 18.0, "Damper_Position": 20, "Steam_Pressure": 0.8},
-            {"Inlet_Temp": temp_base - 8, "Outlet_Temp": temp_base - 22, "Bed_Temp": temp_base - 29, "Blower_Amps": 9.5, "Exhaust_Fan_Speed": 34.0, "Damper_Position": 40, "Steam_Pressure": 1.4},
-            {"Inlet_Temp": temp_base + 6, "Outlet_Temp": temp_base - 6, "Bed_Temp": temp_base - 14, "Blower_Amps": 12.8, "Exhaust_Fan_Speed": 52.0, "Damper_Position": 65, "Steam_Pressure": 2.1},
-            {"Inlet_Temp": temp_base + 12, "Outlet_Temp": temp_base + 2, "Bed_Temp": temp_base - 4, "Blower_Amps": 11.1, "Exhaust_Fan_Speed": 46.0, "Damper_Position": 55, "Steam_Pressure": 1.6},
-            {"Inlet_Temp": temp_base + 4, "Outlet_Temp": temp_base - 4, "Bed_Temp": temp_base - 10, "Blower_Amps": 8.6, "Exhaust_Fan_Speed": 38.0, "Damper_Position": 48, "Steam_Pressure": 1.0},
-            {"Inlet_Temp": temp_base - 4, "Outlet_Temp": temp_base - 14, "Bed_Temp": temp_base - 18, "Blower_Amps": 5.2, "Exhaust_Fan_Speed": 24.0, "Damper_Position": 30, "Steam_Pressure": 0.5},
-        ],
-        "OGB": [
-            {"Impeller_Speed": 0, "Impeller_Amps": 0, "Chopper_Speed": 0, "Chopper_Amps": 0, "Binder_Flow": 0, "Granule_Moisture": 0, "Discharge_Gate_Position": 0},
-            {"Impeller_Speed": 22.0, "Impeller_Amps": 7.2, "Chopper_Speed": 18.0, "Chopper_Amps": 4.4, "Binder_Flow": 0, "Granule_Moisture": 5.1, "Discharge_Gate_Position": 5},
-            {"Impeller_Speed": 30.0, "Impeller_Amps": 9.6, "Chopper_Speed": 26.0, "Chopper_Amps": 6.8, "Binder_Flow": 12.5, "Granule_Moisture": 8.7, "Discharge_Gate_Position": 8},
-            {"Impeller_Speed": 37.0, "Impeller_Amps": 11.2, "Chopper_Speed": 33.0, "Chopper_Amps": 8.1, "Binder_Flow": 16.8, "Granule_Moisture": 12.9, "Discharge_Gate_Position": 12},
-            {"Impeller_Speed": 28.0, "Impeller_Amps": 8.5, "Chopper_Speed": 24.0, "Chopper_Amps": 6.2, "Binder_Flow": 6.4, "Granule_Moisture": 10.1, "Discharge_Gate_Position": 40},
-            {"Impeller_Speed": 20.0, "Impeller_Amps": 6.4, "Chopper_Speed": 16.0, "Chopper_Amps": 4.8, "Binder_Flow": 0.0, "Granule_Moisture": 7.2, "Discharge_Gate_Position": 70},
-            {"Impeller_Speed": 10.0, "Impeller_Amps": 3.1, "Chopper_Speed": 8.0, "Chopper_Amps": 2.3, "Binder_Flow": 0.0, "Granule_Moisture": 4.2, "Discharge_Gate_Position": 100},
-        ],
-    }
-
-    telemetry_rows = family_telemetry.get(family, family_telemetry["RMG"])
-
-    def with_variation(metrics: dict[str, object], idx: int) -> dict[str, object]:
-        """Apply deterministic variation so batch/lot values are not identical across loads."""
-        batch_scale = (batch_variation_seed * 0.07) + (lot_variation_seed * 0.05) + (line * 0.03)
-        row_scale = idx * 0.02
-
-        adjusted: dict[str, object] = {}
-        for key, value in metrics.items():
-            if isinstance(value, (int, float)):
-                adjusted_value = float(value) + batch_scale + row_scale
-                adjusted[key] = round(adjusted_value, 2)
-            else:
-                adjusted[key] = value
-        return adjusted
-
-    rows: list[dict[str, object]] = []
-
-    for idx, (dt_value, time_value, status_idx) in enumerate(timeline):
-        stage_status = final_status if idx == len(timeline) - 1 else status_flow[status_idx]
-        row = {
-            "DT": dt_value,
+    return [
+        {
+            "DT": _to_iso(t),
+            "Time": t,
             "Batch_No": batch_no,
             "Lot_No": lot_no,
-            "Time": time_value,
-            "Status": stage_status,
+            "Status": status,
             "User_Name": user_name,
             "EquipmentCode": dataset_id,
-            "EquipmentType": family,
+            "EquipmentType": "COAT",
+            "Inlet_Air_Temp": in_t,
+            "Bed_Temp": bed_t,
+            "Pan_Speed": pan_spd,
+            "Spray_Rate": spray,
+            "Atom_Air_Press": atom,
         }
-        row.update(with_variation(telemetry_rows[idx], idx))
-        rows.append(row)
-
-    return rows
+        for (t, status, in_t, bed_t, pan_spd, spray, atom) in coat_raw
+    ]
 
 
 def build_alarm_data(dataset_id: str, from_time: str, to_time: str):
     family = dataset_family(dataset_id)
-    line = dataset_number(dataset_id)
-    family_msg = {
-        "RMG": ("Wet Mix Step 4 Over", "High temperature", "Wet Mix Started"),
-        "FBD": ("Drying Stage 4 Over", "Inlet temperature high", "Cooling Started"),
-        "OGB": ("Granulation Stage 4 Over", "Binder flow high", "Sizing Started"),
-    }
-    msg1, msg2, msg3 = family_msg.get(family, family_msg["RMG"])
-    msg_base = 200 + (line * 10)
+    if family == "BLE":
+        return []  # 0 alarms in BLE.pdf
 
+    if family == "RMG":
+        rmg_alarms = [
+            ("DISCHARGE VALVE CLOSE FAIL", "09/02/2026 18:47:04", "09/02/2026 19:01:32", "00:14:28", 101),
+            ("LID OPENED", "09/02/2026 18:54:45", "09/02/2026 19:01:23", "00:06:38", 102),
+            ("DISCHARGE VALVE CLOSE FAIL", "09/02/2026 19:03:08", "09/02/2026 19:03:39", "00:00:31", 103),
+        ]
+        return [
+            {
+                "MsgNumber": msg_no,
+                "DT": _to_iso(occ),
+                "Alarm_Name": name,
+                "Occurred_Time": occ,
+                "Resolved_Time": res,
+                "Duration": dur,
+                "MsgText": f"RMG: {name}",
+                "EquipmentCode": dataset_id,
+                "EquipmentType": "RMG",
+            }
+            for (name, occ, res, dur, msg_no) in rmg_alarms
+        ]
+
+    if family == "COAT":
+        coat_alarms = [
+            ("SPRAY GUN CHOKED", "12/02/2026 10:14:20", "12/02/2026 10:18:45", "00:04:25", 301),
+            ("EXHAUST AIR FLOW LOW", "12/02/2026 11:02:10", "12/02/2026 11:05:00", "00:02:50", 302),
+        ]
+        return [
+            {
+                "MsgNumber": msg_no,
+                "DT": _to_iso(occ),
+                "Alarm_Name": name,
+                "Occurred_Time": occ,
+                "Resolved_Time": res,
+                "Duration": dur,
+                "MsgText": f"COAT: {name}",
+                "EquipmentCode": dataset_id,
+                "EquipmentType": "COAT",
+            }
+            for (name, occ, res, dur, msg_no) in coat_alarms
+        ]
+
+    # FBD
+    fbd_alarms = [
+        ("PC AIR PRESSURE LOW", "09/02/2026 19:36:03", "09/02/2026 19:48:39", "00:12:36", 201),
+        ("EARTH FAULT", "09/02/2026 19:37:15", "09/02/2026 19:48:39", "00:11:24", 202),
+        ("INLET TEMP HIGH", "09/02/2026 19:51:21", "09/02/2026 19:55:02", "00:03:41", 203),
+        ("PC AIR PRESSURE LOW", "09/02/2026 20:48:40", "09/02/2026 21:01:26", "00:12:46", 204),
+        ("EARTH FAULT", "09/02/2026 20:49:48", "09/02/2026 21:01:26", "00:11:38", 205),
+        ("INLET TEMP HIGH", "09/02/2026 21:03:55", "09/02/2026 21:07:44", "00:03:49", 206),
+        ("PC AIR PRESSURE LOW", "09/02/2026 21:50:45", "09/02/2026 22:00:52", "00:10:07", 207),
+        ("EARTH FAULT", "09/02/2026 21:51:51", "09/02/2026 22:00:52", "00:09:01", 208),
+        ("INLET TEMP HIGH", "09/02/2026 22:03:26", "09/02/2026 22:06:08", "00:02:42", 209),
+        ("PC AIR PRESSURE LOW", "09/02/2026 22:08:31", "09/02/2026 22:34:37", "00:26:06", 210),
+        ("EARTH FAULT", "09/02/2026 22:09:34", "09/02/2026 22:34:37", "00:25:03", 211),
+        ("INLET TEMP HIGH", "09/02/2026 22:37:13", "09/02/2026 22:39:10", "00:01:57", 212),
+        ("INLET TEMP HIGH", "09/02/2026 22:45:11", "09/02/2026 22:45:56", "00:00:45", 213),
+        ("PC AIR PRESSURE LOW", "09/02/2026 22:47:01", "09/02/2026 23:25:18", "00:38:17", 214),
+        ("EARTH FAULT", "09/02/2026 22:48:04", "09/02/2026 23:25:18", "00:37:14", 215),
+    ]
     return [
         {
-            "Time_ms": 46247556652.44213 + (line * 100),
-            "MsgProc": 2,
-            "StateAfter": 0,
-            "MsgClass": 64,
-            "MsgNumber": msg_base + 12,
-            "Var1": "                                                                                                                                                                                                                                                               ",
-            "Var2": "                                                                                                                                                                                                                                                               ",
-            "Var3": "                                                                                                                                                                                                                                                               ",
-            "Var4": "                                                                                                                                                                                                                                                               ",
-            "Var5": "                                                                                                                                                                                                                                                               ",
-            "Var6": "                                                                                                                                                                                                                                                               ",
-            "Var7": "                                                                                                                                                                                                                                                               ",
-            "Var8": "                                                                                                                                                                                                                                                               ",
-            "TimeString": "13/08/2026 13:21:35       ",
-            "MsgText": f"{family}: {msg1}",
-            "PLC": f"HMI_Connection_{line}",
-            "DT": "2026-08-13T13:21:35",
+            "MsgNumber": msg_no,
+            "DT": _to_iso(occ),
+            "Alarm_Name": name,
+            "Occurred_Time": occ,
+            "Resolved_Time": res,
+            "Duration": dur,
+            "MsgText": f"FBD: {name}",
             "EquipmentCode": dataset_id,
-            "EquipmentType": family,
-        },
-        {
-            "Time_ms": 46247484200.0 + (line * 100),
-            "MsgProc": 2,
-            "StateAfter": 1,
-            "MsgClass": 64,
-            "MsgNumber": msg_base + 1,
-            "Var1": msg2,
-            "Var2": "",
-            "Var3": "",
-            "Var4": "",
-            "Var5": "",
-            "Var6": "",
-            "Var7": "",
-            "Var8": "",
-            "TimeString": "13/08/2026 07:07:51",
-            "MsgText": f"{family}: {msg2}",
-            "PLC": f"HMI_Connection_{line}",
-            "DT": "2026-08-13T07:07:51",
-            "EquipmentCode": dataset_id,
-            "EquipmentType": family,
-        },
-        {
-            "Time_ms": 46247510000.0 + (line * 100),
-            "MsgProc": 2,
-            "StateAfter": 1,
-            "MsgClass": 64,
-            "MsgNumber": msg_base + 2,
-            "Var1": msg3,
-            "Var2": "",
-            "Var3": "",
-            "Var4": "",
-            "Var5": "",
-            "Var6": "",
-            "Var7": "",
-            "Var8": "",
-            "TimeString": "13/08/2026 07:12:15",
-            "MsgText": f"{family}: {msg3}",
-            "PLC": f"HMI_Connection_{line}",
-            "DT": "2026-08-13T07:12:15",
-            "EquipmentCode": dataset_id,
-            "EquipmentType": family,
-        },
+            "EquipmentType": "FBD",
+        }
+        for (name, occ, res, dur, msg_no) in fbd_alarms
     ]
 
 
 def build_audit_data(dataset_id: str, from_time: str, to_time: str):
     family = dataset_family(dataset_id)
-    line = dataset_number(dataset_id)
-    audit_user = {"RMG": "PRODUCTION_OPERATOR_1", "FBD": "PRODUCTION_OPERATOR_2", "OGB": "PRODUCTION_OPERATOR_3"}.get(family, "PRODUCTION_OPERATOR_1")
-    object_prefix = {"RMG": "Recipe: RMG", "FBD": "Recipe: FBD", "OGB": "Recipe: OGB"}.get(family, "Recipe: RMG")
-    description_prefix = {
-        "RMG": "Mixer synchronization completed",
-        "FBD": "Drying synchronization completed",
-        "OGB": "Granulation synchronization completed",
-    }.get(family, "Mixer synchronization completed")
-    record_base = 95370 + (line * 100)
+    audit_user = {
+        "RMG": "91525 (PB3 RMGC0219 Operator)",
+        "FBD": "91525 (PB3 FBDC0220 Operator)",
+        "BLE": "91525 (PB3 OCBC0222 Operator)",
+        "COAT": "91525 (PB3 COATC0223 Operator)",
+    }.get(family, "91525 (PB3 Operator)")
 
+    supervisor_user = {
+        "RMG": "91525 (PB3 RMGC0219 Supervisor)",
+        "FBD": "91525 (PB3 FBDC0220 Supervisor)",
+        "BLE": "91525 (PB3 OCBC0222 Supervisor)",
+        "COAT": "91525 (PB3 COATC0223 Supervisor)",
+    }.get(family, "91525 (PB3 Supervisor)")
+
+    if family == "RMG":
+        rmg_audits = [
+            ("09/02/2026 16:04:17", "BATCH START", None, None, None, supervisor_user),
+            ("09/02/2026 16:05:36", "PTS START", None, None, None, audit_user),
+            ("09/02/2026 16:20:01", "PTS STOP", None, None, None, audit_user),
+            ("09/02/2026 18:02:39", "AUTO START", None, None, None, audit_user),
+            ("09/02/2026 18:15:28", "ACKNOWLEDGE", None, None, None, audit_user),
+            ("09/02/2026 18:22:25", "AUTO START", None, None, None, audit_user),
+            ("09/02/2026 18:23:24", "AUTO PAUSE", None, None, "BINDER / GRANULATING AGENT ADDITION", audit_user),
+            ("09/02/2026 18:26:02", "AUTO START", None, None, None, audit_user),
+            ("09/02/2026 18:27:06", "AUTO PAUSE", None, None, "RAKING / SCRAPPING", audit_user),
+            ("09/02/2026 18:29:08", "AUTO START", None, None, None, audit_user),
+            ("09/02/2026 18:30:08", "AUTO PAUSE", None, None, "RAKING / SCRAPPING", audit_user),
+            ("09/02/2026 18:31:01", "AUTO START", None, None, None, audit_user),
+            ("09/02/2026 18:39:03", "AUTO STOP", None, None, None, audit_user),
+            ("09/02/2026 18:47:04", "AUTO UNLOAD START", None, None, None, audit_user),
+            ("09/02/2026 19:01:32", "ACKNOWLEDGE", None, None, None, audit_user),
+            ("09/02/2026 19:05:40", "BATCH END", None, None, None, supervisor_user),
+        ]
+        return [
+            {
+                "RecordID": f"AUD-RMG-{idx:02d}",
+                "DT": _to_iso(dt),
+                "DateTime": dt,
+                "TimeStamp": dt,
+                "Description": desc,
+                "OldValue": old_v or "-",
+                "NewValue": new_v or "-",
+                "Reason": reason or "-",
+                "UserName": user,
+                "EquipmentCode": dataset_id,
+                "EquipmentType": "RMG",
+            }
+            for idx, (dt, desc, old_v, new_v, reason, user) in enumerate(rmg_audits, 1)
+        ]
+
+    if family == "BLE":
+        ble_audits = [
+            ("11/02/2026 09:04:55", "BATCH START", None, None, None, supervisor_user),
+            ("11/02/2026 09:08:04", "CHARGE START", None, None, None, audit_user),
+            ("11/02/2026 10:15:13", "CHARGE STOP", None, None, None, audit_user),
+            ("11/02/2026 10:20:52", "BLEND START", None, None, None, audit_user),
+            ("11/02/2026 10:21:02", "BLEND START", None, None, None, audit_user),
+            ("11/02/2026 10:47:54", "CHARGE START", None, None, None, audit_user),
+            ("11/02/2026 10:52:03", "CHARGE STOP", None, None, None, audit_user),
+            ("11/02/2026 10:54:12", "BLEND START", None, None, None, audit_user),
+            ("11/02/2026 10:55:01", "BLEND START", None, None, None, audit_user),
+            ("11/02/2026 11:02:36", "BATCH END", None, None, None, supervisor_user),
+        ]
+        return [
+            {
+                "RecordID": f"AUD-BLE-{idx:02d}",
+                "DT": _to_iso(dt),
+                "DateTime": dt,
+                "TimeStamp": dt,
+                "Description": desc,
+                "OldValue": old_v or "-",
+                "NewValue": new_v or "-",
+                "Reason": reason or "-",
+                "UserName": user,
+                "EquipmentCode": dataset_id,
+                "EquipmentType": "BLE",
+            }
+            for idx, (dt, desc, old_v, new_v, reason, user) in enumerate(ble_audits, 1)
+        ]
+
+    if family == "COAT":
+        coat_audits = [
+            ("12/02/2026 08:30:00", "BATCH START", None, None, None, supervisor_user),
+            ("12/02/2026 08:35:00", "PRE-HEATING START", None, None, None, audit_user),
+            ("12/02/2026 08:55:00", "SPRAYING START", None, None, None, audit_user),
+            ("12/02/2026 10:14:20", "AUTO PAUSE", None, None, "SPRAY GUN CLEANING", audit_user),
+            ("12/02/2026 10:18:45", "ACKNOWLEDGE", None, None, None, audit_user),
+            ("12/02/2026 10:19:00", "AUTO START", None, None, None, audit_user),
+            ("12/02/2026 12:00:00", "POST DRYING START", None, None, None, audit_user),
+            ("12/02/2026 12:45:30", "BATCH END", None, None, None, supervisor_user),
+        ]
+        return [
+            {
+                "RecordID": f"AUD-COAT-{idx:02d}",
+                "DT": _to_iso(dt),
+                "DateTime": dt,
+                "TimeStamp": dt,
+                "Description": desc,
+                "OldValue": old_v or "-",
+                "NewValue": new_v or "-",
+                "Reason": reason or "-",
+                "UserName": user,
+                "EquipmentCode": dataset_id,
+                "EquipmentType": "COAT",
+            }
+            for idx, (dt, desc, old_v, new_v, reason, user) in enumerate(coat_audits, 1)
+        ]
+
+    # FBD
+    fbd_audits = [
+        ("09/02/2026 18:44:45", "BATCH START", None, None, None, supervisor_user),
+        ("09/02/2026 18:46:00", "AUTO CHARGING START", None, None, None, audit_user),
+        ("09/02/2026 18:53:24", "AUTO CHARGING STOP", None, None, None, audit_user),
+        ("09/02/2026 19:01:56", "AUTO CHARGING START", None, None, None, audit_user),
+        ("09/02/2026 19:03:53", "AUTO CHARGING STOP", None, None, None, audit_user),
+        ("09/02/2026 19:30:01", "AUTO START", None, None, None, audit_user),
+        ("09/02/2026 19:35:01", "AUTO STOP", None, None, "RAKING", audit_user),
+        ("09/02/2026 19:35:56", "PC SEAL VENT", "ON", "OFF", None, audit_user),
+        ("09/02/2026 19:48:35", "PC SEAL VENT", "OFF", "ON", None, audit_user),
+        ("09/02/2026 19:48:39", "ACKNOWLEDGE", None, None, None, audit_user),
+        ("09/02/2026 19:48:45", "AUTO START", None, None, None, audit_user),
+        ("09/02/2026 19:55:02", "ACKNOWLEDGE", None, None, None, audit_user),
+        ("09/02/2026 19:55:05", "AUTO START", None, None, None, audit_user),
+        ("09/02/2026 20:47:20", "AUTO STOP", None, None, "RAKING", audit_user),
+        ("09/02/2026 20:48:34", "PC SEAL VENT", "ON", "OFF", None, audit_user),
+        ("09/02/2026 21:01:21", "PC SEAL VENT", "OFF", "ON", None, audit_user),
+        ("09/02/2026 21:01:26", "ACKNOWLEDGE", None, None, None, audit_user),
+        ("09/02/2026 21:01:28", "AUTO START", None, None, None, audit_user),
+    ]
     return [
         {
-            "RecordID": record_base + 9,
-            "TimeStamp": "13/08/2026 06:57:45",
-            "DeltaToUTC": "\"-5:30\"",
-            "UserID": audit_user,
-            "ObjectID": object_prefix,
-            "Description": f"{description_prefix} - start acknowledgement.",
-            "Comment": None,
-            "Checksum": "YcrA30",
-            "DT": "2026-08-13T06:57:45",
+            "RecordID": f"AUD-FBD-{idx:02d}",
+            "DT": _to_iso(dt),
+            "DateTime": dt,
+            "TimeStamp": dt,
+            "Description": desc,
+            "OldValue": old_v or "-",
+            "NewValue": new_v or "-",
+            "Reason": reason or "-",
+            "UserName": user,
             "EquipmentCode": dataset_id,
-            "EquipmentType": family,
-        },
-        {
-            "RecordID": record_base + 10,
-            "TimeStamp": "13/08/2026 06:57:50",
-            "DeltaToUTC": "\"-5:30\"",
-            "UserID": audit_user,
-            "ObjectID": f"{object_prefix} - Stage Trigger",
-            "Description": f"{description_prefix} - stage trigger updated.",
-            "Comment": None,
-            "Checksum": "Uk82de",
-            "DT": "2026-08-13T06:57:50",
-            "EquipmentCode": dataset_id,
-            "EquipmentType": family,
-        },
-        {
-            "RecordID": record_base + 11,
-            "TimeStamp": "13/08/2026 07:08:24",
-            "DeltaToUTC": "\"-5:30\"",
-            "UserID": audit_user,
-            "ObjectID": f"{object_prefix} - Stage Continue",
-            "Description": f"{description_prefix} - continue acknowledgement.",
-            "Comment": None,
-            "Checksum": "4PIAQk",
-            "DT": "2026-08-13T07:08:24",
-            "EquipmentCode": dataset_id,
-            "EquipmentType": family,
-        },
+            "EquipmentType": "FBD",
+        }
+        for idx, (dt, desc, old_v, new_v, reason, user) in enumerate(fbd_audits, 1)
     ]
 
 
 class MockDataServiceHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        url = urlparse(self.path)
-        query_params = parse_qs(url.query)
-        pointname_list = query_params.get("PointName") or query_params.get("pointname") or [""]
-        pointname = pointname_list[0] if pointname_list else ""
+    """Handles REST GET queries for dataset point names."""
+
+    def do_GET(self) -> None:
+        parsed = urlparse(self.path)
+        if not parsed.path.startswith("/fwxapi/rest/v1/Dataset"):
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Not Found"}')
+            return
+
+        query_params = parse_qs(parsed.query)
+        pointname = query_params.get("pointname", [""])[0]
+        if not pointname:
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b'{"error": "pointname is required"}')
+            return
 
         dataset_id, dataset_name, params = parse_pointname(pointname)
+        payload: object = []
 
-        if dataset_name == "BATCHDETAILS":
+        if dataset_name.upper() == "BATCHDETAILS":
             payload = build_batch_details(dataset_id)
-        elif dataset_name == "BATCHDATA":
-            batch_no = params.get("BATCH_NO") or "VI0026050"
-            lot_no = params.get("LOT_NO") or "01 of 05 STEP-1"
-            payload = build_batch_data(dataset_id, batch_no, lot_no)
-        elif dataset_name == "ALARMDATA":
-            from_time = params.get("FROMTIME") or "2026-08-13 06:57:45"
-            to_time = params.get("TOTIME") or "2026-08-13 13:39:54"
-            payload = build_alarm_data(dataset_id, from_time, to_time)
-        elif dataset_name == "AUDITDATA":
-            from_time = params.get("FROMTIME") or "2026-08-13 06:57:45"
-            to_time = params.get("TOTIME") or "2026-08-13 13:39:54"
-            payload = build_audit_data(dataset_id, from_time, to_time)
+        elif dataset_name.upper() == "PARAMETERSETTINGS":
+            payload = build_parameter_settings(
+                dataset_id,
+                params.get("BATCH_NO", "NL0026008"),
+                params.get("LOT_NO", "01 of 05"),
+            )
+        elif dataset_name.upper() == "BATCHDATA":
+            payload = build_batch_data(
+                dataset_id,
+                params.get("BATCH_NO", "NL0026008"),
+                params.get("LOT_NO", "01 of 05"),
+            )
+        elif dataset_name.upper() == "ALARMDATA":
+            payload = build_alarm_data(
+                dataset_id,
+                params.get("FROMTIME", ""),
+                params.get("TOTIME", ""),
+            )
+        elif dataset_name.upper() == "AUDITDATA":
+            payload = build_audit_data(
+                dataset_id,
+                params.get("FROMTIME", ""),
+                params.get("TOTIME", ""),
+            )
         else:
-            payload = {
-                "error": "Unknown dataset",
-                "pointname": pointname,
-            }
+            payload = build_batch_data(
+                dataset_id,
+                params.get("BATCH_NO", "NL0026008"),
+                params.get("LOT_NO", "01 of 05"),
+            )
 
         response_payload = {
             "status": "success",
@@ -416,22 +698,25 @@ class MockDataServiceHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, format, *args):
-        # Keep the console output clean during local development.
         return
 
 
-if __name__ == "__main__":
+def run_server(host=HOST, port=PORT):
+    server = ThreadingHTTPServer((host, port), MockDataServiceHandler)
+    print(f"Mock Data Service running on http://{host}:{port}", flush=True)
+    server.serve_forever()
+
+
+def main():
+    port = PORT
     if len(sys.argv) > 1:
         try:
-            PORT = int(sys.argv[1])
+            port = int(sys.argv[1])
         except ValueError as exc:
             raise SystemExit(f"Invalid port value: {sys.argv[1]}") from exc
 
-    server = ThreadingHTTPServer((HOST, PORT), MockDataServiceHandler)
-    print(f"Mock Data Service running on http://{HOST}:{PORT}")
-    print("Endpoints:")
-    print("  /fwxapi/rest/v1/Dataset?pointname=db:G5RMG.BATCHDETAILS")
-    print("  /fwxapi/rest/v1/Dataset?pointname=db:G5RMG.BATCHDATA<@BATCH_NO='VI0026050', @LOT_NO='01 of 05 STEP-1'>")
-    print("  /fwxapi/rest/v1/Dataset?pointname=db:G5RMG.ALARMDATA<@FROMTIME='2026-08-13 06:57:45', @TOTIME='2026-08-13 13:39:54'>")
-    print("  /fwxapi/rest/v1/Dataset?pointname=db:G5RMG.AUDITDATA<@FROMTIME='2026-08-13 06:57:45', @TOTIME='2026-08-13 13:39:54'>")
-    server.serve_forever()
+    run_server(HOST, port)
+
+
+if __name__ == "__main__":
+    main()

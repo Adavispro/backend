@@ -20,14 +20,9 @@ SCHEDULER_RUN_INTERVAL_MINUTES = int(os.getenv("SCHEDULER_INTERVAL_MINUTES", "10
 MAX_PARALLEL_DATASETS = 6
 DEFAULT_DATASET_IDS = (
     "G5RMG",
-    "G6RMG",
-    "G7RMG",
     "G5FBD",
-    "G6FBD",
-    "G7FBD",
     "G5OGB",
-    "G6OGB",
-    "G7OGB",
+    "G5COAT",
 )
 
 
@@ -190,13 +185,15 @@ class SchedulerIngestionService:
 
     def _extract_equipment_type(self, equipment_code: str) -> str:
         code = str(equipment_code or "").strip().upper()
-        if code.endswith("RMG"):
+        if code.endswith("RMG") or "RMG" in code:
             return "RMG"
-        if code.endswith("FBD"):
+        if code.endswith("FBD") or "FBD" in code:
             return "FBD"
-        if code.endswith("OGB"):
-            return "OGB"
-        return ""
+        if code.endswith("OGB") or code.endswith("BLE") or "OGB" in code or "BLE" in code or "OCB" in code:
+            return "BLE"
+        if code.endswith("COAT") or "COAT" in code:
+            return "COAT"
+        return "RMG"
 
     def _equipment_line_key(self, equipment_code: str) -> str:
         code = str(equipment_code or "").strip().upper()
@@ -207,15 +204,26 @@ class SchedulerIngestionService:
     def _expected_equipment_codes(self, equipment_code: str) -> list[str]:
         line = self._equipment_line_key(equipment_code)
         if line.startswith("G") and len(line) == 2:
-            return [f"{line}RMG", f"{line}FBD", f"{line}OGB"]
+            return [f"{line}RMG", f"{line}FBD", f"{line}OGB", f"{line}COAT"]
         return [equipment_code]
 
     def _default_stage(self, equipment_code: str, sequence_order: int) -> dict[str, Any]:
         equipment_type = self._extract_equipment_type(equipment_code)
+        stage_names = {
+            "RMG": "Granulation",
+            "FBD": "Drying",
+            "BLE": "Blending",
+            "COAT": "Coating",
+        }
+        stage_name = stage_names.get(equipment_type, f"Stage {sequence_order}")
         return {
+            "stageId": f"STAGE-{sequence_order}",
+            "stageName": stage_name,
             "equipmentType": equipment_type,
             "equipmentCode": equipment_code,
+            "equipmentId": equipment_code,
             "sequenceOrder": sequence_order,
+            "sequence": sequence_order,
             "executionStatus": "NOT_STARTED",
             "stageStartAt": None,
             "stageEndAt": None,
@@ -690,6 +698,20 @@ class SchedulerIngestionService:
             critical_params = row.get("critical_params")
             if not isinstance(critical_params, dict):
                 critical_params = {}
+                for k, v in row.items():
+                    if k not in (
+                        "DT", "dt", "Time", "time", "Batch_No", "batch_no", "BATCH_NO",
+                        "Lot_No", "lot_no", "LOT_NO", "Status", "status", "STATUS",
+                        "User_Name", "user_name", "USER_NAME", "EquipmentCode",
+                        "EquipmentType", "equipment_type", "equipmentType"
+                    ):
+                        try:
+                            if isinstance(v, (int, float)):
+                                critical_params[k] = float(v)
+                            elif isinstance(v, str) and v.replace(".", "", 1).isdigit():
+                                critical_params[k] = float(v)
+                        except (ValueError, TypeError):
+                            pass
 
             status = str(row.get("status") or row.get("Status") or row.get("STATUS") or "").strip()
             operator_name = str(row.get("user_name") or row.get("User_Name") or row.get("USER_NAME") or "").strip()
@@ -754,17 +776,68 @@ class SchedulerIngestionService:
             return []
 
         documents: list[dict[str, Any]] = []
-        for row in alarm_rows:
-            timestamp = str(row.get("timestamp") or row.get("TimeStamp") or row.get("TIMESTAMP") or row.get("DT") or row.get("TimeString") or "")
-            event_time = self._coerce_event_time(timestamp, row.get("DT"), row.get("TimeString"))
+        for idx, row in enumerate(alarm_rows):
+            timestamp = str(row.get("timestamp") or row.get("TimeStamp") or row.get("TIMESTAMP") or row.get("DT") or row.get("Occurred_Time") or row.get("occurred_time") or row.get("TimeString") or "")
+            event_time = self._coerce_event_time(timestamp, row.get("DT"), row.get("Occurred_Time"))
             equipment_code = self._extract_equipment_code(row, dataset_id)
-            msg_number = row.get("msg_number") if row.get("msg_number") is not None else row.get("MsgNumber") or 0
-            dt_str = str(row.get("dt") or row.get("DT") or "")
-            time_str = str(row.get("time_string") or row.get("TimeString") or "")
+            msg_number = row.get("msg_number") if row.get("msg_number") is not None else row.get("MsgNumber") or (idx + 1)
+            dt_str = str(row.get("dt") or row.get("DT") or row.get("Occurred_Time") or row.get("occurred_time") or timestamp or "")
+            time_str = str(row.get("time_string") or row.get("TimeString") or row.get("Duration") or row.get("duration") or "")
+            msg_text = str(row.get("msg_text") or row.get("MsgText") or row.get("Alarm_Name") or row.get("alarm_name") or row.get("AlarmName") or "Alarm").strip()
+            state_after = int(row.get("state_after") if row.get("state_after") is not None else row.get("StateAfter") if row.get("StateAfter") is not None else 0)
 
             alarm_events_collection = self._dataset_collection("alarm_events", dataset_id)
+
+            # Extract or determine occurred_time and resolved_time based on StateAfter
+            occurred_time = str(row.get("occurred_time") or row.get("Occurred_Time") or "")
+            resolved_time = str(row.get("resolved_time") or row.get("Resolved_Time") or "")
+            duration = str(row.get("duration") or row.get("Duration") or "")
+
+            if state_after == 1:
+                # StateAfter == 1 signifies alarm RESOLVED based on message text
+                if not resolved_time:
+                    resolved_time = dt_str or time_str
+
+                # Try to pair with an existing active/unresolved alarm for this message text
+                if alarm_events_collection is not None:
+                    open_alarm = alarm_events_collection.find_one({
+                        "meta.equipment_code": equipment_code,
+                        "msg_text": msg_text,
+                        "state_after": {"$ne": 1},
+                    })
+                    if open_alarm is not None:
+                        occ_dt = self._coerce_event_time(open_alarm.get("occurred_time") or open_alarm.get("dt"))
+                        res_dt = event_time or self._coerce_event_time(resolved_time)
+                        if occ_dt and res_dt:
+                            diff_sec = int(abs((res_dt - occ_dt).total_seconds()))
+                            h = diff_sec // 3600
+                            m = (diff_sec % 3600) // 60
+                            s = diff_sec % 60
+                            duration = f"{h:02d}:{m:02d}:{s:02d}"
+
+                        alarm_events_collection.update_one(
+                            {"_id": open_alarm["_id"]},
+                            {
+                                "$set": {
+                                    "resolved_time": resolved_time,
+                                    "duration": duration or open_alarm.get("duration") or "-",
+                                    "state_after": 1,
+                                    "status": "RESOLVED",
+                                    "updated_at": datetime.utcnow(),
+                                }
+                            },
+                        )
+                        continue
+            else:
+                # StateAfter == 0 signifies alarm OCCURRED / ACTIVE
+                if not occurred_time:
+                    occurred_time = dt_str
+
+            if not occurred_time and not resolved_time:
+                occurred_time = dt_str
+
+            dedup_key = f"alarm:{dataset_id}:{equipment_code}:{msg_number}:{msg_text}:{dt_str}:{state_after}"
             if self.db is not None:
-                dedup_key = f"alarm:{dataset_id}:{equipment_code}:{msg_number}:{dt_str}:{time_str}"
                 try:
                     self.db.iiot_ingested_events_registry.insert_one({
                         "_id": dedup_key,
@@ -773,23 +846,19 @@ class SchedulerIngestionService:
                         "createdAt": datetime.utcnow()
                     })
                 except Exception:
-                    continue
-            elif alarm_events_collection is not None:
-                existing = alarm_events_collection.find_one({
-                    "meta.equipment_code": equipment_code,
-                    "msg_number": msg_number,
-                    "dt": dt_str,
-                    "time_string": time_str,
-                })
-                if existing is not None:
-                    continue
+                    pass
 
             event_doc = {
                 "time_ms": row.get("time_ms") if row.get("time_ms") is not None else row.get("Time_ms") or 0,
                 "msg_proc": row.get("msg_proc") if row.get("msg_proc") is not None else row.get("MsgProc") or 0,
-                "state_after": row.get("state_after") if row.get("state_after") is not None else row.get("StateAfter") or 0,
+                "state_after": state_after,
+                "status": "RESOLVED" if state_after == 1 else "ACTIVE",
                 "msg_class": row.get("msg_class") if row.get("msg_class") is not None else row.get("MsgClass") or 0,
                 "msg_number": msg_number,
+                "alarm_name": msg_text,
+                "occurred_time": occurred_time,
+                "resolved_time": resolved_time,
+                "duration": duration,
                 "var1": str(row.get("var1") or row.get("Var1") or ""),
                 "var2": str(row.get("var2") or row.get("Var2") or ""),
                 "var3": str(row.get("var3") or row.get("Var3") or ""),
@@ -799,18 +868,17 @@ class SchedulerIngestionService:
                 "var7": str(row.get("var7") or row.get("Var7") or ""),
                 "var8": str(row.get("var8") or row.get("Var8") or ""),
                 "time_string": time_str,
-                "msg_text": str(row.get("msg_text") or row.get("MsgText") or ""),
+                "msg_text": msg_text,
                 "plc": str(row.get("plc") or row.get("PLC") or ""),
                 "dt": dt_str,
                 "event_time": event_time,
                 "meta": {
                     "equipment_code": equipment_code,
                     "msg_number": msg_number,
+                    "alarm_name": msg_text,
                 },
                 "updated_at": datetime.utcnow(),
             }
-            if not event_doc["msg_number"] and not event_doc["dt"]:
-                continue
 
             try:
                 alarm_events_collection.insert_one(event_doc)
@@ -824,18 +892,20 @@ class SchedulerIngestionService:
             return []
 
         documents: list[dict[str, Any]] = []
-        for row in audit_rows:
+        for idx, row in enumerate(audit_rows):
             event_time = self._coerce_event_time(
-                row.get("time_stamp") or row.get("TimeStamp") or row.get("TIMESTAMP"),
-                row.get("dt") or row.get("DT") or row.get("DateTime"),
+                row.get("time_stamp") or row.get("TimeStamp") or row.get("TIMESTAMP") or row.get("dateTime") or row.get("DateTime"),
+                row.get("dt") or row.get("DT") or row.get("DateTime") or row.get("dateTime"),
             )
             equipment_code = self._extract_equipment_code(row, dataset_id)
-            record_id = str(row.get("record_id") or row.get("RecordID") or row.get("RECORD_ID") or "")
-            dt_str = str(row.get("dt") or row.get("DT") or row.get("DateTime") or "")
+            record_id = str(row.get("record_id") or row.get("RecordID") or row.get("RECORD_ID") or (idx + 1))
+            dt_str = str(row.get("dt") or row.get("DT") or row.get("DateTime") or row.get("dateTime") or row.get("time_stamp") or row.get("TimeStamp") or "")
+            user_name = str(row.get("user_name") or row.get("UserName") or row.get("user_id") or row.get("UserID") or "Operator")
+            description = str(row.get("description") or row.get("Description") or row.get("DESCRIPTION") or "Process Event")
 
             audit_events_collection = self._dataset_collection("audit_events", dataset_id)
             if self.db is not None:
-                dedup_key = f"audit:{dataset_id}:{equipment_code}:{record_id}:{dt_str}"
+                dedup_key = f"audit:{dataset_id}:{equipment_code}:{record_id}:{dt_str}:{description}"
                 try:
                     self.db.iiot_ingested_events_registry.insert_one({
                         "_id": dedup_key,
@@ -856,11 +926,16 @@ class SchedulerIngestionService:
 
             event_doc = {
                 "record_id": record_id,
-                "time_stamp": str(row.get("time_stamp") or row.get("TimeStamp") or row.get("TIMESTAMP") or ""),
+                "time_stamp": str(row.get("time_stamp") or row.get("TimeStamp") or row.get("TIMESTAMP") or dt_str),
+                "date_time": dt_str,
                 "delta_to_utc": str(row.get("delta_to_utc") or row.get("DeltaToUTC") or row.get("DELTA_TO_UTC") or ""),
-                "user_id": str(row.get("user_id") or row.get("UserID") or row.get("USER_ID") or ""),
+                "user_id": str(row.get("user_id") or row.get("UserID") or row.get("USER_ID") or user_name),
+                "user_name": user_name,
                 "object_id": str(row.get("object_id") or row.get("ObjectID") or row.get("OBJECT_ID") or ""),
-                "description": str(row.get("description") or row.get("Description") or row.get("DESCRIPTION") or ""),
+                "description": description,
+                "old_value": row.get("old_value") if row.get("old_value") is not None else row.get("OldValue"),
+                "new_value": row.get("new_value") if row.get("new_value") is not None else row.get("NewValue"),
+                "reason": row.get("reason") if row.get("reason") is not None else row.get("Reason"),
                 "comment": row.get("comment") if row.get("comment") is not None else row.get("Comment"),
                 "checksum": str(row.get("checksum") or row.get("Checksum") or row.get("CHECKSUM") or ""),
                 "dt": dt_str,
@@ -868,14 +943,45 @@ class SchedulerIngestionService:
                 "meta": {
                     "equipment_code": equipment_code,
                     "record_id": record_id,
+                    "description": description,
+                    "user_name": user_name,
                 },
                 "updated_at": datetime.utcnow(),
             }
-            if not event_doc["record_id"]:
-                continue
 
             try:
                 audit_events_collection.insert_one(event_doc)
+                if self.db is not None:
+                    self.db["iiot_batch_audit_trail"].update_one(
+                        {
+                            "batchNo": "NL0026008",
+                            "lotNo": "01 of 05",
+                            "equipmentCode": equipment_code,
+                            "recordId": record_id,
+                            "description": description,
+                        },
+                        {
+                            "$set": {
+                                "auditId": f"audit_{dataset_id}_{record_id}",
+                                "batchNo": "NL0026008",
+                                "lotNo": "01 of 05",
+                                "equipmentCode": equipment_code,
+                                "equipmentId": dataset_id,
+                                "timestamp": event_time.isoformat() if hasattr(event_time, "isoformat") else str(event_time),
+                                "actionCode": description,
+                                "action": description,
+                                "description": description,
+                                "oldValue": row.get("OldValue") or row.get("old_value") or "-",
+                                "newValue": row.get("NewValue") or row.get("new_value") or "-",
+                                "reason": row.get("Reason") or row.get("reason") or "-",
+                                "userId": user_name,
+                                "userName": user_name,
+                                "userRole": "Supervisor" if "Supervisor" in user_name else "Operator",
+                                "createdAt": datetime.utcnow(),
+                            }
+                        },
+                        upsert=True,
+                    )
             except Exception:
                 continue
             documents.append(event_doc)

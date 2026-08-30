@@ -30,18 +30,26 @@ var ROOM_ID = "ROOM-0001";
 var EQUIPMENT_MASTER_COLLECTIONS = ["iiot_equipment_master", "iiot_equiment_master"];
 
 var DATASET_IDS = [
-    "G5RMG", "G6RMG", "G7RMG",
-    "G5FBD", "G6FBD", "G7FBD",
-    "G5OGB", "G6OGB", "G7OGB"
+    "G5RMG",
+    "G5FBD",
+    "G5OGB",
+    "G5COAT"
 ];
 
 var DATASET_TYPE_MAP = {
-    RMG: { name: "Rapid Mixer Granulator", make: "GEA Pharma", modelPrefix: "RMG" },
-    FBD: { name: "Fluid Bed Dryer", make: "Glatt", modelPrefix: "FBD" },
-    OGB: { name: "Oscillating Granulator Blender", make: "Bohle", modelPrefix: "OGB" }
+    RMG: { name: "Rapid Mixer Granulator", make: "SAAN", modelPrefix: "RMG", area: "PB3", block: "PB3" },
+    FBD: { name: "Fluid Bed Dryer", make: "SAAN", modelPrefix: "FBD", area: "GRANULATION", block: "PB3" },
+    OGB: { name: "Octagonal Blender", make: "SAAN", modelPrefix: "OGB", area: "BLENDER2", block: "PB3" },
+    BLE: { name: "Octagonal Blender", make: "SAAN", modelPrefix: "OGB", area: "BLENDER2", block: "PB3" },
+    COAT: { name: "Auto Coater", make: "SAAN", modelPrefix: "COAT", area: "COATING", block: "PB3" }
 };
 
 var MOCK_PRODUCTS = [
+    {
+        productCode: "STFS7000",
+        productName: "Finasteride USP 5 mg",
+        productCategory: "Tablets"
+    },
     {
         productCode: "STAPU1000",
         productName: "Allopurinol tablets",
@@ -107,15 +115,11 @@ function safeUpsert(collectionName, docs, keyField) {
                     upsert: true
                 }
             });
-            if (ops.length >= 200) {
-                col.bulkWrite(ops, { ordered: false });
-                ops = [];
-            }
         });
         if (ops.length > 0) {
             col.bulkWrite(ops, { ordered: false });
+            logInfo("Upserted " + docs.length + " docs into " + collectionName);
         }
-        logInfo("Upserted " + docs.length + " docs into " + collectionName);
     } catch (e) {
         logInfo("Error upserting into " + collectionName + ": " + e.message);
     }
@@ -124,28 +128,39 @@ function safeUpsert(collectionName, docs, keyField) {
 function createEquipmentDefinitions() {
     var defs = [];
     DATASET_IDS.forEach(function (datasetId) {
-        var type = datasetId.slice(-3).toUpperCase();
+        var type = datasetId.replace(/[^A-Z]/g, "").replace("G", "");
+        if (type.startsWith("5") || type.startsWith("6") || type.startsWith("7")) {
+            type = type.slice(1);
+        }
+        if (!DATASET_TYPE_MAP[type]) {
+            if (datasetId.includes("RMG")) type = "RMG";
+            else if (datasetId.includes("FBD")) type = "FBD";
+            else if (datasetId.includes("OGB") || datasetId.includes("BLE")) type = "OGB";
+            else if (datasetId.includes("COAT")) type = "COAT";
+            else if (datasetId.includes("CIP")) type = "CIP";
+            else type = "RMG";
+        }
         var typeMeta = DATASET_TYPE_MAP[type] || DATASET_TYPE_MAP.RMG;
-        var lineNo = parseInt(datasetId.replace(/[^0-9]/g, ""), 10) || 0;
+        var lineNo = parseInt(datasetId.replace(/[^0-9]/g, ""), 10) || 5;
 
         defs.push({
             equipmentId: datasetId,
             equipmentCode: datasetId,
-            equipmentName: typeMeta.name + " " + datasetId,
+            equipmentName: typeMeta.name + " (" + datasetId + ")",
             plantId: PLANT_ID,
-            blockId: BLOCK_ID,
-            areaId: AREA_ID,
+            blockId: typeMeta.block || BLOCK_ID,
+            areaId: typeMeta.area || AREA_ID,
             roomId: ROOM_ID,
             make: typeMeta.make,
             model: typeMeta.modelPrefix + "-" + lineNo,
-            equipmentType: type,
+            equipmentType: type === "OGB" ? "BLE" : type,
             equipmentTypeName: typeMeta.name,
             hierarchy: {
                 plant: PLANT_ID,
-                block: BLOCK_ID,
-                area: AREA_ID,
+                block: typeMeta.block || BLOCK_ID,
+                area: typeMeta.area || AREA_ID,
                 room: ROOM_ID,
-                fullPath: PLANT_ID + "/" + BLOCK_ID + "/" + AREA_ID + "/" + ROOM_ID + "/" + datasetId
+                fullPath: PLANT_ID + "/" + (typeMeta.block || BLOCK_ID) + "/" + (typeMeta.area || AREA_ID) + "/" + ROOM_ID + "/" + datasetId
             }
         });
     });
@@ -201,32 +216,42 @@ function getProductCatalog(ts) {
 }
 
 function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
-    var eqType = (equipmentId || "").toString().trim().toUpperCase().slice(-3);
+    var rawType = (equipmentId || "").toString().trim().toUpperCase();
+    var eqType = "RMG";
+    if (rawType.includes("RMG")) eqType = "RMG";
+    else if (rawType.includes("FBD")) eqType = "FBD";
+    else if (rawType.includes("OGB") || rawType.includes("BLE")) eqType = "BLE";
+    else if (rawType.includes("COAT")) eqType = "COAT";
+    else if (rawType.includes("CIP")) eqType = "CIP";
+
     var parameters = [];
 
     if (eqType === "RMG") {
         parameters = [
-            { suffix: "AG_AMPS", code: "agAmps", name: "Agitator Amps", unitOfMeasure: "A", baseValue: 16.0, lowWarn: 2.0, lowCrit: 4.0, highWarn: 3.0, highCrit: 5.0 },
-            { suffix: "AG_SPD", code: "agSpeed", name: "Agitator Speed", unitOfMeasure: "rpm", baseValue: 34.0, lowWarn: 4.0, lowCrit: 7.0, highWarn: 5.0, highCrit: 8.0 },
-            { suffix: "CHP_AMPS", code: "chpAmps", name: "Chopper Amps", unitOfMeasure: "A", baseValue: 16.0, lowWarn: 2.0, lowCrit: 4.0, highWarn: 3.0, highCrit: 5.0 },
-            { suffix: "CHP_SPD", code: "chpSpeed", name: "Chopper Speed", unitOfMeasure: "rpm", baseValue: 50.0, lowWarn: 4.0, lowCrit: 8.0, highWarn: 5.0, highCrit: 10.0 },
-            { suffix: "HEATER_TEMP", code: "heaterTemp", name: "Heater Temperature", unitOfMeasure: "celsius", baseValue: 3320.0, lowWarn: 25.0, lowCrit: 45.0, highWarn: 35.0, highCrit: 55.0 }
+            { suffix: "AG_SPD", code: "agSpeed", name: "Agitator Speed", unitOfMeasure: "RPM", baseValue: 140.0, lowWarn: 20.0, lowCrit: 40.0, highWarn: 20.0, highCrit: 35.0 },
+            { suffix: "AG_AMPS", code: "agAmps", name: "Agitator Current", unitOfMeasure: "A", baseValue: 28.0, lowWarn: 18.0, lowCrit: 28.0, highWarn: 2.5, highCrit: 5.0 },
+            { suffix: "CHP_SPD", code: "chpSpeed", name: "Granulator Speed", unitOfMeasure: "RPM", baseValue: 1420.0, lowWarn: 170.0, lowCrit: 420.0, highWarn: 80.0, highCrit: 180.0 },
+            { suffix: "CHP_AMPS", code: "chpAmps", name: "Granulator Current", unitOfMeasure: "A", baseValue: 5.5, lowWarn: 3.5, lowCrit: 5.5, highWarn: 0.7, highCrit: 2.0 },
+            { suffix: "GRAN_TEMP", code: "heaterTemp", name: "Granulation Temperature", unitOfMeasure: "°C", baseValue: 55.0, lowWarn: 13.0, lowCrit: 20.0, highWarn: 13.0, highCrit: 20.0 },
+            { suffix: "DURATION_SEC", code: "durationSec", name: "Duration Sec", unitOfMeasure: "Sec", baseValue: 180.0, lowWarn: 180.0, lowCrit: 180.0, highWarn: 300.0, highCrit: 420.0 }
         ];
     } else if (eqType === "FBD") {
         parameters = [
-            { suffix: "INLET_TEMP", code: "inletTemp", name: "Inlet Temperature", unitOfMeasure: "celsius", baseValue: 58.0, lowWarn: 4.0, lowCrit: 8.0, highWarn: 6.0, highCrit: 10.0 },
-            { suffix: "OUTLET_TEMP", code: "outletTemp", name: "Outlet Temperature", unitOfMeasure: "celsius", baseValue: 45.0, lowWarn: 3.0, lowCrit: 6.0, highWarn: 5.0, highCrit: 8.0 },
-            { suffix: "BED_TEMP", code: "bedTemp", name: "Bed Temperature", unitOfMeasure: "celsius", baseValue: 40.0, lowWarn: 3.0, lowCrit: 6.0, highWarn: 5.0, highCrit: 8.0 },
-            { suffix: "EXH_FAN_SPD", code: "exhaustFanSpeed", name: "Exhaust Fan Speed", unitOfMeasure: "%", baseValue: 45.0, lowWarn: 8.0, lowCrit: 15.0, highWarn: 10.0, highCrit: 18.0 },
-            { suffix: "STEAM_PRESS", code: "steamPressure", name: "Steam Pressure", unitOfMeasure: "bar", baseValue: 1.5, lowWarn: 0.3, lowCrit: 0.5, highWarn: 0.4, highCrit: 0.7 }
+            { suffix: "INLET_TEMP", code: "inletTemp", name: "Inlet Air Temperature", unitOfMeasure: "°C", baseValue: 60.0, lowWarn: 33.0, lowCrit: 35.0, highWarn: 4.0, highCrit: 6.0 },
+            { suffix: "OUTLET_TEMP", code: "outletTemp", name: "Outlet Exhaust Temperature", unitOfMeasure: "°C", baseValue: 37.0, lowWarn: 17.0, lowCrit: 18.0, highWarn: 11.0, highCrit: 15.0 }
+        ];
+    } else if (eqType === "COAT") {
+        parameters = [
+            { suffix: "INLET_AIR_TEMP", code: "inletAirTemp", name: "Inlet Air Temperature", unitOfMeasure: "°C", baseValue: 65.0, lowWarn: 15.0, lowCrit: 20.0, highWarn: 5.0, highCrit: 10.0 },
+            { suffix: "BED_TEMP", code: "bedTemp", name: "Tablet Bed Temperature", unitOfMeasure: "°C", baseValue: 44.0, lowWarn: 5.0, lowCrit: 8.0, highWarn: 4.0, highCrit: 7.0 },
+            { suffix: "PAN_SPEED", code: "panSpeed", name: "Pan Rotation Speed", unitOfMeasure: "rpm", baseValue: 8.0, lowWarn: 2.0, lowCrit: 4.0, highWarn: 2.0, highCrit: 4.0 },
+            { suffix: "SPRAY_RATE", code: "sprayRate", name: "Coating Spray Rate", unitOfMeasure: "g/min", baseValue: 120.0, lowWarn: 15.0, lowCrit: 30.0, highWarn: 15.0, highCrit: 30.0 },
+            { suffix: "ATOM_AIR_PRESS", code: "atomAirPress", name: "Atomizing Air Pressure", unitOfMeasure: "bar", baseValue: 2.5, lowWarn: 0.5, lowCrit: 1.0, highWarn: 0.5, highCrit: 1.0 }
         ];
     } else {
+        // BLE (Octagonal Blender)
         parameters = [
-            { suffix: "IMP_SPD", code: "impellerSpeed", name: "Impeller Speed", unitOfMeasure: "rpm", baseValue: 30.0, lowWarn: 5.0, lowCrit: 9.0, highWarn: 6.0, highCrit: 10.0 },
-            { suffix: "IMP_AMPS", code: "impellerAmps", name: "Impeller Amps", unitOfMeasure: "A", baseValue: 9.0, lowWarn: 2.0, lowCrit: 3.0, highWarn: 2.0, highCrit: 4.0 },
-            { suffix: "CHOP_SPD", code: "chopperSpeed", name: "Chopper Speed", unitOfMeasure: "rpm", baseValue: 24.0, lowWarn: 4.0, lowCrit: 7.0, highWarn: 5.0, highCrit: 8.0 },
-            { suffix: "BINDER_FLOW", code: "binderFlow", name: "Binder Flow", unitOfMeasure: "lph", baseValue: 10.0, lowWarn: 2.0, lowCrit: 3.0, highWarn: 2.0, highCrit: 4.0 },
-            { suffix: "GRAN_MOIST", code: "granuleMoisture", name: "Granule Moisture", unitOfMeasure: "%", baseValue: 9.0, lowWarn: 1.5, lowCrit: 3.0, highWarn: 2.0, highCrit: 3.5 }
+            { suffix: "ACTUAL_RPM", code: "actualRpm", name: "Blending Speed", unitOfMeasure: "RPM", baseValue: 5.0, lowWarn: 1.0, lowCrit: 2.0, highWarn: 1.0, highCrit: 2.0 }
         ];
     }
 
@@ -357,15 +382,23 @@ function runSeed() {
 
     var coreCollections = [
         "iiot_equipment_master",
-        // "iiot_equipment_live_status",
+        "iiot_equiment_master",
         "iiot_equipment_critical_parameters",
         "iiot_equipment_critical_parameters_limit",
-        "iiot_product_master"
-
+        "iiot_product_master",
+        "ingestion_state",
+        "iiot_ingested_events_registry",
+        "iiot_batch_summary"
     ];
 
     coreCollections.forEach(function (name) {
         resetCollection(name);
+    });
+
+    DATASET_IDS.forEach(function (ds) {
+        resetCollection("iiot_ts_batch_" + ds);
+        resetCollection("iiot_ts_alarm_" + ds);
+        resetCollection("iiot_ts_audit_" + ds);
     });
 
     createIndexes();

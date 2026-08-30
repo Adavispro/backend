@@ -966,6 +966,12 @@ public class DynamicWorkflowEngine {
             approval.put("deferredAt", now);
             approval.put("deferralReason", effectiveComment);
         } else if ("UNDER_REVIEW".equalsIgnoreCase(targetStatus)) {
+            approval.put("assignedRole", "PRODUCTION_REVIEWER");
+            if (!supervisorName.isEmpty()) {
+                approval.put("assignedTo", supervisorName);
+            } else {
+                approval.remove("assignedTo");
+            }
             if ("SEND_FOR_REVIEW".equalsIgnoreCase(actionCode) || "SUBMIT_FOR_REVIEW".equalsIgnoreCase(actionCode)) {
                 approval.put("requestedBy", userId);
                 approval.put("requestedAt", now);
@@ -981,8 +987,14 @@ public class DynamicWorkflowEngine {
                 targetStage.put("supervisorName", supervisorName);
             }
         } else if ("REVIEWER_REVIEWED".equalsIgnoreCase(targetStatus) || "PENDING_APPROVAL".equalsIgnoreCase(targetStatus)) {
+            approval.put("assignedRole", "QA_APPROVER");
             approval.put("reviewedBy", userId);
             approval.put("reviewedAt", now);
+            if (!supervisorName.isEmpty()) {
+                approval.put("assignedTo", supervisorName);
+            } else {
+                approval.remove("assignedTo");
+            }
             if ("SUBMIT_RESPONSE".equalsIgnoreCase(actionCode) || "SUBMIT_JUSTIFICATION".equalsIgnoreCase(actionCode) || "PROVIDE_ADDITIONAL_INFO".equalsIgnoreCase(actionCode)) {
                 approval.put("responseProvidedBy", userId);
                 approval.put("responseProvidedAt", now);
@@ -992,6 +1004,9 @@ public class DynamicWorkflowEngine {
                 targetStage.put("supervisorName", supervisorName);
             }
         } else if ("RETURNED_TO_OPERATOR".equalsIgnoreCase(targetStatus) || "REJECTED".equalsIgnoreCase(targetStatus) || "ADDITIONAL_INFO_REQUESTED".equalsIgnoreCase(targetStatus)) {
+            approval.put("assignedRole", "PRODUCTION_OPERATOR");
+            approval.remove("assignedTo");
+            approval.remove("activeReviewer");
             approval.put("returnedFromStage", targetAction.getFromStageCode());
             approval.put("rejectedBy", userId);
             approval.put("rejectedAt", now);
@@ -1019,7 +1034,11 @@ public class DynamicWorkflowEngine {
             instance.setLastActionCode(actionCode);
             instance.setLastActionBy(userId);
             instance.setLastActionAt(now.toInstant());
-            instance.setAssignedTo(!supervisorName.isEmpty() ? supervisorName : instance.getAssignedTo());
+            if ("RETURNED_TO_OPERATOR".equalsIgnoreCase(targetStatus) || "REJECTED".equalsIgnoreCase(targetStatus)) {
+                instance.setAssignedTo(null);
+            } else {
+                instance.setAssignedTo(!supervisorName.isEmpty() ? supervisorName : null);
+            }
             instance.setIsTerminal("APPROVED".equalsIgnoreCase(targetStatus));
             instance.setUpdatedAt(now.toInstant());
             mongoTemplate.save(instance, INSTANCE_COLLECTION);

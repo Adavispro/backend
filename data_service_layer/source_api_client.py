@@ -127,9 +127,17 @@ class AlarmRecord:
     msg_text: str
     plc: str
     dt: str
+    occurred_time: str = ""
+    resolved_time: str = ""
+    duration: str = ""
+    alarm_name: str = ""
 
     @classmethod
     def from_dict(cls, payload: Dict[str, Any]) -> "AlarmRecord":
+        occ = str(payload.get("Occurred_Time") or payload.get("occurred_time") or payload.get("DT") or payload.get("dt") or "")
+        res = str(payload.get("Resolved_Time") or payload.get("resolved_time") or "")
+        dur = str(payload.get("Duration") or payload.get("duration") or payload.get("TimeString") or payload.get("time_string") or "")
+        name = str(payload.get("Alarm_Name") or payload.get("alarm_name") or payload.get("MsgText") or payload.get("msg_text") or "")
         return cls(
             time_ms=float(payload.get("Time_ms") or payload.get("time_ms") or payload.get("TIME_MS") or 0),
             msg_proc=int(payload.get("MsgProc") or payload.get("msg_proc") or payload.get("MSG_PROC") or 0),
@@ -144,10 +152,14 @@ class AlarmRecord:
             var6=str(payload.get("Var6") or payload.get("var6") or payload.get("VAR6") or ""),
             var7=str(payload.get("Var7") or payload.get("var7") or payload.get("VAR7") or ""),
             var8=str(payload.get("Var8") or payload.get("var8") or payload.get("VAR8") or ""),
-            time_string=str(payload.get("TimeString") or payload.get("time_string") or payload.get("TIME_STRING") or ""),
-            msg_text=str(payload.get("MsgText") or payload.get("msg_text") or payload.get("MSG_TEXT") or ""),
+            time_string=str(payload.get("TimeString") or payload.get("time_string") or payload.get("TIME_STRING") or dur),
+            msg_text=str(payload.get("MsgText") or payload.get("msg_text") or payload.get("MSG_TEXT") or name),
             plc=str(payload.get("PLC") or payload.get("plc") or payload.get("Plc") or ""),
-            dt=str(payload.get("DT") or payload.get("dt") or payload.get("DateTime") or ""),
+            dt=str(payload.get("DT") or payload.get("dt") or payload.get("DateTime") or occ),
+            occurred_time=occ,
+            resolved_time=res,
+            duration=dur,
+            alarm_name=name,
         )
 
 
@@ -263,10 +275,16 @@ def fetch_alarm_data(from_time: str, to_time: str, dataset_id: str = DEFAULT_DAT
     return [AlarmRecord.from_dict(item) for item in data]
 
 
+def fetch_parameter_settings(batch_no: str, lot_no: str, dataset_id: str = DEFAULT_DATASET_ID) -> Dict[str, Any]:
+    payload = fetch_dataset("PARAMETERSETTINGS", {"BATCH_NO": batch_no, "LOT_NO": lot_no}, dataset_id=dataset_id)
+    return payload.get("data", {})
+
+
 def fetch_audit_data(from_time: str, to_time: str, dataset_id: str = DEFAULT_DATASET_ID) -> List[AuditRecord]:
     payload = fetch_dataset("AUDITDATA", {"FROMTIME": from_time, "TOTIME": to_time}, dataset_id=dataset_id)
     data = payload.get("data", [])
     return [AuditRecord.from_dict(item) for item in data]
+
 
 
 def _format_batch_timestamp(value: str) -> Optional[str]:

@@ -1,0 +1,1379 @@
+{
+  "RMG": {
+    "category": "Rapid Mixer Granulator",
+    "equipmentDetails": {
+      "equipmentName": "RAPID MIXER GRANULATOR",
+      "equipmentId": "RMGC0219",
+      "make": "SAAN",
+      "area": "PB3",
+      "block": "PB3"
+    },
+    "batchDetails": {
+      "batchNumber": "NL0026008",
+      "lotNumber": "01 of 05",
+      "productName": "Finasteride USP 5 mg",
+      "productCode": "STFS7000",
+      "recipeName": "STFS7000",
+      "batchSize": "900.000 Kg",
+      "startTime": "09/02/2026 16:04:17",
+      "endTime": "09/02/2026 19:05:40",
+      "batchDurationInHours": "03:01:23"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "91525 (PB3 RMGC0219 Supervisor)",
+        "dateTime": "09/02/2026 16:04:17",
+        "description": "Login"
+      },
+      {
+        "userName": "8961 (PB3 RMGC0219 Operator)",
+        "dateTime": "09/02/2026 16:05:30",
+        "description": "Login"
+      },
+      {
+        "userName": "8961 (PB3 RMGC0219 Operator)",
+        "dateTime": "09/02/2026 19:04:00",
+        "description": "Logout Successfully"
+      },
+      {
+        "userName": "91525 (PB3 RMGC0219 Supervisor)",
+        "dateTime": "09/02/2026 19:05:40",
+        "description": "Logout Successfully"
+      }
+    ],
+    "parameterSettings": {
+      "dryCycle1": {
+        "DRY CYCLE1 IMPELLER SLOW SET (Sec)": 600,
+        "DRY CYCLE1 IMPELLER FAST SET (Sec)": 0,
+        "DRY CYCLE1 CHOPPER DELAY (Sec)": 0,
+        "DRY CYCLE1 CHOPPER SLOW SET (Sec)": 0,
+        "DRY CYCLE1 CHOPPER FAST SET (Sec)": 0
+      },
+      "wetCycle1": {
+        "WET CYCLE1 IMPELLER SLOW SET (Sec)": 180,
+        "WET CYCLE1 IMPELLER FAST SET (Sec)": 0,
+        "WET CYCLE1 CHOPPER DELAY (Sec)": 0,
+        "WET CYCLE1 CHOPPER SLOW SET (Sec)": 0,
+        "WET CYCLE1 CHOPPER FAST SET (Sec)": 0,
+        "WET CYCLE1 PUMP1 ON DELAY (Sec)": 0,
+        "WET CYCLE1 PUMP1 SET (Sec)": 180,
+        "WET CYCLE1 PUMP1 RPM": 240
+      },
+      "wetCycle2": {
+        "WET CYCLE2 IMPELLER SLOW SET (Sec)": 180,
+        "WET CYCLE2 IMPELLER FAST SET (Sec)": 0,
+        "WET CYCLE2 CHOPPER DELAY (Sec)": 0,
+        "WET CYCLE2 CHOPPER SLOW SET (Sec)": 180,
+        "WET CYCLE2 CHOPPER FAST SET (Sec)": 0,
+        "WET CYCLE2 PUMP1 ON DELAY (Sec)": 0,
+        "WET CYCLE2 PUMP1 SET (Sec)": 0,
+        "WET CYCLE2 PUMP1 RPM": 0
+      },
+      "wetCycle3": {
+        "WET CYCLE3 IMPELLER SLOW SET (Sec)": 480,
+        "WET CYCLE3 IMPELLER FAST SET (Sec)": 0,
+        "WET CYCLE3 CHOPPER DELAY (Sec)": 0,
+        "WET CYCLE3 CHOPPER SLOW SET (Sec)": 480,
+        "WET CYCLE3 CHOPPER FAST SET (Sec)": 0,
+        "WET CYCLE3 PUMP1 ON DELAY (Sec)": 0,
+        "WET CYCLE3 PUMP1 SET (Sec)": 0,
+        "WET CYCLE3 PUMP1 RPM": 0
+      },
+      "unloadingParameters": {
+        "IMPELLER": "SLOW",
+        "CHOPPER": "SLOW"
+      }
+    },
+    "operationalDetailValues": [
+      {
+        "time": "09/02/2026 18:02:40",
+        "status": "DRY CYCLE 1 IMPELLER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:12:40",
+        "status": "DRY CYCLE 1 IMPELLER SLOW STOP",
+        "currentAmp": null,
+        "durationSec": 600
+      },
+      {
+        "time": "09/02/2026 18:16:03",
+        "status": "WET CYCLE 1 IMPELLER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:16:03",
+        "status": "WET CYCLE 1 PUMP 1 START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:18:38",
+        "status": "WET CYCLE 1 IMPELLER SLOW STOP",
+        "currentAmp": 30.5,
+        "durationSec": 155
+      },
+      {
+        "time": "09/02/2026 18:18:38",
+        "status": "WET CYCLE 1 PUMP 1 STOP",
+        "currentAmp": null,
+        "durationSec": 155
+      },
+      {
+        "time": "09/02/2026 18:19:50",
+        "status": "WET CYCLE 1 IMPELLER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:19:50",
+        "status": "WET CYCLE 1 PUMP 1 START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:20:15",
+        "status": "WET CYCLE 1 IMPELLER SLOW STOP",
+        "currentAmp": 30.4,
+        "durationSec": 25
+      },
+      {
+        "time": "09/02/2026 18:20:15",
+        "status": "WET CYCLE 1 PUMP 1 STOP",
+        "currentAmp": null,
+        "durationSec": 25
+      },
+      {
+        "time": "09/02/2026 18:22:26",
+        "status": "WET CYCLE 2 IMPELLER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:22:26",
+        "status": "WET CYCLE 2 CHOPPER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:23:24",
+        "status": "WET CYCLE 2 IMPELLER SLOW STOP",
+        "currentAmp": 30.6,
+        "durationSec": 58
+      },
+      {
+        "time": "09/02/2026 18:23:24",
+        "status": "WET CYCLE 2 CHOPPER SLOW STOP",
+        "currentAmp": 6.5,
+        "durationSec": 58
+      },
+      {
+        "time": "09/02/2026 18:26:03",
+        "status": "WET CYCLE 2 IMPELLER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:26:03",
+        "status": "WET CYCLE 2 CHOPPER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:27:06",
+        "status": "WET CYCLE 2 IMPELLER SLOW STOP",
+        "currentAmp": 30.6,
+        "durationSec": 63
+      },
+      {
+        "time": "09/02/2026 18:27:06",
+        "status": "WET CYCLE 2 CHOPPER SLOW STOP",
+        "currentAmp": 6.5,
+        "durationSec": 63
+      },
+      {
+        "time": "09/02/2026 18:29:09",
+        "status": "WET CYCLE 2 IMPELLER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:29:09",
+        "status": "WET CYCLE 2 CHOPPER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:30:08",
+        "status": "WET CYCLE 2 IMPELLER SLOW STOP",
+        "currentAmp": 30.7,
+        "durationSec": 59
+      },
+      {
+        "time": "09/02/2026 18:30:08",
+        "status": "WET CYCLE 2 CHOPPER SLOW STOP",
+        "currentAmp": 6.5,
+        "durationSec": 59
+      },
+      {
+        "time": "09/02/2026 18:31:02",
+        "status": "WET CYCLE 3 IMPELLER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:31:02",
+        "status": "WET CYCLE 3 CHOPPER SLOW START",
+        "currentAmp": null,
+        "durationSec": null
+      },
+      {
+        "time": "09/02/2026 18:39:02",
+        "status": "WET CYCLE 3 IMPELLER SLOW STOP",
+        "currentAmp": 31.0,
+        "durationSec": 480
+      },
+      {
+        "time": "09/02/2026 18:39:02",
+        "status": "WET CYCLE 3 CHOPPER SLOW STOP",
+        "currentAmp": 6.6,
+        "durationSec": 480
+      }
+    ],
+    "alarmSummary": [
+      {
+        "alarmName": "DISCHARGE VALVE CLOSE FAIL",
+        "occurredTime": "09/02/2026 18:47:04",
+        "resolvedTime": "09/02/2026 19:01:32",
+        "duration": "00:14:28"
+      },
+      {
+        "alarmName": "LID OPENED",
+        "occurredTime": "09/02/2026 18:54:45",
+        "resolvedTime": "09/02/2026 19:01:23",
+        "duration": "00:06:38"
+      },
+      {
+        "alarmName": "DISCHARGE VALVE CLOSE FAIL",
+        "occurredTime": "09/02/2026 19:03:08",
+        "resolvedTime": "09/02/2026 19:03:39",
+        "duration": "00:00:31"
+      }
+    ],
+    "auditTrail": [
+      {
+        "dateTime": "09/02/2026 16:04:17",
+        "description": "BATCH START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "91525 (PB3 RMGC0219 Supervisor)"
+      },
+      {
+        "dateTime": "09/02/2026 16:05:36",
+        "description": "PTS START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 16:20:01",
+        "description": "PTS STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:02:39",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:15:28",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:22:25",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:23:24",
+        "description": "AUTO PAUSE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "BINDER / GRANULATING AGENT ADDITION",
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:26:02",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:27:06",
+        "description": "AUTO PAUSE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "RAKING / SCRAPPING",
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:29:08",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:30:08",
+        "description": "AUTO PAUSE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "RAKING / SCRAPPING",
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:31:01",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:39:03",
+        "description": "AUTO STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:47:04",
+        "description": "AUTO UNLOAD START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:01:32",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 RMGC0219 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:05:40",
+        "description": "BATCH END",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "91525 (PB3 RMGC0219 Supervisor)"
+      }
+    ]
+  },
+  "FBD": {
+    "category": "Fluid Bed Dryer",
+    "equipmentDetails": {
+      "equipmentName": "FLUID BED DRIER",
+      "equipmentId": "FBDC0220",
+      "make": "SAAN",
+      "area": "GRANULATION",
+      "block": "PB3"
+    },
+    "batchDetails": {
+      "batchNumber": "NL0026008",
+      "lotNumber": "1",
+      "productName": "Finasteride USP 5 mg",
+      "productCode": "STFS7000",
+      "recipeName": "STFS7000",
+      "batchSize": "900.000 kg",
+      "startTime": "09/02/2026 18:44:45",
+      "endTime": "09/02/2026 23:47:01",
+      "batchDurationInHours": "05:02:16"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "98204 (PB3 FBDC0220 Supervisor)",
+        "dateTime": "09/02/2026 18:44:47",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "8961 (PB3 FBDC0220 Operator)",
+        "dateTime": "09/02/2026 18:45:50",
+        "description": "Login"
+      },
+      {
+        "userName": "8961 (PB3 FBDC0220 Operator)",
+        "dateTime": "09/02/2026 22:01:42",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "96599 (PB3 FBDC0220 Operator)",
+        "dateTime": "09/02/2026 22:02:01",
+        "description": "Login"
+      },
+      {
+        "userName": "96599 (PB3 FBDC0220 Operator)",
+        "dateTime": "09/02/2026 23:45:11",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "98204 (PB3 FBDC0220 Supervisor)",
+        "dateTime": "09/02/2026 23:46:40",
+        "description": "Login"
+      }
+    ],
+    "parameterSettings": {
+      "PROCESS TIME (MIN)": 300,
+      "AIR DRY TIME (MIN)": 5,
+      "COOLING TIME (MIN)": 0,
+      "SHAKE INTERVAL (MIN)": 10,
+      "SHAKE DURATION (SEC)": 30,
+      "END SHAKE TIME (SEC)": 30,
+      "INLET TEMPERATURE (\u00b0C)": 60,
+      "INLET TEMPERATURE HIGH (\u00b0C)": 64,
+      "OUTLET TEMPERATURE (\u00b0C)": 48,
+      "PRINT INTERVAL (MIN)": 5
+    },
+    "operationalValueSummary": {
+      "INLET TEMPERATURE (\u00b0C)": {
+        "min": 27,
+        "max": 64
+      },
+      "OUTLET TEMPERATURE (\u00b0C)": {
+        "min": 20,
+        "max": 37
+      }
+    },
+    "operationalDetailValues": [
+      {
+        "time": "09/02/2026 19:30:01",
+        "inletTemp": 27,
+        "outletTemp": 25
+      },
+      {
+        "time": "09/02/2026 19:35:01",
+        "inletTemp": 35,
+        "outletTemp": 20
+      },
+      {
+        "time": "09/02/2026 19:48:45",
+        "inletTemp": 29,
+        "outletTemp": 23
+      },
+      {
+        "time": "09/02/2026 19:50:45",
+        "inletTemp": 48,
+        "outletTemp": 20
+      },
+      {
+        "time": "09/02/2026 19:51:21",
+        "inletTemp": 64,
+        "outletTemp": 21
+      },
+      {
+        "time": "09/02/2026 19:55:05",
+        "inletTemp": 55,
+        "outletTemp": 22
+      },
+      {
+        "time": "09/02/2026 20:00:05",
+        "inletTemp": 56,
+        "outletTemp": 23
+      },
+      {
+        "time": "09/02/2026 20:05:05",
+        "inletTemp": 52,
+        "outletTemp": 23
+      },
+      {
+        "time": "09/02/2026 20:10:05",
+        "inletTemp": 55,
+        "outletTemp": 23
+      },
+      {
+        "time": "09/02/2026 20:15:05",
+        "inletTemp": 51,
+        "outletTemp": 23
+      },
+      {
+        "time": "09/02/2026 20:20:05",
+        "inletTemp": 56,
+        "outletTemp": 23
+      },
+      {
+        "time": "09/02/2026 20:25:05",
+        "inletTemp": 51,
+        "outletTemp": 23
+      },
+      {
+        "time": "09/02/2026 20:30:05",
+        "inletTemp": 55,
+        "outletTemp": 23
+      },
+      {
+        "time": "09/02/2026 20:35:05",
+        "inletTemp": 52,
+        "outletTemp": 23
+      },
+      {
+        "time": "09/02/2026 22:40:11",
+        "inletTemp": 60,
+        "outletTemp": 30
+      },
+      {
+        "time": "09/02/2026 22:45:11",
+        "inletTemp": 63,
+        "outletTemp": 37
+      },
+      {
+        "time": "09/02/2026 22:45:11",
+        "inletTemp": 64,
+        "outletTemp": 37
+      },
+      {
+        "time": "09/02/2026 22:45:57",
+        "inletTemp": 63,
+        "outletTemp": 37
+      },
+      {
+        "time": "09/02/2026 22:46:13",
+        "inletTemp": 63,
+        "outletTemp": 37
+      }
+    ],
+    "alarmSummary": [
+      {
+        "alarmName": "PC AIR PRESSURE LOW",
+        "occurredTime": "09/02/2026 19:36:03",
+        "resolvedTime": "09/02/2026 19:48:39",
+        "duration": "00:12:36"
+      },
+      {
+        "alarmName": "EARTH FAULT",
+        "occurredTime": "09/02/2026 19:37:15",
+        "resolvedTime": "09/02/2026 19:48:39",
+        "duration": "00:11:24"
+      },
+      {
+        "alarmName": "INLET TEMP HIGH",
+        "occurredTime": "09/02/2026 19:51:21",
+        "resolvedTime": "09/02/2026 19:55:02",
+        "duration": "00:03:41"
+      },
+      {
+        "alarmName": "PC AIR PRESSURE LOW",
+        "occurredTime": "09/02/2026 20:48:40",
+        "resolvedTime": "09/02/2026 21:01:26",
+        "duration": "00:12:46"
+      },
+      {
+        "alarmName": "EARTH FAULT",
+        "occurredTime": "09/02/2026 20:49:48",
+        "resolvedTime": "09/02/2026 21:01:26",
+        "duration": "00:11:38"
+      },
+      {
+        "alarmName": "INLET TEMP HIGH",
+        "occurredTime": "09/02/2026 21:03:55",
+        "resolvedTime": "09/02/2026 21:07:44",
+        "duration": "00:03:49"
+      },
+      {
+        "alarmName": "PC AIR PRESSURE LOW",
+        "occurredTime": "09/02/2026 21:50:45",
+        "resolvedTime": "09/02/2026 22:00:52",
+        "duration": "00:10:07"
+      },
+      {
+        "alarmName": "EARTH FAULT",
+        "occurredTime": "09/02/2026 21:51:51",
+        "resolvedTime": "09/02/2026 22:00:52",
+        "duration": "00:09:01"
+      },
+      {
+        "alarmName": "INLET TEMP HIGH",
+        "occurredTime": "09/02/2026 22:03:26",
+        "resolvedTime": "09/02/2026 22:06:08",
+        "duration": "00:02:42"
+      },
+      {
+        "alarmName": "PC AIR PRESSURE LOW",
+        "occurredTime": "09/02/2026 22:08:31",
+        "resolvedTime": "09/02/2026 22:34:37",
+        "duration": "00:26:06"
+      },
+      {
+        "alarmName": "EARTH FAULT",
+        "occurredTime": "09/02/2026 22:09:34",
+        "resolvedTime": "09/02/2026 22:34:37",
+        "duration": "00:25:03"
+      },
+      {
+        "alarmName": "INLET TEMP HIGH",
+        "occurredTime": "09/02/2026 22:37:13",
+        "resolvedTime": "09/02/2026 22:39:10",
+        "duration": "00:01:57"
+      },
+      {
+        "alarmName": "INLET TEMP HIGH",
+        "occurredTime": "09/02/2026 22:45:11",
+        "resolvedTime": "09/02/2026 22:45:56",
+        "duration": "00:00:45"
+      },
+      {
+        "alarmName": "PC AIR PRESSURE LOW",
+        "occurredTime": "09/02/2026 22:47:01",
+        "resolvedTime": "09/02/2026 23:25:18",
+        "duration": "00:38:17"
+      },
+      {
+        "alarmName": "EARTH FAULT",
+        "occurredTime": "09/02/2026 22:48:04",
+        "resolvedTime": "09/02/2026 23:25:18",
+        "duration": "00:37:14"
+      }
+    ],
+    "auditTrail": [
+      {
+        "dateTime": "09/02/2026 18:44:45",
+        "description": "BATCH START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "98204 (PB3 FBDC0220 Supervisor)"
+      },
+      {
+        "dateTime": "09/02/2026 18:46:00",
+        "description": "AUTO CHARGING START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 18:53:24",
+        "description": "AUTO CHARGING STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:01:56",
+        "description": "AUTO CHARGING START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:03:53",
+        "description": "AUTO CHARGING STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:30:01",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:35:01",
+        "description": "AUTO STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "RAKING",
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:35:56",
+        "description": "PC SEAL VENT",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:48:35",
+        "description": "PC SEAL VENT",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:48:39",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:48:45",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:55:02",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 19:55:05",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 20:47:20",
+        "description": "AUTO STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "RAKING",
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 20:48:34",
+        "description": "PC SEAL VENT",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 21:01:21",
+        "description": "PC SEAL VENT",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 21:01:26",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 21:01:28",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      }
+    ]
+  },
+  "BLE": {
+    "category": "Octagonal Blender",
+    "equipmentDetails": {
+      "equipmentName": "OCTAGONAL BLENDER",
+      "equipmentId": "OCBC0222",
+      "make": "SAAN",
+      "area": "BLENDER2",
+      "block": "PB3"
+    },
+    "batchDetails": {
+      "batchNumber": "NL0026008",
+      "lotNumber": "01 of 05",
+      "productName": "Finasteride USP 5 mg",
+      "productCode": "STFS7000",
+      "recipeName": "STFS7000",
+      "batchSize": "900.000 Kg",
+      "startTime": "11/02/2026 09:04:55",
+      "endTime": "11/02/2026 11:02:36",
+      "batchDurationInHours": "01:57:41"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "91525 (PB3 OCBC0222 Supervisor)",
+        "dateTime": "11/02/2026 09:05:19",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "25081 (PB3 OCBC0222 Operator)",
+        "dateTime": "11/02/2026 09:05:40",
+        "description": "Login"
+      },
+      {
+        "userName": "25081 (PB3 OCBC0222 Operator)",
+        "dateTime": "11/02/2026 11:02:10",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "91525 (PB3 OCBC0222 Supervisor)",
+        "dateTime": "11/02/2026 11:02:31",
+        "description": "Login"
+      }
+    ],
+    "parameterSettings": {
+      "SELECT NUMBER OF MIXINGS": 2,
+      "FIRST MIXING TIME (MIN)": 15,
+      "SECOND MIXING TIME (MIN)": 5,
+      "THIRD MIXING TIME (MIN)": 0,
+      "FOURTH MIXING TIME (MIN)": 0,
+      "BLENDING SPEED (RPM)": 5,
+      "VACUUM ON TIME (MIN)": 100,
+      "PURGE ON TIME (Sec)": 5
+    },
+    "operationalDetailValues": [
+      {
+        "time": "11/02/2026 10:21:02",
+        "blenderStatus": "MIXING 1 STARTED",
+        "actualRpm": 5
+      },
+      {
+        "time": "11/02/2026 10:36:02",
+        "blenderStatus": "MIXING 1 COMPLETED",
+        "actualRpm": 5
+      },
+      {
+        "time": "11/02/2026 10:55:01",
+        "blenderStatus": "MIXING 2 STARTED",
+        "actualRpm": 5
+      },
+      {
+        "time": "11/02/2026 11:00:01",
+        "blenderStatus": "BLENDING OVER",
+        "actualRpm": 5
+      }
+    ],
+    "alarmSummary": [],
+    "auditTrail": [
+      {
+        "dateTime": "11/02/2026 09:04:55",
+        "description": "BATCH START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "91525 (PB3 OCBC0222 Supervisor)"
+      },
+      {
+        "dateTime": "11/02/2026 09:08:04",
+        "description": "CHARGE START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "25081 (PB3 OCBC0222 Operator)"
+      },
+      {
+        "dateTime": "11/02/2026 10:15:13",
+        "description": "CHARGE STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "25081 (PB3 OCBC0222 Operator)"
+      },
+      {
+        "dateTime": "11/02/2026 10:20:52",
+        "description": "BLEND START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "25081 (PB3 OCBC0222 Operator)"
+      },
+      {
+        "dateTime": "11/02/2026 10:21:02",
+        "description": "BLEND START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "25081 (PB3 OCBC0222 Operator)"
+      },
+      {
+        "dateTime": "11/02/2026 10:47:54",
+        "description": "CHARGE START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "25081 (PB3 OCBC0222 Operator)"
+      },
+      {
+        "dateTime": "11/02/2026 10:52:03",
+        "description": "CHARGE STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "25081 (PB3 OCBC0222 Operator)"
+      },
+      {
+        "dateTime": "11/02/2026 10:54:12",
+        "description": "BLEND START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "25081 (PB3 OCBC0222 Operator)"
+      },
+      {
+        "dateTime": "11/02/2026 10:55:01",
+        "description": "BLEND START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "25081 (PB3 OCBC0222 Operator)"
+      },
+      {
+        "dateTime": "11/02/2026 11:02:36",
+        "description": "BATCH END",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "91525 (PB3 OCBC0222 Supervisor)"
+      }
+    ]
+  },
+  "COAT": {
+    "category": "Auto Coater",
+    "equipmentDetails": {
+      "equipmentName": "AUTO COATER",
+      "equipmentId": "COATC0223",
+      "make": "SAAN",
+      "area": "COATING",
+      "block": "PB3"
+    },
+    "batchDetails": {
+      "batchNumber": "NL0026008",
+      "lotNumber": "01 of 05",
+      "productName": "Finasteride USP 5 mg",
+      "productCode": "STFS7000",
+      "recipeName": "STFS7000",
+      "batchSize": "900.000 Kg",
+      "startTime": "12/02/2026 08:30:00",
+      "endTime": "12/02/2026 12:45:30",
+      "batchDurationInHours": "04:15:30"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "91525 (PB3 COATC0223 Supervisor)",
+        "dateTime": "12/02/2026 08:30:00",
+        "description": "Login"
+      },
+      {
+        "userName": "8961 (PB3 COATC0223 Operator)",
+        "dateTime": "12/02/2026 08:31:15",
+        "description": "Login"
+      },
+      {
+        "userName": "8961 (PB3 COATC0223 Operator)",
+        "dateTime": "12/02/2026 12:40:00",
+        "description": "Logout Successfully"
+      },
+      {
+        "userName": "91525 (PB3 COATC0223 Supervisor)",
+        "dateTime": "12/02/2026 12:45:30",
+        "description": "Logout Successfully"
+      }
+    ],
+    "parameterSettings": {
+      "PRE_HEATING": {
+        "INLET AIR TEMP SET (\u00b0C)": 65,
+        "BED TEMP SET (\u00b0C)": 42,
+        "PAN SPEED SET (RPM)": 3,
+        "DRYING TIME (MIN)": 15
+      },
+      "SPRAYING_CYCLE": {
+        "INLET AIR TEMP SET (\u00b0C)": 65,
+        "BED TEMP SET (\u00b0C)": 44,
+        "PAN SPEED SET (RPM)": 8,
+        "SPRAY RATE SET (G/MIN)": 120,
+        "ATOMIZING AIR PRESSURE (BAR)": 2.5,
+        "PATTERN AIR PRESSURE (BAR)": 2.0,
+        "PROCESS TIME (MIN)": 180
+      },
+      "POST_DRYING": {
+        "INLET AIR TEMP SET (\u00b0C)": 50,
+        "BED TEMP SET (\u00b0C)": 40,
+        "PAN SPEED SET (RPM)": 3,
+        "DRYING TIME (MIN)": 30
+      }
+    },
+    "operationalValueSummary": {
+      "INLET AIR TEMP (\u00b0C) MIN": 48,
+      "INLET AIR TEMP (\u00b0C) MAX": 66,
+      "BED TEMP (\u00b0C) MIN": 38,
+      "BED TEMP (\u00b0C) MAX": 46,
+      "PAN SPEED (RPM) MIN": 3,
+      "PAN SPEED (RPM) MAX": 8,
+      "SPRAY RATE (G/MIN) MIN": 0,
+      "SPRAY RATE (G/MIN) MAX": 125
+    },
+    "operationalDetailValues": [
+      {
+        "time": "12/02/2026 08:35:00",
+        "status": "PRE-HEATING STARTED",
+        "inletTemp": 52.0,
+        "bedTemp": 38.0,
+        "panSpeed": 3.0,
+        "sprayRate": 0.0,
+        "atomAirPress": 0.0
+      },
+      {
+        "time": "12/02/2026 08:50:00",
+        "status": "PRE-HEATING COMPLETED",
+        "inletTemp": 65.0,
+        "bedTemp": 42.0,
+        "panSpeed": 3.0,
+        "sprayRate": 0.0,
+        "atomAirPress": 0.0
+      },
+      {
+        "time": "12/02/2026 08:55:00",
+        "status": "SPRAYING CYCLE 1 START",
+        "inletTemp": 65.0,
+        "bedTemp": 43.5,
+        "panSpeed": 8.0,
+        "sprayRate": 118.0,
+        "atomAirPress": 2.5
+      },
+      {
+        "time": "12/02/2026 09:55:00",
+        "status": "SPRAYING RUNNING",
+        "inletTemp": 65.5,
+        "bedTemp": 44.0,
+        "panSpeed": 8.0,
+        "sprayRate": 120.0,
+        "atomAirPress": 2.5
+      },
+      {
+        "time": "12/02/2026 11:55:00",
+        "status": "SPRAYING COMPLETED",
+        "inletTemp": 64.8,
+        "bedTemp": 44.2,
+        "panSpeed": 8.0,
+        "sprayRate": 120.0,
+        "atomAirPress": 2.5
+      },
+      {
+        "time": "12/02/2026 12:00:00",
+        "status": "POST DRYING START",
+        "inletTemp": 50.0,
+        "bedTemp": 41.0,
+        "panSpeed": 3.0,
+        "sprayRate": 0.0,
+        "atomAirPress": 0.0
+      },
+      {
+        "time": "12/02/2026 12:30:00",
+        "status": "POST DRYING COMPLETED",
+        "inletTemp": 48.0,
+        "bedTemp": 38.5,
+        "panSpeed": 3.0,
+        "sprayRate": 0.0,
+        "atomAirPress": 0.0
+      }
+    ],
+    "alarmSummary": [
+      {
+        "alarmName": "SPRAY GUN CHOKED",
+        "occurredTime": "12/02/2026 10:14:20",
+        "resolvedTime": "12/02/2026 10:18:45",
+        "duration": "00:04:25"
+      },
+      {
+        "alarmName": "EXHAUST AIR FLOW LOW",
+        "occurredTime": "12/02/2026 11:02:10",
+        "resolvedTime": "12/02/2026 11:05:00",
+        "duration": "00:02:50"
+      }
+    ],
+    "auditTrail": [
+      {
+        "dateTime": "12/02/2026 08:30:00",
+        "description": "BATCH START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "91525 (PB3 COATC0223 Supervisor)"
+      },
+      {
+        "dateTime": "12/02/2026 08:35:00",
+        "description": "PRE-HEATING START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 COATC0223 Operator)"
+      },
+      {
+        "dateTime": "12/02/2026 08:55:00",
+        "description": "SPRAYING START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 COATC0223 Operator)"
+      },
+      {
+        "dateTime": "12/02/2026 10:14:20",
+        "description": "AUTO PAUSE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "SPRAY GUN CLEANING",
+        "userName": "8961 (PB3 COATC0223 Operator)"
+      },
+      {
+        "dateTime": "12/02/2026 10:18:45",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 COATC0223 Operator)"
+      },
+      {
+        "dateTime": "12/02/2026 10:19:00",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 COATC0223 Operator)"
+      },
+      {
+        "dateTime": "12/02/2026 12:00:00",
+        "description": "POST DRYING START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 COATC0223 Operator)"
+      },
+      {
+        "dateTime": "12/02/2026 12:45:30",
+        "description": "BATCH END",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "91525 (PB3 COATC0223 Supervisor)"
+      }
+    ]
+  },
+  "CIP": {
+    "category": "Clean-In-Place",
+    "equipmentDetails": {
+      "equipmentName": "CLEAN IN PLACE SYSTEM",
+      "equipmentId": "CIPC0224",
+      "make": "SAAN",
+      "area": "WASHING",
+      "block": "PB3"
+    },
+    "batchDetails": {
+      "batchNumber": "CIP0026009",
+      "lotNumber": "01 of 01",
+      "productName": "CIP Cleaning Validation Cycle",
+      "productCode": "CIP_STD_01",
+      "recipeName": "CIP_STD_01",
+      "batchSize": "1200.000 L",
+      "startTime": "13/02/2026 06:00:00",
+      "endTime": "13/02/2026 08:30:00",
+      "batchDurationInHours": "02:30:00"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "91525 (PB3 CIPC0224 Supervisor)",
+        "dateTime": "13/02/2026 06:00:00",
+        "description": "Login"
+      },
+      {
+        "userName": "8961 (PB3 CIPC0224 Operator)",
+        "dateTime": "13/02/2026 06:01:00",
+        "description": "Login"
+      },
+      {
+        "userName": "8961 (PB3 CIPC0224 Operator)",
+        "dateTime": "13/02/2026 08:25:00",
+        "description": "Logout Successfully"
+      },
+      {
+        "userName": "91525 (PB3 CIPC0224 Supervisor)",
+        "dateTime": "13/02/2026 08:30:00",
+        "description": "Logout Successfully"
+      }
+    ],
+    "parameterSettings": {
+      "PRE_RINSE": {
+        "PRE-RINSE TIME (MIN)": 15,
+        "WATER TEMPERATURE (\u00b0C)": 25,
+        "SUPPLY FLOW RATE (LPM)": 150
+      },
+      "DETERGENT_WASH": {
+        "WASH TIME (MIN)": 30,
+        "WASH TEMPERATURE (\u00b0C)": 75,
+        "DETERGENT CONCENTRATION (%)": 2.0,
+        "RECIRCULATION PRESSURE (BAR)": 3.0
+      },
+      "FINAL_RINSE_AND_DRY": {
+        "FINAL RINSE TIME (MIN)": 20,
+        "WATER CONDUCTIVITY LIMIT (\u00b5S/cm)": 1.3,
+        "AIR BLOW DRY TIME (MIN)": 15
+      }
+    },
+    "operationalValueSummary": {
+      "WASH TEMPERATURE (\u00b0C) MIN": 24,
+      "WASH TEMPERATURE (\u00b0C) MAX": 78,
+      "SUPPLY FLOW RATE (LPM) MIN": 0,
+      "SUPPLY FLOW RATE (LPM) MAX": 160,
+      "SUPPLY PRESSURE (BAR) MIN": 0,
+      "SUPPLY PRESSURE (BAR) MAX": 3.5,
+      "FINAL RINSE CONDUCTIVITY (\u00b5S/cm)": 0.85
+    },
+    "operationalDetailValues": [
+      {
+        "time": "13/02/2026 06:05:00",
+        "status": "PRE-RINSE START",
+        "washTemp": 25.0,
+        "flowRate": 150.0,
+        "pressure": 2.5,
+        "conductivity": 15.0
+      },
+      {
+        "time": "13/02/2026 06:20:00",
+        "status": "PRE-RINSE COMPLETED",
+        "washTemp": 26.0,
+        "flowRate": 152.0,
+        "pressure": 2.5,
+        "conductivity": 8.0
+      },
+      {
+        "time": "13/02/2026 06:25:00",
+        "status": "DETERGENT WASH START",
+        "washTemp": 75.0,
+        "flowRate": 140.0,
+        "pressure": 3.0,
+        "conductivity": 450.0
+      },
+      {
+        "time": "13/02/2026 06:55:00",
+        "status": "DETERGENT WASH COMPLETED",
+        "washTemp": 76.5,
+        "flowRate": 142.0,
+        "pressure": 3.0,
+        "conductivity": 460.0
+      },
+      {
+        "time": "13/02/2026 07:00:00",
+        "status": "INTERMEDIATE RINSE START",
+        "washTemp": 45.0,
+        "flowRate": 150.0,
+        "pressure": 2.8,
+        "conductivity": 55.0
+      },
+      {
+        "time": "13/02/2026 07:30:00",
+        "status": "FINAL WFI RINSE START",
+        "washTemp": 80.0,
+        "flowRate": 150.0,
+        "pressure": 2.8,
+        "conductivity": 0.85
+      },
+      {
+        "time": "13/02/2026 08:00:00",
+        "status": "AIR BLOW DRY START",
+        "washTemp": 60.0,
+        "flowRate": 0.0,
+        "pressure": 1.5,
+        "conductivity": 0.85
+      },
+      {
+        "time": "13/02/2026 08:25:00",
+        "status": "CIP CYCLE COMPLETED",
+        "washTemp": 30.0,
+        "flowRate": 0.0,
+        "pressure": 0.0,
+        "conductivity": 0.85
+      }
+    ],
+    "alarmSummary": [
+      {
+        "alarmName": "DETERGENT DOSING FLOW LOW",
+        "occurredTime": "13/02/2026 06:28:10",
+        "resolvedTime": "13/02/2026 06:30:00",
+        "duration": "00:01:50"
+      }
+    ],
+    "auditTrail": [
+      {
+        "dateTime": "13/02/2026 06:00:00",
+        "description": "CIP CYCLE START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "91525 (PB3 CIPC0224 Supervisor)"
+      },
+      {
+        "dateTime": "13/02/2026 06:05:00",
+        "description": "PRE-RINSE START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 CIPC0224 Operator)"
+      },
+      {
+        "dateTime": "13/02/2026 06:25:00",
+        "description": "DETERGENT WASH START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 CIPC0224 Operator)"
+      },
+      {
+        "dateTime": "13/02/2026 07:30:00",
+        "description": "FINAL RINSE START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 CIPC0224 Operator)"
+      },
+      {
+        "dateTime": "13/02/2026 08:00:00",
+        "description": "FINAL RINSE PASS (0.85 \u00b5S/cm)",
+        "oldValue": null,
+        "newValue": "PASS",
+        "reason": "CONDUCTIVITY ACCEPTABLE",
+        "userName": "8961 (PB3 CIPC0224 Operator)"
+      },
+      {
+        "dateTime": "13/02/2026 08:30:00",
+        "description": "CIP CYCLE END",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "91525 (PB3 CIPC0224 Supervisor)"
+      }
+    ]
+  }
+}
