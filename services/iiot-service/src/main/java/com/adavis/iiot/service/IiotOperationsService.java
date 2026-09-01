@@ -666,6 +666,8 @@ public class IiotOperationsService {
     }
 
     public byte[] getBatchPdfBytes(String batchNo, String lotNo, String equipmentCode, String tenantId, String userId, String userRole) {
+        String effectiveTenantId = tenantId != null && !tenantId.isBlank() ? tenantId : DEFAULT_TENANT_ID;
+
         Query query = new Query(Criteria.where("batchNo").is(batchNo));
         if (lotNo != null && !lotNo.isBlank()) {
             query.addCriteria(Criteria.where("lotNo").is(lotNo));
@@ -674,38 +676,42 @@ public class IiotOperationsService {
         if (summary == null) {
             summary = mongoTemplate.findOne(new Query(Criteria.where("batchNo").regex("^" + batchNo + "$", "i")), Document.class, BATCH_SUMMARY_COLLECTION);
         }
-        if (summary == null) {
-            summary = new Document();
-            summary.put("batchNo", batchNo);
-            summary.put("lotNo", lotNo != null && !lotNo.isBlank() ? lotNo : "01 of 05");
-            summary.put("productCode", "STFS7000");
-            summary.put("productName", "Finasteride USP 5 mg");
-            summary.put("equipmentId", equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : "RMGC0219");
-            summary.put("lineId", "LINE-01");
-            summary.put("batchSize", 900.0);
-            summary.put("unit", "KG");
-            summary.put("batchStartAt", "2026-02-09T16:04:17Z");
-            summary.put("batchEndAt", "2026-02-09T19:05:40Z");
-            summary.put("overallStatus", "APPROVED");
-            summary.put("plantId", "PLNT-0001");
-            summary.put("tenantId", tenantId != null ? tenantId : DEFAULT_TENANT_ID);
-            mongoTemplate.save(summary, BATCH_SUMMARY_COLLECTION);
+
+        String effectiveLot = lotNo != null && !lotNo.isBlank() ? lotNo : (summary != null ? summary.getString("lotNo") : "01 of 05");
+        String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : (summary != null ? summary.getString("equipmentId") : "G5RMG");
+        if (effectiveEq == null || effectiveEq.isBlank() || effectiveEq.equals("-")) {
+            effectiveEq = "G5RMG";
+        }
+        String effectivePlantId = summary != null ? summary.getString("plantId") : "PLNT-0001";
+        if (effectivePlantId == null || effectivePlantId.isBlank()) {
+            effectivePlantId = "PLNT-0001";
         }
 
-        String effectiveLot = lotNo != null && !lotNo.isBlank() ? lotNo : summary.getString("lotNo");
-        String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : summary.getString("equipmentId");
-        if (effectiveEq == null || effectiveEq.isBlank()) effectiveEq = "G5RMG";
+        // 1. Check if a valid stored PDF already exists in DMS (Authoritative storage, no regeneration)
+        BatchPdfGeneratorService.PdfGenerationResult existing = batchPdfGeneratorService.findStoredBatchPdf(
+                batchNo, effectiveLot, effectiveEq, effectiveTenantId, effectivePlantId);
 
-        BatchPdfGeneratorService.PdfGenerationResult res = batchPdfGeneratorService.generateAndStoreBatchPdf(
-                batchNo, effectiveLot, effectiveEq, tenantId, summary.getString("plantId"));
-        byte[] pdfBytes = res.getPdfBytes();
+        byte[] pdfBytes;
+        if (existing != null && existing.getPdfBytes() != null && existing.getPdfBytes().length > 0) {
+            log.info("Serving stored GxP PDF documentId={} for batch={}, lot={}, equipment={}",
+                    existing.getDocumentId(), batchNo, effectiveLot, effectiveEq);
+            pdfBytes = existing.getPdfBytes();
+        } else {
+            // 2. Controlled Idempotent Generation / Backfill
+            log.info("No stored PDF found for batch={}, lot={}, equipment={}. Performing controlled GxP generation.",
+                    batchNo, effectiveLot, effectiveEq);
+            BatchPdfGeneratorService.PdfGenerationResult res = batchPdfGeneratorService.generateAndStoreBatchPdf(
+                    batchNo, effectiveLot, effectiveEq, effectiveTenantId, effectivePlantId, userId, userRole);
+            pdfBytes = res.getPdfBytes();
+        }
 
-        // Record Audit Trail for PDF Download
+        // 3. Record Audit Trail for PDF Download
         Document auditEvent = new Document();
-        auditEvent.put("tenantId", tenantId != null ? tenantId : DEFAULT_TENANT_ID);
+        auditEvent.put("tenantId", effectiveTenantId);
+        auditEvent.put("plantId", effectivePlantId);
         auditEvent.put("batchNo", batchNo);
-        auditEvent.put("lotNo", lotNo != null ? lotNo : summary.getString("lotNo"));
-        auditEvent.put("equipmentCode", equipmentCode != null ? equipmentCode : "ALL");
+        auditEvent.put("lotNo", effectiveLot);
+        auditEvent.put("equipmentCode", effectiveEq);
         auditEvent.put("action", "DOWNLOAD_BATCH_DOSSIER_PDF");
         auditEvent.put("userId", userId != null ? userId : "SYSTEM");
         auditEvent.put("userRole", userRole != null ? userRole : "USER");
@@ -774,6 +780,20 @@ public class IiotOperationsService {
             if ("APPROVED".equals(requestedStatus) || "REJECTED".equals(requestedStatus)) {
                 approval.put("approvedBy", approvedBy);
                 approval.put("approvedAt", now);
+                if ("APPROVED".equals(requestedStatus)) {
+                    try {
+                        BatchPdfGeneratorService.PdfGenerationResult pdfRes = batchPdfGeneratorService.generateAndStoreBatchPdf(
+                                batchNo, lotNo, equipmentCode, stringValue(summary.get("tenantId")), stringValue(summary.get("plantId")), approvedBy, "QA_APPROVER");
+                        approval.put("pdfDocumentId", pdfRes.getDocumentId());
+                        approval.put("pdfStoragePath", pdfRes.getStoragePath());
+                        approval.put("pdfSha256Checksum", pdfRes.getSha256Checksum());
+                        approval.put("pdfStatus", "READY");
+                        approval.put("pdfGeneratedAt", now);
+                    } catch (Exception ex) {
+                        log.warn("Failed to generate PDF on approval for batch={}, stage={}: {}", batchNo, equipmentCode, ex.getMessage());
+                        approval.put("pdfStatus", "FAILED");
+                    }
+                }
             } else {
                 approval.put("approvedBy", "");
                 approval.put("approvedAt", null);

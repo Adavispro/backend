@@ -265,7 +265,9 @@ public class IiotOperationsController {
 
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
         headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
-        String filename = String.format("Batch_Dossier_%s.pdf", batchNo);
+        String cleanBatch = batchNo != null ? batchNo.replaceAll("[^a-zA-Z0-9.-]", "_") : "Report";
+        String cleanLot = lotNo != null && !lotNo.isBlank() ? "_" + lotNo.replaceAll("[^a-zA-Z0-9.-]", "_") : "";
+        String filename = String.format("Batch_Dossier_%s%s.pdf", cleanBatch, cleanLot);
         headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename(filename).build());
         headers.setContentLength(pdfBytes.length);
 

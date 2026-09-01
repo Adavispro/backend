@@ -947,7 +947,7 @@ public class DynamicWorkflowEngine {
             approval.put("approvedAt", now);
             try {
                 BatchPdfGeneratorService.PdfGenerationResult pdfRes = batchPdfGeneratorService.generateAndStoreBatchPdf(
-                        batchNo, lotNo, equipmentCode, tenantId, plantId);
+                        batchNo, lotNo, equipmentCode, tenantId, plantId, userId, userRole);
                 approval.put("pdfDocumentId", pdfRes.getDocumentId());
                 approval.put("pdfStoragePath", pdfRes.getStoragePath());
                 approval.put("pdfSha256Checksum", pdfRes.getSha256Checksum());
@@ -957,9 +957,13 @@ public class DynamicWorkflowEngine {
                 summary.put("pdfDocumentId", pdfRes.getDocumentId());
                 summary.put("pdfStoragePath", pdfRes.getStoragePath());
                 summary.put("pdfSha256Checksum", pdfRes.getSha256Checksum());
+                summary.put("pdfStatus", "READY");
+                summary.put("pdfGeneratedAt", now);
             } catch (Exception ex) {
-                log.error("Failed to automatically generate PDF on approval for batch={}: {}", batchNo, ex.getMessage(), ex);
+                log.error("Failed to automatically generate PDF on approval for batch={}, lot={}, equipment={}, tenant={}, plant={}, user={}: {}",
+                        batchNo, lotNo, equipmentCode, tenantId, plantId, userId, ex.getMessage(), ex);
                 approval.put("pdfStatus", "FAILED");
+                summary.put("pdfStatus", "FAILED");
             }
         } else if ("DEFERRED".equalsIgnoreCase(targetStatus)) {
             approval.put("deferredBy", userId);

@@ -95,8 +95,9 @@ if is_mock_running; then
   echo "Mock data service is already running on port $MOCK_PORT."
 else
   echo "Starting mock data service on port $MOCK_PORT..."
-  nohup "$PYTHON_BIN" "$REPO_ROOT/data_service_layer/mock_data_service.py" > "$MOCK_LOG" 2>&1 &
+  setsid "$PYTHON_BIN" "$REPO_ROOT/data_service_layer/mock_data_service.py" </dev/null >> "$MOCK_LOG" 2>&1 &
   MOCK_PID=$!
+  disown "$MOCK_PID" 2>/dev/null || true
   echo "$MOCK_PID" > "$MOCK_PID_FILE"
 
   # Wait for mock service to respond
@@ -135,11 +136,12 @@ if [[ "$FOREGROUND" -eq 1 ]]; then
     --db-name "$DB_NAME" \
     --interval-seconds "$INTERVAL_SECONDS"
 else
-  nohup "$PYTHON_BIN" -m scheduler.run_scheduler_loop \
+  setsid "$PYTHON_BIN" -m scheduler.run_scheduler_loop \
     --mongo-uri "$MONGO_URI" \
     --db-name "$DB_NAME" \
-    --interval-seconds "$INTERVAL_SECONDS" > "$SCHEDULER_LOG" 2>&1 &
+    --interval-seconds "$INTERVAL_SECONDS" </dev/null >> "$SCHEDULER_LOG" 2>&1 &
   SCHEDULER_PID=$!
+  disown "$SCHEDULER_PID" 2>/dev/null || true
   echo "$SCHEDULER_PID" > "$SCHEDULER_PID_FILE"
 
   echo "============================================"

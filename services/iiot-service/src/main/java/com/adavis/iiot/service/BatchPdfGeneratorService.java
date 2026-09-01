@@ -39,10 +39,11 @@ public class BatchPdfGeneratorService {
     private static final String AUDIT_TRAIL_COLLECTION = "iiot_workflow_audit_trail";
     private static final String INSTANCE_COLLECTION = "iiot_workflow_instances";
     private static final String GENERATED_DOCUMENTS_COLLECTION = "iiot_generated_documents";
+    private static final String DMS_DOCUMENTS_COLLECTION = "dms_documents";
 
     private final MongoTemplate mongoTemplate;
 
-    @Value("${iiot.pdf.storage.root-path:./data/dms/local}")
+    @Value("${iiot.pdf.storage.root-path:${IIOT_PDF_STORAGE_ROOT_PATH:./data/dms/local}}")
     private String storageRootPath;
 
     public static class PdfGenerationResult {
@@ -108,8 +109,27 @@ public class BatchPdfGeneratorService {
         public void setPdfBytes(byte[] pdfBytes) { this.pdfBytes = pdfBytes; }
     }
 
+    public void validatePdfBytes(byte[] pdfBytes) {
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            throw new BusinessException("Generated PDF byte stream is empty or null.", "PDF_EMPTY_BYTES");
+        }
+        if (pdfBytes.length < 4
+                || pdfBytes[0] != 0x25 // %
+                || pdfBytes[1] != 0x50 // P
+                || pdfBytes[2] != 0x44 // D
+                || pdfBytes[3] != 0x46 // F
+        ) {
+            throw new BusinessException("Generated file header does not match valid %PDF format.", "PDF_CORRUPTED_HEADER");
+        }
+    }
+
     public PdfGenerationResult generateAndStoreBatchPdf(String batchNo, String lotNo, String equipmentCode, String tenantId, String plantId) {
-        log.info("Generating GxP PDF batch dossier for batch={}, lot={}, equipment={}", batchNo, lotNo, equipmentCode);
+        return generateAndStoreBatchPdf(batchNo, lotNo, equipmentCode, tenantId, plantId, "SYSTEM", "QA_APPROVER");
+    }
+
+    public PdfGenerationResult generateAndStoreBatchPdf(String batchNo, String lotNo, String equipmentCode, String tenantId, String plantId, String approvedBy, String approvedRole) {
+        log.info("Generating GxP PDF batch dossier for batch={}, lot={}, equipment={}, tenant={}, plant={}",
+                batchNo, lotNo, equipmentCode, tenantId, plantId);
 
         // 1. Fetch Batch Summary
         Query query = new Query(Criteria.where("batchNo").is(batchNo));
@@ -117,6 +137,9 @@ public class BatchPdfGeneratorService {
             query.addCriteria(Criteria.where("lotNo").is(lotNo));
         }
         Document summary = mongoTemplate.findOne(query, Document.class, BATCH_SUMMARY_COLLECTION);
+        if (summary == null) {
+            summary = mongoTemplate.findOne(new Query(Criteria.where("batchNo").regex("^" + batchNo + "$", "i")), Document.class, BATCH_SUMMARY_COLLECTION);
+        }
         if (summary == null) {
             throw new BusinessException("Batch summary not found for batch=" + batchNo + ", lot=" + lotNo);
         }
@@ -166,44 +189,128 @@ public class BatchPdfGeneratorService {
         // 6. Generate PDF bytes via OpenPDF
         byte[] pdfBytes = buildPdfDocument(summary, workflowInstance, historyList, auditList, cppSamples, alarms, plcEvents, resolvedEq);
 
-        // 7. Compute SHA-256
+        // 7. Validate PDF binary
+        validatePdfBytes(pdfBytes);
+
+        // 8. Compute SHA-256 Checksum & Identifiers
         String checksum = computeSha256(pdfBytes);
         String documentId = "DOC-BATCH-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
-        String fileName = String.format("Batch_Dossier_%s_%s_%s.pdf", safeFileString(batchNo), safeFileString(lotNo), safeFileString(resolvedEq));
+        String fileName = String.format("Batch_Dossier_%s_%s_%s.pdf", safeFileString(batchNo), safeFileString(resolvedLot), safeFileString(resolvedEq));
 
-        String effectiveTenantId = tenantId != null && !tenantId.isBlank() ? tenantId : "TNT-0001";
-        String effectivePlantId = plantId != null && !plantId.isBlank() ? plantId : "PLNT-0001";
+        String effectiveTenantId = tenantId != null && !tenantId.isBlank() ? tenantId : safeString(summary, "tenantId");
+        if (effectiveTenantId.equals("-") || effectiveTenantId.isBlank()) effectiveTenantId = "TNT-0001";
 
-        // 8. Save to local storage directory
+        String effectivePlantId = plantId != null && !plantId.isBlank() ? plantId : safeString(summary, "plantId");
+        if (effectivePlantId.equals("-") || effectivePlantId.isBlank()) effectivePlantId = "PLNT-0001";
+
         String relativePath = effectiveTenantId + "/" + effectivePlantId + "/" + documentId + "-" + fileName;
-        Path fullPath = Paths.get(storageRootPath).resolve(relativePath);
+        String base64Data = Base64.getEncoder().encodeToString(pdfBytes);
+        Date now = Date.from(Instant.now());
+        String effectiveApprovedBy = approvedBy != null && !approvedBy.isBlank() ? approvedBy : "SYSTEM";
+
+        // 9. Persist to authoritative DMS document repository (dms_documents)
+        Map<String, Object> repositoryDetails = new LinkedHashMap<>();
+        repositoryDetails.put("storageProvider", "DATABASE");
+        repositoryDetails.put("bucketName", "adavis-dms");
+        repositoryDetails.put("objectKey", relativePath);
+        repositoryDetails.put("base64Data", base64Data);
+        repositoryDetails.put("localPath", relativePath);
+
+        Document dmsDoc = new Document();
+        dmsDoc.put("documentId", documentId);
+        dmsDoc.put("documentVersion", "1.0");
+        dmsDoc.put("tenantId", effectiveTenantId);
+        dmsDoc.put("plantId", effectivePlantId);
+        dmsDoc.put("batchNo", batchNo);
+        dmsDoc.put("lotNo", resolvedLot);
+        dmsDoc.put("equipmentCode", resolvedEq);
+        dmsDoc.put("datasetId", resolvedEq);
+        dmsDoc.put("workflowInstanceId", workflowInstance != null ? safeString(workflowInstance, "instanceId") : null);
+        dmsDoc.put("workflowVersion", workflowInstance != null ? safeString(workflowInstance, "workflowVersion") : "1.0");
+        dmsDoc.put("approvedBy", effectiveApprovedBy);
+        dmsDoc.put("approvedAt", now);
+        dmsDoc.put("generatedAt", now);
+        dmsDoc.put("generationStatus", "READY");
+        dmsDoc.put("status", "ACTIVE");
+        dmsDoc.put("mimeType", "application/pdf");
+        dmsDoc.put("fileName", fileName);
+        dmsDoc.put("fileSizeBytes", (long) pdfBytes.length);
+        dmsDoc.put("sha256Checksum", checksum);
+        dmsDoc.put("base64Data", base64Data);
+        dmsDoc.put("repositoryDetails", repositoryDetails);
+        dmsDoc.put("uploadedBy", effectiveApprovedBy);
+        dmsDoc.put("createdAt", now);
+        dmsDoc.put("updatedAt", now);
+
         try {
-            Files.createDirectories(fullPath.getParent());
-            Files.write(fullPath, pdfBytes);
-        } catch (IOException ex) {
-            log.error("Failed to write PDF file to storage path: {}", fullPath, ex);
-            throw new BusinessException("Failed to persist generated batch PDF dossier: " + ex.getMessage());
+            mongoTemplate.save(dmsDoc, DMS_DOCUMENTS_COLLECTION);
+            log.info("Persisted GxP PDF dossier in DMS collection {} with documentId={}", DMS_DOCUMENTS_COLLECTION, documentId);
+        } catch (Exception ex) {
+            log.error("Failed to persist document record in DMS {}: {}", DMS_DOCUMENTS_COLLECTION, ex.getMessage(), ex);
+            throw new BusinessException("Failed to persist generated batch PDF dossier in DMS: " + ex.getMessage(), "DMS_PERSISTENCE_FAILED");
         }
 
-        // 9. Register Document metadata in Mongo
-        Document docRecord = new Document();
-        docRecord.put("documentId", documentId);
-        docRecord.put("tenantId", effectiveTenantId);
-        docRecord.put("plantId", effectivePlantId);
-        docRecord.put("batchNo", batchNo);
-        docRecord.put("lotNo", resolvedLot);
-        docRecord.put("equipmentCode", resolvedEq);
-        docRecord.put("fileName", fileName);
-        docRecord.put("mimeType", "application/pdf");
-        docRecord.put("fileSizeBytes", (long) pdfBytes.length);
-        docRecord.put("storagePath", relativePath);
-        docRecord.put("sha256Checksum", checksum);
-        docRecord.put("status", "ACTIVE");
-        docRecord.put("generatedAt", Date.from(Instant.now()));
-        docRecord.put("createdAt", Date.from(Instant.now()));
-        mongoTemplate.save(docRecord, GENERATED_DOCUMENTS_COLLECTION);
+        // Also persist to iiot_generated_documents for compatibility
+        try {
+            Document legacyDoc = new Document(dmsDoc);
+            legacyDoc.remove("_id");
+            legacyDoc.put("storagePath", relativePath);
+            mongoTemplate.save(legacyDoc, GENERATED_DOCUMENTS_COLLECTION);
+        } catch (Exception ex) {
+            log.warn("Failed to write to legacy collection {}: {}", GENERATED_DOCUMENTS_COLLECTION, ex.getMessage());
+        }
 
-        log.info("Successfully generated and stored PDF dossier documentId={} for batch={}", documentId, batchNo);
+        // 10. Local filesystem caching (graceful non-blocking fallback)
+        try {
+            if (storageRootPath != null && !storageRootPath.isBlank()) {
+                Path fullPath = Paths.get(storageRootPath).resolve(relativePath);
+                if (fullPath.getParent() != null) {
+                    Files.createDirectories(fullPath.getParent());
+                }
+                Files.write(fullPath, pdfBytes);
+                log.debug("Wrote PDF cache copy to local filesystem path: {}", fullPath);
+            }
+        } catch (Exception ex) {
+            log.warn("Local filesystem PDF caching skipped or failed (path: {}): {}. Authoritative DMS database persistence is intact.",
+                    relativePath, ex.getMessage());
+        }
+
+        // 11. Associate generated document with batch summary and stages
+        try {
+            summary.put("pdfDocumentId", documentId);
+            summary.put("pdfStoragePath", relativePath);
+            summary.put("pdfSha256Checksum", checksum);
+            summary.put("pdfStatus", "READY");
+            summary.put("pdfGeneratedAt", now);
+            summary.put("updatedAt", now);
+
+            if (summary.get("stages") instanceof List<?> stagesList) {
+                for (Object stgObj : stagesList) {
+                    if (stgObj instanceof Document stage) {
+                        String stgEq = safeString(stage, "equipmentCode");
+                        String stgId = safeString(stage, "equipmentId");
+                        if (resolvedEq.equalsIgnoreCase(stgEq) || resolvedEq.equalsIgnoreCase(stgId)) {
+                            Document approval = stage.get("approval", Document.class);
+                            if (approval == null) {
+                                approval = new Document();
+                                stage.put("approval", approval);
+                            }
+                            approval.put("pdfDocumentId", documentId);
+                            approval.put("pdfStoragePath", relativePath);
+                            approval.put("pdfSha256Checksum", checksum);
+                            approval.put("pdfStatus", "READY");
+                            approval.put("pdfGeneratedAt", now);
+                        }
+                    }
+                }
+            }
+            mongoTemplate.save(summary, BATCH_SUMMARY_COLLECTION);
+        } catch (Exception ex) {
+            log.warn("Failed to update batch summary document references: {}", ex.getMessage());
+        }
+
+        log.info("Successfully generated and stored PDF dossier documentId={} for batch={}, size={} bytes, sha256={}",
+                documentId, batchNo, pdfBytes.length, checksum);
 
         return PdfGenerationResult.builder()
                 .documentId(documentId)
@@ -211,12 +318,136 @@ public class BatchPdfGeneratorService {
                 .storagePath(relativePath)
                 .fileSizeBytes(pdfBytes.length)
                 .sha256Checksum(checksum)
-                .generatedAt(Instant.now())
+                .generatedAt(now.toInstant())
                 .pdfBytes(pdfBytes)
                 .build();
     }
 
+    public PdfGenerationResult findStoredBatchPdf(String batchNo, String lotNo, String equipmentCode, String tenantId, String plantId) {
+        if (batchNo == null || batchNo.isBlank()) return null;
+
+        // Try exact match query on dms_documents
+        Query query = new Query(Criteria.where("batchNo").is(batchNo).and("status").is("ACTIVE"));
+        if (lotNo != null && !lotNo.isBlank()) {
+            query.addCriteria(Criteria.where("lotNo").is(lotNo));
+        }
+        if (equipmentCode != null && !equipmentCode.isBlank() && !equipmentCode.equalsIgnoreCase("ALL")) {
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("equipmentCode").is(equipmentCode),
+                    Criteria.where("datasetId").is(equipmentCode)
+            ));
+        }
+        if (tenantId != null && !tenantId.isBlank()) {
+            query.addCriteria(Criteria.where("tenantId").is(tenantId));
+        }
+        query.with(Sort.by(Sort.Direction.DESC, "generatedAt", "createdAt"));
+
+        Document doc = mongoTemplate.findOne(query, Document.class, DMS_DOCUMENTS_COLLECTION);
+        if (doc == null) {
+            // Fallback: check iiot_generated_documents
+            doc = mongoTemplate.findOne(query, Document.class, GENERATED_DOCUMENTS_COLLECTION);
+        }
+
+        // If still null, check if batch summary has a specific pdfDocumentId
+        if (doc == null) {
+            Query summaryQuery = new Query(Criteria.where("batchNo").is(batchNo));
+            if (lotNo != null && !lotNo.isBlank()) {
+                summaryQuery.addCriteria(Criteria.where("lotNo").is(lotNo));
+            }
+            Document summary = mongoTemplate.findOne(summaryQuery, Document.class, BATCH_SUMMARY_COLLECTION);
+            if (summary != null) {
+                String docId = safeString(summary, "pdfDocumentId");
+                if (docId != null && !docId.equals("-") && !docId.isBlank()) {
+                    doc = mongoTemplate.findOne(new Query(Criteria.where("documentId").is(docId)), Document.class, DMS_DOCUMENTS_COLLECTION);
+                    if (doc == null) {
+                        doc = mongoTemplate.findOne(new Query(Criteria.where("documentId").is(docId)), Document.class, GENERATED_DOCUMENTS_COLLECTION);
+                    }
+                }
+            }
+        }
+
+        if (doc == null) {
+            return null;
+        }
+
+        byte[] pdfBytes = extractPdfBytesFromDoc(doc);
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            log.warn("Found document record {} in DMS but binary payload is unavailable or empty.", doc.getString("documentId"));
+            return null;
+        }
+
+        try {
+            validatePdfBytes(pdfBytes);
+        } catch (Exception ex) {
+            log.warn("Found stored document {} but bytes failed PDF validation: {}", doc.getString("documentId"), ex.getMessage());
+            return null;
+        }
+
+        String docId = doc.getString("documentId");
+        String fileName = doc.getString("fileName");
+        String storagePath = doc.getString("storagePath");
+        if (storagePath == null && doc.get("repositoryDetails") instanceof Map<?, ?> rep) {
+            storagePath = String.valueOf(rep.get("objectKey"));
+        }
+        String checksum = doc.getString("sha256Checksum");
+        Date genAt = doc.getDate("generatedAt");
+
+        return PdfGenerationResult.builder()
+                .documentId(docId)
+                .fileName(fileName)
+                .storagePath(storagePath)
+                .fileSizeBytes(pdfBytes.length)
+                .sha256Checksum(checksum)
+                .generatedAt(genAt != null ? genAt.toInstant() : Instant.now())
+                .pdfBytes(pdfBytes)
+                .build();
+    }
+
+    private byte[] extractPdfBytesFromDoc(Document doc) {
+        if (doc == null) return null;
+
+        // 1. Direct base64Data in doc or in repositoryDetails
+        String base64 = doc.getString("base64Data");
+        if (base64 == null && doc.get("repositoryDetails") instanceof Map<?, ?> rep) {
+            Object b64Obj = rep.get("base64Data");
+            if (b64Obj != null) base64 = b64Obj.toString();
+        }
+        if (base64 != null && !base64.isBlank()) {
+            try {
+                return Base64.getDecoder().decode(base64);
+            } catch (Exception ex) {
+                log.warn("Failed to decode base64 PDF from document {}", doc.getString("documentId"), ex);
+            }
+        }
+
+        // 2. Binary content if stored as BSON Binary
+        Object contentObj = doc.get("content");
+        if (contentObj instanceof org.bson.types.Binary bin) {
+            return bin.getData();
+        } else if (contentObj instanceof byte[] b) {
+            return b;
+        }
+
+        // 3. Fallback: try filesystem path if readable
+        String storagePath = doc.getString("storagePath");
+        if (storagePath == null && doc.get("repositoryDetails") instanceof Map<?, ?> rep) {
+            storagePath = String.valueOf(rep.get("objectKey"));
+        }
+        if (storagePath != null && !storagePath.isBlank() && !storagePath.equals("null")) {
+            try {
+                return loadStoredPdfBytes(storagePath);
+            } catch (Exception ex) {
+                log.debug("Filesystem read fallback failed for document {}: {}", doc.getString("documentId"), ex.getMessage());
+            }
+        }
+
+        return null;
+    }
+
     public byte[] loadStoredPdfBytes(String storagePath) {
+        if (storagePath == null || storagePath.isBlank()) {
+            throw new BusinessException("Storage path is empty.");
+        }
         Path fullPath = Paths.get(storageRootPath).resolve(storagePath);
         try {
             if (!Files.exists(fullPath) || !Files.isReadable(fullPath)) {
