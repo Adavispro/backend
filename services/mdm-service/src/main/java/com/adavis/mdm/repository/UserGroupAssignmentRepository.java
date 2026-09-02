@@ -20,6 +20,8 @@ public interface UserGroupAssignmentRepository extends MongoRepository<UserGroup
 
     List<UserGroupAssignment> findByGroupIdAndIsActiveTrue(String groupId);
 
+    List<UserGroupAssignment> findByGroupIdInAndIsActiveTrue(List<String> groupIds);
+
     List<UserGroupAssignment> findByUserIdAndIsActive(String userId, Boolean isActive);
 
     List<UserGroupAssignment> findByGroupIdAndIsActive(String groupId, Boolean isActive);

@@ -3,7 +3,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 import os
 
-KEYS_DIR = "keys"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+KEYS_DIR = os.path.join(BASE_DIR, "keys")
 os.makedirs(KEYS_DIR, exist_ok=True)
 
 # Generate private key

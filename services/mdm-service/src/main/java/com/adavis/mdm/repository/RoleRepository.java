@@ -14,6 +14,12 @@ public interface RoleRepository extends MongoRepository<Role, String> {
 
     List<Role> findByIsActiveTrue();
 
+    List<Role> findByTenantIdAndIsActiveTrue(String tenantId);
+
+    long countByIsActiveTrue();
+
+    long countByTenantIdAndIsActiveTrue(String tenantId);
+
     List<Role> findByParentRoleId(String parentRoleId);
 
     boolean existsByRoleId(String roleId);

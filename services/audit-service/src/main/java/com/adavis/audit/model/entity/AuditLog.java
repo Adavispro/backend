@@ -1,6 +1,5 @@
 package com.adavis.audit.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,9 +16,11 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-    @Document(collection = "mdm_audit_trails")
+@Document(collection = "mdm_audit_trails")
 @CompoundIndex(name = "entity_idx", def = "{'entity': 1, 'entityId': 1}")
 @CompoundIndex(name = "user_timestamp_idx", def = "{'userId': 1, 'timestamp': -1}")
+@CompoundIndex(name = "tenant_timestamp_idx", def = "{'tenantId': 1, 'timestamp': -1}")
+@CompoundIndex(name = "tenant_user_timestamp_idx", def = "{'tenantId': 1, 'userId': 1, 'timestamp': -1}")
 public class AuditLog {
 
     @Id
@@ -29,7 +30,6 @@ public class AuditLog {
     private String userId;
 
     @Indexed
-    @JsonIgnore
     private String username;
 
     @Indexed
@@ -41,7 +41,6 @@ public class AuditLog {
     private Map<String, Object> before;
     private Map<String, Object> after;
 
-    @JsonIgnore
     private Map<String, Object> metadata; // Additional context
 
     private String ipAddress;

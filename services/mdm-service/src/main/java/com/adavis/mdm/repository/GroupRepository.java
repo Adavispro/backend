@@ -14,6 +14,12 @@ public interface GroupRepository extends MongoRepository<Group, String> {
 
     List<Group> findByIsActiveTrue();
 
+    List<Group> findByTenantIdAndIsActiveTrue(String tenantId);
+
+    long countByIsActiveTrue();
+
+    long countByTenantIdAndIsActiveTrue(String tenantId);
+
     boolean existsByGroupId(String groupId);
 
     boolean existsByTenantIdAndGroupCode(String tenantId, String groupCode);

@@ -22,4 +22,10 @@ public class DashboardController {
             @RequestParam(required = false) String tenantId) {
         return ResponseEntity.ok(ApiResponse.success(dashboardService.getUserTiles(tenantId)));
     }
+
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<com.adavis.mdm.model.dto.DashboardSummaryResponse>> getDashboardSummary(
+            @RequestParam(required = false) String tenantId) {
+        return ResponseEntity.ok(ApiResponse.success(dashboardService.getDashboardSummary(tenantId)));
+    }
 }

@@ -16,6 +16,8 @@ public class DashboardUserTilesResponse {
     private long activeUsersCount;
     private long idleUsersCount;
     private long totalOnlineUsersCount;
+    private long configuredRolesCount;
+    private long configuredGroupsCount;
     private String idleThresholdMinutes;
     private String asOf;
 }

@@ -24,11 +24,23 @@ public class AuditLogController {
 
     @GetMapping("/trails")
     public ApiResponse<PageResponse<AuditLog>> getAuditTrails(
+            @RequestParam(required = false) String tenantId,
             @RequestParam(required = false) String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
-        Page<AuditLog> auditLogs = auditLogService.getAuditTrails(userId, pageable);
+        Page<AuditLog> auditLogs = auditLogService.getAuditTrails(tenantId, userId, pageable);
+        return ApiResponse.success(PageResponse.from(auditLogs));
+    }
+
+    @GetMapping({"/trails/tenant/{tenantId}", "/logs/tenant/{tenantId}"})
+    public ApiResponse<PageResponse<AuditLog>> getAuditTrailsByTenant(
+            @PathVariable String tenantId,
+            @RequestParam(required = false) String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
+        Page<AuditLog> auditLogs = auditLogService.getAuditTrailsByTenant(tenantId, userId, pageable);
         return ApiResponse.success(PageResponse.from(auditLogs));
     }
 
@@ -50,7 +62,8 @@ public class AuditLogController {
             @RequestParam String mode,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer quarter,
-            @RequestParam Integer year) {
-        return ApiResponse.success(auditLogService.getUserActivityTrend(mode, month, quarter, year));
+            @RequestParam Integer year,
+            @RequestParam(required = false) String tenantId) {
+        return ApiResponse.success(auditLogService.getUserActivityTrend(mode, month, quarter, year, tenantId));
     }
 }

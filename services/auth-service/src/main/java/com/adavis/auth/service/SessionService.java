@@ -123,18 +123,25 @@ public class SessionService {
             }
         }
 
-        long activeUsersCount = latestSessionByUser.values().stream()
-                .filter(session -> session.getLastActivity() != null && !session.getLastActivity().isBefore(idleCutoff))
-                .count();
+        List<String> activeUserIds = latestSessionByUser.entrySet().stream()
+                .filter(entry -> entry.getValue().getLastActivity() != null && !entry.getValue().getLastActivity().isBefore(idleCutoff))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
 
-        long idleUsersCount = latestSessionByUser.size() - activeUsersCount;
+        List<String> idleUserIds = latestSessionByUser.entrySet().stream()
+                .filter(entry -> entry.getValue().getLastActivity() == null || entry.getValue().getLastActivity().isBefore(idleCutoff))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("tenantId", tenantId);
         response.put("idleThresholdMinutes", idleThresholdMinutes);
-        response.put("activeUsersCount", activeUsersCount);
-        response.put("idleUsersCount", idleUsersCount);
-        response.put("totalOnlineUsersCount", latestSessionByUser.size());
+        response.put("activeUsersCount", (long) activeUserIds.size());
+        response.put("idleUsersCount", (long) idleUserIds.size());
+        response.put("totalOnlineUsersCount", (long) latestSessionByUser.size());
+        response.put("activeUserIds", activeUserIds);
+        response.put("idleUserIds", idleUserIds);
+        response.put("onlineUserIds", new java.util.ArrayList<>(latestSessionByUser.keySet()));
         response.put("asOf", Instant.now().toString());
         return response;
     }

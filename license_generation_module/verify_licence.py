@@ -2,13 +2,29 @@
 import jwt
 import os
 
-KEYS_DIR = "keys"
-LICENSE_FOLDER = "licenses"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+KEYS_DIR = os.path.join(BASE_DIR, "keys")
+LICENSE_FOLDER = os.path.join(BASE_DIR, "licenses")
 
-# Load public key
-public_key_path = os.path.join(KEYS_DIR, "public_key.pem")
-with open(public_key_path, "r") as f:
-    public_key = f.read()
+def load_public_key():
+    candidate_paths = [
+        os.path.join(BASE_DIR, "keys", "public_key.pem"),
+        os.path.join(BASE_DIR, "keys_txt", "public_key.txt"),
+        os.path.join(BASE_DIR, "keys", "public_key.txt"),
+        os.path.join(BASE_DIR, "keys_txt", "public_key.pem"),
+        os.path.join("keys", "public_key.pem"),
+        os.path.join("keys_txt", "public_key.txt"),
+    ]
+    for path in candidate_paths:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+    raise FileNotFoundError(
+        f"Public key file not found. Checked: {candidate_paths}. "
+        f"Please run 'python generate_keys.py' to generate keys or place public_key.pem in the keys/ directory."
+    )
+
+public_key = load_public_key()
 
 def verify_license(token):
     try:

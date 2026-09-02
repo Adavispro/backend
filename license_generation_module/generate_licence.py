@@ -3,19 +3,36 @@ import jwt
 import os
 from datetime import datetime, timedelta, timezone
 
-KEYS_DIR = "keys"
-LICENSE_FOLDER = "licenses"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+KEYS_DIR = os.path.join(BASE_DIR, "keys")
+LICENSE_FOLDER = os.path.join(BASE_DIR, "licenses")
 os.makedirs(LICENSE_FOLDER, exist_ok=True)
 
-private_key_path = os.path.join(KEYS_DIR, "private_key.pem")
-with open(private_key_path, "r") as f:
-    private_key = f.read()
+def load_private_key():
+    candidate_paths = [
+        os.path.join(BASE_DIR, "keys", "private_key.pem"),
+        os.path.join(BASE_DIR, "keys_txt", "private_key.txt"),
+        os.path.join(BASE_DIR, "keys", "private_key.txt"),
+        os.path.join(BASE_DIR, "keys_txt", "private_key.pem"),
+        os.path.join("keys", "private_key.pem"),
+        os.path.join("keys_txt", "private_key.txt"),
+    ]
+    for path in candidate_paths:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+    raise FileNotFoundError(
+        f"Private key file not found. Checked: {candidate_paths}. "
+        f"Please run 'python generate_keys.py' to generate keys or place private_key.pem in the keys/ directory."
+    )
+
+private_key = load_private_key()
 
 def generate_license():
     now = datetime.now(timezone.utc)
 
     payload = {
-        "tenantId": "TNT-0001",
+        "tenantId": "TNT-0002",
         'licenceKey': 'LIC-0001',
         "plan": {
             "planId": "PLAN_ENTERPRISE",
