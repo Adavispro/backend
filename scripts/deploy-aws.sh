@@ -60,6 +60,7 @@ for dockerfile in "${required_dockerfiles[@]}"; do
   fi
 done
 
+FORCE_BUILD="${FORCE_BUILD:-true}"
 missing_artifacts=0
 for artifact_pattern in "${required_artifact_patterns[@]}"; do
   if ! compgen -G "$artifact_pattern" >/dev/null; then
@@ -68,8 +69,8 @@ for artifact_pattern in "${required_artifact_patterns[@]}"; do
   fi
 done
 
-if [ "$missing_artifacts" -eq 1 ]; then
-  echo "Required service JARs are missing. Building Maven artifacts before docker compose..."
+if [ "$missing_artifacts" -eq 1 ] || [ "$FORCE_BUILD" = "true" ]; then
+  echo "Building fresh Maven artifacts before docker compose..."
 
   if ! command -v id >/dev/null 2>&1; then
     echo "Unable to resolve current user id. Install coreutils (id) and retry." >&2
