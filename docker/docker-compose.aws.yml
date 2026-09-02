@@ -156,6 +156,8 @@ services:
       IIOT_SOURCE_DB_URL: ${IIOT_SOURCE_DB_URL}
       IIOT_SOURCE_DB_USERNAME: ${IIOT_SOURCE_DB_USERNAME}
       IIOT_SOURCE_DB_PASSWORD: ${IIOT_SOURCE_DB_PASSWORD}
+    volumes:
+      - dms_data:/app/data
     networks:
       - adavis-network
 
@@ -268,4 +270,6 @@ volumes:
   redis_data:
     driver: local
   redpanda_data:
+    driver: local
+  dms_data:
     driver: local
