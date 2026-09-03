@@ -165,8 +165,10 @@ public class DashboardService {
                             .build();
                 })
                 .sorted((a, b) -> {
-                    int cmp = Long.compare(b.getTotal(), a.getTotal());
-                    return cmp != 0 ? cmp : a.getLabel().compareToIgnoreCase(b.getLabel());
+                    int activeCmp = Long.compare(b.getValue(), a.getValue());
+                    if (activeCmp != 0) return activeCmp;
+                    int totalCmp = Long.compare(b.getTotal(), a.getTotal());
+                    return totalCmp != 0 ? totalCmp : a.getLabel().compareToIgnoreCase(b.getLabel());
                 })
                 .collect(Collectors.toList());
 
