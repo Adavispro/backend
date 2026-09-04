@@ -29,6 +29,7 @@ public class UserActivityTrendResponse {
         private String weekStart;
         private String weekEnd;
         private long distinctUserCount;
+        private long loginCount;
         private List<UserSummary> users;
     }
 

@@ -200,7 +200,7 @@ public class AuditLogService {
                 continue;
             }
 
-            buckets.get(bucketIndex).addUser(loginEvent.getUserId(), loginEvent.getUsername());
+            buckets.get(bucketIndex).addLogin(loginEvent.getUserId(), loginEvent.getUsername());
         }
 
         return UserActivityTrendResponse.builder()
@@ -322,13 +322,15 @@ public class AuditLogService {
         private final LocalDate weekStart;
         private final LocalDate weekEnd;
         private final Map<String, UserActivityTrendResponse.UserSummary> users = new LinkedHashMap<>();
+        private long loginCount = 0;
 
         private WeeklyBucketAccumulator(LocalDate weekStart, LocalDate weekEnd) {
             this.weekStart = weekStart;
             this.weekEnd = weekEnd;
         }
 
-        private void addUser(String userId, String username) {
+        private void addLogin(String userId, String username) {
+            loginCount++;
             if (userId == null || userId.isBlank()) {
                 return;
             }
@@ -352,6 +354,7 @@ public class AuditLogService {
                     .weekStart(weekStart.toString())
                     .weekEnd(weekEnd.toString())
                     .distinctUserCount(users.size())
+                    .loginCount(loginCount)
                     .users(new ArrayList<>(users.values()))
                     .build();
         }

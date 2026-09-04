@@ -175,9 +175,74 @@ public class AuditLogServiceTest {
         assertEquals(2026, trend.getYear());
         assertEquals(3, trend.getQuarter());
         assertNotNull(trend.getWeeks());
-        assertTrue(trend.getWeeks().stream().anyMatch(w -> w.getDistinctUserCount() == 1));
+        assertTrue(trend.getWeeks().stream().anyMatch(w -> w.getDistinctUserCount() == 1 && w.getLoginCount() == 1));
 
         verify(auditLogRepository).findByActionAndStatusAndTenantIdAndTimestampRangeOrderByTimestampAsc(
                 eq("LOGIN"), eq("SUCCESS"), eq("TNT-0001"), any(Instant.class), any(Instant.class));
+    }
+
+    @Test
+    @DisplayName("getUserActivityTrend should accurately calculate loginCount and distinctUserCount for multiple logins")
+    void testGetUserActivityTrend_MultipleLoginsSameUser() {
+        AuditLog login1 = AuditLog.builder()
+                .id("1")
+                .userId("USR-1")
+                .username("john_doe")
+                .action("LOGIN")
+                .status("SUCCESS")
+                .tenantId("TNT-0001")
+                .timestamp(Instant.parse("2026-09-02T10:00:00Z"))
+                .build();
+
+        AuditLog login2 = AuditLog.builder()
+                .id("2")
+                .userId("USR-1")
+                .username("john_doe")
+                .action("LOGIN")
+                .status("SUCCESS")
+                .tenantId("TNT-0001")
+                .timestamp(Instant.parse("2026-09-02T15:00:00Z"))
+                .build();
+
+        AuditLog login3 = AuditLog.builder()
+                .id("3")
+                .userId("USR-2")
+                .username("jane_doe")
+                .action("LOGIN")
+                .status("SUCCESS")
+                .tenantId("TNT-0001")
+                .timestamp(Instant.parse("2026-09-03T09:00:00Z"))
+                .build();
+
+        when(auditLogRepository.findByActionAndStatusAndTenantIdAndTimestampRangeOrderByTimestampAsc(
+                eq("LOGIN"), eq("SUCCESS"), eq("TNT-0001"), any(Instant.class), any(Instant.class)))
+                .thenReturn(List.of(login1, login2, login3));
+
+        var trend = auditLogService.getUserActivityTrend("monthly", 9, null, 2026, "TNT-0001");
+
+        assertNotNull(trend);
+        assertEquals("monthly", trend.getMode());
+        assertEquals(9, trend.getMonth());
+        assertEquals(2026, trend.getYear());
+
+        // Find the week covering 2026-09-02 and 2026-09-03 (first week of Sept: 2026-09-01 to 2026-09-07)
+        var week = trend.getWeeks().stream()
+                .filter(w -> "2026-09-01".equals(w.getWeekStart()))
+                .findFirst()
+                .orElseThrow();
+
+        // 3 login events total, but 2 unique users (USR-1 and USR-2)
+        assertEquals(3, week.getLoginCount());
+        assertEquals(2, week.getDistinctUserCount());
+        assertEquals(2, week.getUsers().size());
+
+        // Other weeks with no logins should have 0 counts
+        trend.getWeeks().stream()
+                .filter(w -> !"2026-09-01".equals(w.getWeekStart()))
+                .forEach(emptyWeek -> {
+                    assertEquals(0, emptyWeek.getLoginCount());
+                    assertEquals(0, emptyWeek.getDistinctUserCount());
+                    assertTrue(emptyWeek.getUsers().isEmpty());
+                });
     }
 }
