@@ -100,9 +100,11 @@ public class UserController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(required = false) Boolean isBlocked,
-            @RequestParam(required = false) String lifecycleStatus) {
+            @RequestParam(required = false) String lifecycleStatus,
+            @RequestParam(required = false) String sessionPresence,
+            @RequestParam(required = false) String tenantId) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<UserProfile> userPage = userService.getAllUsers(pageable, isActive, isBlocked, lifecycleStatus);
+        Page<UserProfile> userPage = userService.getAllUsers(pageable, isActive, isBlocked, lifecycleStatus, sessionPresence, tenantId);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(userPage)));
     }
 

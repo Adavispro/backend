@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -410,7 +411,20 @@ public class UserService {
                                          Boolean isActive,
                                          Boolean isBlocked,
                                          String lifecycleStatus) {
+        return getAllUsers(pageable, isActive, isBlocked, lifecycleStatus, null, null);
+    }
+
+    public Page<UserProfile> getAllUsers(Pageable pageable,
+                                         Boolean isActive,
+                                         Boolean isBlocked,
+                                         String lifecycleStatus,
+                                         String sessionPresence,
+                                         String tenantId) {
         Query query = new Query();
+
+        if (StringUtils.hasText(tenantId)) {
+            query.addCriteria(Criteria.where("tenantId").is(tenantId.trim()));
+        }
 
         if (isActive != null) {
             query.addCriteria(Criteria.where("isActive").is(isActive));
@@ -424,6 +438,14 @@ public class UserService {
             query.addCriteria(Criteria.where("lifecycleStatus").is(lifecycleStatus.trim().toUpperCase(Locale.ROOT)));
         }
 
+        if (StringUtils.hasText(sessionPresence)) {
+            List<String> userIds = fetchPresenceUserIds(tenantId, sessionPresence.trim().toUpperCase(Locale.ROOT));
+            if (userIds.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0);
+            }
+            query.addCriteria(Criteria.where("userId").in(userIds));
+        }
+
         long total = mongoTemplate.count(query, UserProfile.class);
         query.with(pageable);
         if (pageable.getSort().isUnsorted()) {
@@ -432,6 +454,35 @@ public class UserService {
 
         List<UserProfile> users = mongoTemplate.find(query, UserProfile.class);
         return new PageImpl<>(users, pageable, total);
+    }
+
+    private List<String> fetchPresenceUserIds(String tenantId, String presenceType) {
+        String url = authServiceBaseUrl + "/internal/v1/auth/users/session-presence-summary";
+        if (StringUtils.hasText(tenantId)) {
+            url += "?tenantId=" + tenantId;
+        }
+
+        try {
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                return List.of();
+            }
+
+            Object data = response.getBody().get("data");
+            if (data instanceof Map<?, ?> payload) {
+                String key = "IDLE".equalsIgnoreCase(presenceType) ? "idleUserIds" : "activeUserIds";
+                Object idList = payload.get(key);
+                if (idList instanceof List<?> list) {
+                    return list.stream()
+                            .filter(String.class::isInstance)
+                            .map(String.class::cast)
+                            .collect(Collectors.toList());
+                }
+            }
+        } catch (RestClientException ex) {
+            log.warn("Failed to fetch session presence user IDs for tenantId {}: {}", tenantId, ex.getMessage());
+        }
+        return List.of();
     }
 
     @CacheEvict(value = "users", key = "#userId")
