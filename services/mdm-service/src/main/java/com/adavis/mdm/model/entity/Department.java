@@ -40,6 +40,20 @@ public class Department {
     private String parentDepartmentId;
     private Boolean isActive;
 
+    @org.springframework.data.annotation.Transient
+    private String remarks;
+
+    @org.springframework.data.annotation.Transient
+    private String reason;
+
+    @org.springframework.data.annotation.Transient
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+    private String esignPassword;
+
+    @org.springframework.data.annotation.Transient
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+    private String password;
+
     private Instant createdAt;
     private Instant updatedAt;
 }

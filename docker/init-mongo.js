@@ -294,12 +294,14 @@ var collectionOptions = {
         validator: {
             $jsonSchema: {
                 bsonType: 'object',
-                required: ['assignmentId', 'tenantId', 'userId', 'groupId', 'isActive'],
+                required: ['assignmentId', 'tenantId', 'isActive'],
                 properties: {
                     assignmentId: { bsonType: 'string' },
                     tenantId: { bsonType: 'string' },
-                    userId: { bsonType: 'string' },
-                    groupId: { bsonType: 'string' },
+                    userId: { bsonType: ['string', 'null'] },
+                    groupId: { bsonType: ['string', 'null'] },
+                    plantId: { bsonType: ['string', 'null'] },
+                    departmentId: { bsonType: ['string', 'null'] },
                     isActive: { bsonType: 'bool' }
                 }
             }

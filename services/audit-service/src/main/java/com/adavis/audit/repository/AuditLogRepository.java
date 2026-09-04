@@ -21,6 +21,12 @@ public interface AuditLogRepository extends MongoRepository<AuditLog, String> {
 
     Page<AuditLog> findByTenantIdAndUserIdOrderByTimestampDesc(String tenantId, String userId, Pageable pageable);
 
+    @Query("{ $or: [ { 'userId': ?0 }, { 'entityId': ?0 } ] }")
+    Page<AuditLog> findByUserIdOrEntityIdOrderByTimestampDesc(String userId, Pageable pageable);
+
+    @Query("{ 'tenantId': ?0, $or: [ { 'userId': ?1 }, { 'entityId': ?1 } ] }")
+    Page<AuditLog> findByTenantIdAndUserIdOrEntityIdOrderByTimestampDesc(String tenantId, String userId, Pageable pageable);
+
     Page<AuditLog> findByActionAndTimestampBetween(String action, Instant from, Instant to, Pageable pageable);
 
     @Query("{ 'action': ?0, 'status': ?1, 'timestamp': { $gte: ?2, $lt: ?3 } }")

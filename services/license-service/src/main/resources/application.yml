@@ -32,7 +32,8 @@ logging:
 license:
   jwt:
     issuer: ${LICENSE_JWT_ISSUER:ADAVIS}
-    public-key-path: ${LICENSE_PUBLIC_KEY_PATH:../../license_generation_module/keys/public_key.pem}
+    public-key-path: ${LICENSE_PUBLIC_KEY_PATH:backend/license_generation_module/keys/public_key.pem}
+    private-key-path: ${LICENSE_PRIVATE_KEY_PATH:backend/license_generation_module/keys/private_key.pem}
 
 audit:
   enabled: ${AUDIT_ENABLED:true}

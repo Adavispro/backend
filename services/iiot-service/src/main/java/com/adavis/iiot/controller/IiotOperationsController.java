@@ -41,8 +41,12 @@ public class IiotOperationsController {
     }
 
     @GetMapping("/equipment-master")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEquipmentMasters() {
-        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getEquipmentMasters()));
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEquipmentMasters(
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) String tenantId,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId) {
+        String effectiveTenantId = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getEquipmentMasters(isActive, effectiveTenantId)));
     }
 
     @GetMapping("/equipment-master/{equipmentId}")

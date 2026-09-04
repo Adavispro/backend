@@ -21,7 +21,8 @@ public class LicenseExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
         log.warn("Business exception: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        HttpStatus status = "FORBIDDEN".equalsIgnoreCase(ex.getErrorCode()) ? HttpStatus.FORBIDDEN : HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status)
                 .body(ApiResponse.error(ex.getMessage(), ex.getErrorCode()));
     }
 

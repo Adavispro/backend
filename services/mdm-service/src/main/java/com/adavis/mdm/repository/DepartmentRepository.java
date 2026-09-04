@@ -20,6 +20,18 @@ public interface DepartmentRepository extends MongoRepository<Department, String
 
     List<Department> findByParentDepartmentIdAndIsActiveTrue(String parentDepartmentId);
 
+    List<Department> findByTenantId(String tenantId);
+
+    List<Department> findByTenantIdAndIsActive(String tenantId, Boolean isActive);
+
+    List<Department> findByTenantIdAndPlantId(String tenantId, String plantId);
+
+    List<Department> findByTenantIdAndPlantIdAndIsActive(String tenantId, String plantId, Boolean isActive);
+
+    List<Department> findByTenantIdAndParentDepartmentId(String tenantId, String parentDepartmentId);
+
+    List<Department> findByTenantIdAndParentDepartmentIdAndIsActiveTrue(String tenantId, String parentDepartmentId);
+
     boolean existsByDepartmentId(String departmentId);
 
     boolean existsByTenantIdAndPlantIdAndDepartmentCode(String tenantId, String plantId, String departmentCode);

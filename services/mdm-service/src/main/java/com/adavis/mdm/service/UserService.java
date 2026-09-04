@@ -2,6 +2,7 @@ package com.adavis.mdm.service;
 
 import com.adavis.common.exception.BusinessException;
 import com.adavis.common.exception.ResourceNotFoundException;
+import com.adavis.common.exception.UnauthorizedException;
 import com.adavis.dto.license.request.ValidateLicenseRequest;
 import com.adavis.mdm.model.entity.DmsDocument;
 import com.adavis.mdm.model.entity.Group;
@@ -17,6 +18,7 @@ import com.adavis.mdm.repository.RoleRepository;
 import com.adavis.mdm.repository.RolePermissionRepository;
 import com.adavis.mdm.repository.UserGroupAssignmentRepository;
 import com.adavis.mdm.repository.UserProfileRepository;
+import com.adavis.mdm.security.SecurityContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -75,6 +77,8 @@ public class UserService {
     private final AuditEventPublisher auditEventPublisher;
     private final BusinessIdGeneratorService businessIdGeneratorService;
     private final MongoTemplate mongoTemplate;
+    private final SecurityContextService securityContextService;
+    private final TopologyEsignatureService topologyEsignatureService;
 
     @Value("${services.auth.base-url:http://auth-service:9081}")
     private String authServiceBaseUrl;
@@ -126,10 +130,35 @@ public class UserService {
                                   List<Map<String, Object>> supportingDocuments,
                                   String supportingDocumentType,
                                   String reason) {
+        return createUser(userProfile, initialPassword, currentUserId, itAdminUserId,
+                supportingDocumentIds, supportingDocuments, supportingDocumentType, reason, null, null);
+    }
+
+    @CacheEvict(value = "users", allEntries = true)
+    public UserProfile createUser(UserProfile userProfile,
+                                  String initialPassword,
+                                  String currentUserId,
+                                  String itAdminUserId,
+                                  List<String> supportingDocumentIds,
+                                  List<Map<String, Object>> supportingDocuments,
+                                  String supportingDocumentType,
+                                  String reason,
+                                  String remarks,
+                                  String esignPassword) {
+        String actor = StringUtils.hasText(itAdminUserId) ? itAdminUserId.trim() : (StringUtils.hasText(currentUserId) ? currentUserId.trim() : "SYSTEM");
+        if (!StringUtils.hasText(actor) || "SYSTEM".equalsIgnoreCase(actor)) {
+            throw new UnauthorizedException("Authenticated user context is required for user onboarding.", "AUTH_CONTEXT_REQUIRED");
+        }
+
         if (!StringUtils.hasText(userProfile.getTenantId())) {
             throw new BusinessException("tenantId is required for user onboarding", "TENANT_ID_REQUIRED");
         }
-        ensureItAdminCanCreateUser(currentUserId, userProfile.getTenantId());
+        ensureItAdminCanCreateUser(actor, userProfile.getTenantId());
+        securityContextService.verifyTenantAccess(actor, userProfile.getTenantId());
+
+        String effectiveRemarks = StringUtils.hasText(remarks) ? remarks : reason;
+        topologyEsignatureService.validateRemarks(effectiveRemarks);
+        topologyEsignatureService.verifyEsignature(actor, esignPassword, "CREATE_USER on " + userProfile.getUserId(), userProfile.getTenantId());
 
         if (!StringUtils.hasText(userProfile.getUserId())) {
             throw new BusinessException("User ID is required for onboarding", "USER_ID_REQUIRED");
@@ -178,11 +207,11 @@ public class UserService {
         normalizeUserFields(userProfile);
 
         validateSeatAvailability(userProfile.getTenantId(), userProfile.getIsActive(), userProfile.getIsBlocked());
-        provisionAuthUser(userProfile, initialPassword);
+        provisionAuthUser(userProfile, initialPassword, actor);
         userProfile.setCreatedAt(Instant.now());
         userProfile.setUpdatedAt(Instant.now());
 
-        log.info("Creating user: {}", userProfile.getUserId());
+        log.info("Creating user: {} by actor: {}", userProfile.getUserId(), actor);
         UserProfile saved = userProfileRepository.save(userProfile);
         syncLicenseUserCount(userProfile.getTenantId());
 
@@ -190,18 +219,49 @@ public class UserService {
                 saved,
                 "NEW_USER",
                 null,
-                itAdminUserId,
+                actor,
                 supportingDocumentIds,
-            supportingDocuments,
+                supportingDocuments,
                 supportingDocumentType,
-                firstNonBlank(reason, "User onboarding completed"));
+                firstNonBlank(effectiveRemarks, "User onboarding completed"));
 
-        auditEventPublisher.publish(saved.getUserId(), "USER_CREATED", "MDM_USER", saved.getUserId(), "SUCCESS",
-                Map.of(
-                "tenantId", saved.getTenantId() == null ? "" : saved.getTenantId(),
-                        "email", saved.getEmail() == null ? "" : saved.getEmail(),
-                        "userTrackId", saved.getUserTrackId() == null ? "" : saved.getUserTrackId()));
+        Map<String, Object> auditMetadata = new LinkedHashMap<>();
+        auditMetadata.put("tenantId", saved.getTenantId() == null ? "" : saved.getTenantId());
+        auditMetadata.put("email", saved.getEmail() == null ? "" : saved.getEmail());
+        auditMetadata.put("userTrackId", saved.getUserTrackId() == null ? "" : saved.getUserTrackId());
+        auditMetadata.put("remarks", effectiveRemarks.trim());
+        auditMetadata.put("esignatureVerified", true);
+        auditMetadata.put("complianceStandard", "21_CFR_PART_11");
+        auditMetadata.put("verifiedAt", Instant.now().toString());
+
+        auditEventPublisher.publish(actor, "USER_CREATED", "MDM_USER", saved.getUserId(), "SUCCESS",
+                null, userProfileSnapshot(saved), auditMetadata);
         return saved;
+    }
+
+    public Map<String, Object> userProfileSnapshot(UserProfile user) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        if (user == null) {
+            return snapshot;
+        }
+        snapshot.put("userId", user.getUserId());
+        snapshot.put("userTrackId", user.getUserTrackId());
+        snapshot.put("tenantId", user.getTenantId());
+        snapshot.put("username", user.getUsername());
+        snapshot.put("email", user.getEmail());
+        snapshot.put("firstName", user.getFirstName());
+        snapshot.put("lastName", user.getLastName());
+        snapshot.put("phoneNumber", user.getPhoneNumber());
+        snapshot.put("title", user.getTitle());
+        snapshot.put("userType", user.getUserType());
+        snapshot.put("empId", user.getEmpId());
+        snapshot.put("departmentId", user.getDepartmentId());
+        snapshot.put("designation", user.getDesignation());
+        snapshot.put("isExternal", user.getIsExternal());
+        snapshot.put("isActive", user.getIsActive());
+        snapshot.put("isBlocked", user.getIsBlocked());
+        snapshot.put("lifecycleStatus", user.getLifecycleStatus());
+        return snapshot;
     }
 
     @Cacheable(value = "users", key = "#userId")
@@ -259,7 +319,17 @@ public class UserService {
             rolePermissions.put(roleId, permissions);
         }
 
-        Query assignmentQuery = new Query(Criteria.where("userId").is(userId).and("isActive").is(true));
+        Criteria principalCriteria = groupIds.isEmpty()
+            ? Criteria.where("userId").is(userId)
+            : new Criteria().orOperator(
+                Criteria.where("userId").is(userId),
+                Criteria.where("groupId").in(groupIds)
+            );
+        Criteria assignmentCriteria = principalCriteria.and("isActive").is(true);
+        if (StringUtils.hasText(tenantId)) {
+            assignmentCriteria = assignmentCriteria.and("tenantId").is(tenantId);
+        }
+        Query assignmentQuery = new Query(assignmentCriteria);
         List<Document> assignments = mongoTemplate.find(assignmentQuery, Document.class, USER_ASSIGNMENTS_COLLECTION);
 
         List<String> assignedPlantIds = assignments.stream()
@@ -391,7 +461,23 @@ public class UserService {
         Map<String, Object> selectedPlant = assignedPlants.stream()
                 .filter(plant -> plantId.equals(stringValue(plant.get("plantId"))))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException("User is not assigned to selected plant", "PLANT_ACCESS_DENIED"));
+                .orElse(null);
+
+        if (selectedPlant == null && isPrivilegedTenantAdmin) {
+            String tenantId = stringValue(context.get("tenantId"));
+            Query query = new Query(Criteria.where("plantId").is(plantId).and("isActive").is(true));
+            if (StringUtils.hasText(tenantId)) {
+                query.addCriteria(Criteria.where("tenantId").is(tenantId));
+            }
+            Document plantDoc = mongoTemplate.findOne(query, Document.class, PLANTS_COLLECTION);
+            if (plantDoc != null) {
+                selectedPlant = toMap(plantDoc);
+            }
+        }
+
+        if (selectedPlant == null) {
+            throw new BusinessException("User is not assigned to selected plant", "PLANT_ACCESS_DENIED");
+        }
 
         context.put("selectedPlantId", plantId);
         context.put("selectedPlant", selectedPlant);
@@ -487,8 +573,36 @@ public class UserService {
 
     @CacheEvict(value = "users", key = "#userId")
     public UserProfile updateUser(String userId, UserProfile updatedProfile) {
+        return updateUser(userId, updatedProfile, "SYSTEM", "Update user profile", null);
+    }
+
+    @CacheEvict(value = "users", key = "#userId")
+    public UserProfile updateUser(String userId, UserProfile updatedProfile, String actorUserId, String remarks, String esignPassword) {
+        String actor = StringUtils.hasText(actorUserId) ? actorUserId.trim() : "SYSTEM";
+        if (!StringUtils.hasText(actor) || "SYSTEM".equalsIgnoreCase(actor)) {
+            throw new UnauthorizedException("Authenticated user context is required for user update.", "AUTH_CONTEXT_REQUIRED");
+        }
+
         UserProfile existing = getUserByUserId(userId);
         String previousTenantId = existing.getTenantId();
+
+        securityContextService.verifyTenantAccess(actor, previousTenantId);
+        if (StringUtils.hasText(updatedProfile.getTenantId())) {
+            securityContextService.verifyTenantAccess(actor, updatedProfile.getTenantId());
+        }
+
+        if (securityContextService.isSuperAdmin(existing.getUserId()) && !securityContextService.isSuperAdmin(actor)) {
+            throw new BusinessException("Cannot modify super admin user", "FORBIDDEN");
+        }
+        if (!securityContextService.isSuperAdmin(actor) && updatedProfile.getTenantId() != null
+                && !updatedProfile.getTenantId().equalsIgnoreCase(previousTenantId)) {
+            throw new BusinessException("Cannot change user tenant", "FORBIDDEN");
+        }
+
+        topologyEsignatureService.validateRemarks(remarks);
+        topologyEsignatureService.verifyEsignature(actor, esignPassword, "UPDATE_USER on " + userId, previousTenantId);
+
+        Map<String, Object> before = userProfileSnapshot(existing);
         boolean wasSeatConsumer = Boolean.TRUE.equals(existing.getIsActive()) && !Boolean.TRUE.equals(existing.getIsBlocked());
 
         if (StringUtils.hasText(updatedProfile.getEmail())) {
@@ -501,57 +615,120 @@ public class UserService {
             existing.setEmail(updatedEmail);
         }
 
-        existing.setTenantId(updatedProfile.getTenantId());
-        existing.setFirstName(updatedProfile.getFirstName());
-        existing.setLastName(updatedProfile.getLastName());
-        existing.setPhoneNumber(updatedProfile.getPhoneNumber());
-        existing.setTitle(updatedProfile.getTitle());
-        existing.setUserType(updatedProfile.getUserType());
-        existing.setLifecycleStatus(updatedProfile.getLifecycleStatus());
-        existing.setEmpId(updatedProfile.getEmpId());
-        existing.setDepartmentId(updatedProfile.getDepartmentId());
-        existing.setDesignation(updatedProfile.getDesignation());
-        existing.setIsExternal(updatedProfile.getIsExternal());
+        if (StringUtils.hasText(updatedProfile.getTenantId())) {
+            existing.setTenantId(updatedProfile.getTenantId());
+        }
+        if (updatedProfile.getFirstName() != null) {
+            existing.setFirstName(updatedProfile.getFirstName());
+        }
+        if (updatedProfile.getLastName() != null) {
+            existing.setLastName(updatedProfile.getLastName());
+        }
+        if (updatedProfile.getPhoneNumber() != null) {
+            existing.setPhoneNumber(updatedProfile.getPhoneNumber());
+        }
+        if (updatedProfile.getTitle() != null) {
+            existing.setTitle(updatedProfile.getTitle());
+        }
+        if (updatedProfile.getUserType() != null) {
+            existing.setUserType(updatedProfile.getUserType());
+        }
+        if (updatedProfile.getEmpId() != null) {
+            existing.setEmpId(updatedProfile.getEmpId());
+        }
+        if (updatedProfile.getDepartmentId() != null) {
+            existing.setDepartmentId(updatedProfile.getDepartmentId());
+        }
+        if (updatedProfile.getDesignation() != null) {
+            existing.setDesignation(updatedProfile.getDesignation());
+        }
+        if (updatedProfile.getIsExternal() != null) {
+            existing.setIsExternal(updatedProfile.getIsExternal());
+        }
+        if (existing.getIsExternal() == null) {
+            existing.setIsExternal(false);
+        }
         if (updatedProfile.getIsBlocked() != null) {
             existing.setIsBlocked(updatedProfile.getIsBlocked());
         }
         if (updatedProfile.getIsActive() != null) {
             existing.setIsActive(updatedProfile.getIsActive());
         }
-        existing.setLifecycleStatus(updatedProfile.getLifecycleStatus());
+        if (updatedProfile.getLifecycleStatus() != null) {
+            existing.setLifecycleStatus(updatedProfile.getLifecycleStatus());
+        }
         normalizeUserFields(existing);
         existing.setUpdatedAt(Instant.now());
 
-        log.info("Updating user: {}", userId);
+        log.info("Updating user: {} by actor: {}", userId, actor);
         UserProfile saved = userProfileRepository.save(existing);
         boolean isSeatConsumer = Boolean.TRUE.equals(saved.getIsActive()) && !Boolean.TRUE.equals(saved.getIsBlocked());
         if (!Objects.equals(previousTenantId, saved.getTenantId()) || wasSeatConsumer != isSeatConsumer) {
             syncLicenseUserCount(previousTenantId);
             syncLicenseUserCount(saved.getTenantId());
         }
-        auditEventPublisher.publish(saved.getUserId(), "USER_UPDATED", "MDM_USER", saved.getUserId(), "SUCCESS",
-            Map.of(
-                "tenantId", saved.getTenantId() == null ? "" : saved.getTenantId(),
-                "designation", saved.getDesignation() == null ? "" : saved.getDesignation()));
+
+        Map<String, Object> after = userProfileSnapshot(saved);
+        Map<String, Object> auditMetadata = new LinkedHashMap<>();
+        auditMetadata.put("tenantId", saved.getTenantId() == null ? "" : saved.getTenantId());
+        auditMetadata.put("designation", saved.getDesignation() == null ? "" : saved.getDesignation());
+        auditMetadata.put("remarks", remarks.trim());
+        auditMetadata.put("esignatureVerified", true);
+        auditMetadata.put("complianceStandard", "21_CFR_PART_11");
+        auditMetadata.put("verifiedAt", Instant.now().toString());
+
+        auditEventPublisher.publish(actor, "USER_UPDATED", "MDM_USER", saved.getUserId(), "SUCCESS",
+            before, after, auditMetadata);
         return saved;
     }
 
     @CacheEvict(value = "users", key = "#userId")
     public void deleteUser(String userId) {
+        deleteUser(userId, "SYSTEM", "Deleted user", null);
+    }
+
+    @CacheEvict(value = "users", key = "#userId")
+    public void deleteUser(String userId, String actorUserId, String remarks, String esignPassword) {
+        String actor = StringUtils.hasText(actorUserId) ? actorUserId.trim() : "SYSTEM";
+        if (!StringUtils.hasText(actor) || "SYSTEM".equalsIgnoreCase(actor)) {
+            throw new UnauthorizedException("Authenticated user context is required for user deletion.", "AUTH_CONTEXT_REQUIRED");
+        }
+
         UserProfile user = getUserByUserId(userId);
         String tenantId = user.getTenantId();
+
+        securityContextService.verifyTenantAccess(actor, tenantId);
+        if (securityContextService.isSuperAdmin(user.getUserId())) {
+            throw new BusinessException("Cannot delete super admin user", "FORBIDDEN");
+        }
+        if (userId.equalsIgnoreCase(actor)) {
+            throw new BusinessException("Cannot delete your own user account", "FORBIDDEN");
+        }
+
+        topologyEsignatureService.validateRemarks(remarks);
+        topologyEsignatureService.verifyEsignature(actor, esignPassword, "DELETE_USER on " + userId, tenantId);
+
         Map<String, Object> before = userLifecycleSnapshot(user);
         user.setIsActive(false);
         user.setIsBlocked(true);
         user.setLifecycleStatus("DELETED");
         user.setUpdatedAt(Instant.now());
         UserProfile saved = userProfileRepository.save(user);
+        syncAuthUserStatus(saved, actor);
         syncLicenseUserCount(tenantId);
-        auditEventPublisher.publish(saved.getUserId(), "USER_DELETED", "MDM_USER", saved.getUserId(), "SUCCESS",
+
+        Map<String, Object> auditMetadata = new LinkedHashMap<>();
+        auditMetadata.put("tenantId", saved.getTenantId() == null ? "" : saved.getTenantId());
+        auditMetadata.put("remarks", remarks.trim());
+        auditMetadata.put("esignatureVerified", true);
+        auditMetadata.put("complianceStandard", "21_CFR_PART_11");
+        auditMetadata.put("verifiedAt", Instant.now().toString());
+
+        auditEventPublisher.publish(actor, "USER_DELETED", "MDM_USER", saved.getUserId(), "SUCCESS",
             before,
             userLifecycleSnapshot(saved),
-            Map.of("tenantId", saved.getTenantId() == null ? "" : saved.getTenantId()));
-        log.info("Soft deleted user: {}", userId);
+            auditMetadata);
+        log.info("Soft deleted user: {} by actor: {}", userId, actor);
     }
 
     @CacheEvict(value = "users", key = "#userId")
@@ -567,12 +744,48 @@ public class UserService {
                                        List<Map<String, Object>> supportingDocuments,
                                        String supportingDocumentType,
                                        String reason) {
+        return updateLifecycle(userId, action, itAdminUserId, supportingDocumentIds,
+                supportingDocuments, supportingDocumentType, reason, null, null);
+    }
+
+    @CacheEvict(value = "users", key = "#userId")
+    public UserProfile updateLifecycle(String userId,
+                                       String action,
+                                       String itAdminUserId,
+                                       List<String> supportingDocumentIds,
+                                       List<Map<String, Object>> supportingDocuments,
+                                       String supportingDocumentType,
+                                       String reason,
+                                       String remarks,
+                                       String esignPassword) {
+        String actor = StringUtils.hasText(itAdminUserId) ? itAdminUserId.trim() : "SYSTEM";
+        if (!StringUtils.hasText(actor) || "SYSTEM".equalsIgnoreCase(actor)) {
+            throw new UnauthorizedException("Authenticated user context is required for user lifecycle action.", "AUTH_CONTEXT_REQUIRED");
+        }
+
         if (!StringUtils.hasText(action)) {
             throw new BusinessException("Lifecycle action is required", "LIFECYCLE_ACTION_REQUIRED");
         }
 
         String normalizedAction = action.trim().toLowerCase(Locale.ROOT);
         UserProfile user = getUserByUserId(userId);
+
+        securityContextService.verifyTenantAccess(actor, user.getTenantId());
+
+        if (securityContextService.isSuperAdmin(user.getUserId()) && ("deactivate".equalsIgnoreCase(normalizedAction) || "block".equalsIgnoreCase(normalizedAction))) {
+            throw new BusinessException("Cannot deactivate or block super admin user", "FORBIDDEN");
+        }
+        if (userId.equalsIgnoreCase(actor) && ("deactivate".equalsIgnoreCase(normalizedAction) || "block".equalsIgnoreCase(normalizedAction))) {
+            throw new BusinessException("Cannot deactivate or block your own user account", "FORBIDDEN");
+        }
+        if (securityContextService.isSuperAdmin(user.getUserId()) && !securityContextService.isSuperAdmin(actor)) {
+            throw new BusinessException("Cannot modify super admin lifecycle", "FORBIDDEN");
+        }
+
+        String effectiveRemarks = StringUtils.hasText(remarks) ? remarks : reason;
+        topologyEsignatureService.validateRemarks(effectiveRemarks);
+        topologyEsignatureService.verifyEsignature(actor, esignPassword, normalizedAction.toUpperCase(Locale.ROOT) + "_USER on " + userId, user.getTenantId());
+
         Map<String, Object> before = userLifecycleSnapshot(user);
 
         switch (normalizedAction) {
@@ -600,26 +813,41 @@ public class UserService {
 
         user.setUpdatedAt(Instant.now());
         UserProfile saved = userProfileRepository.save(user);
-        syncAuthUserStatus(saved);
+        syncAuthUserStatus(saved, actor);
         syncLicenseUserCount(saved.getTenantId());
 
         recordLifecycleRequest(
                 saved,
                 "LIFECYCLE_CHANGE",
                 normalizedAction.toUpperCase(Locale.ROOT),
-                itAdminUserId,
+                actor,
                 supportingDocumentIds,
-            supportingDocuments,
+                supportingDocuments,
                 supportingDocumentType,
-                firstNonBlank(reason, "Lifecycle action " + normalizedAction));
+                firstNonBlank(effectiveRemarks, "Lifecycle action " + normalizedAction));
 
-        auditEventPublisher.publish(saved.getUserId(), "USER_LIFECYCLE_UPDATED", "MDM_USER", saved.getUserId(),
+        Map<String, Object> auditMetadata = new LinkedHashMap<>();
+        auditMetadata.put("tenantId", saved.getTenantId() == null ? "" : saved.getTenantId());
+        auditMetadata.put("action", normalizedAction);
+        auditMetadata.put("remarks", effectiveRemarks.trim());
+        auditMetadata.put("esignatureVerified", true);
+        auditMetadata.put("complianceStandard", "21_CFR_PART_11");
+        auditMetadata.put("verifiedAt", Instant.now().toString());
+
+        String auditAction = switch (normalizedAction) {
+            case "activate" -> "USER_ACTIVATED";
+            case "reactivate" -> "USER_REACTIVATED";
+            case "deactivate" -> "USER_DEACTIVATED";
+            case "block" -> "USER_BLOCKED";
+            case "unblock" -> "USER_UNBLOCKED";
+            default -> "USER_LIFECYCLE_UPDATED";
+        };
+
+        auditEventPublisher.publish(actor, auditAction, "MDM_USER", saved.getUserId(),
             "SUCCESS",
             before,
             userLifecycleSnapshot(saved),
-            Map.of(
-                "tenantId", saved.getTenantId() == null ? "" : saved.getTenantId(),
-                "action", normalizedAction));
+            auditMetadata);
         return saved;
     }
 
@@ -698,14 +926,21 @@ public class UserService {
         }
     }
 
-    private void syncAuthUserStatus(UserProfile user) {
+    private void syncAuthUserStatus(UserProfile user, String actor) {
         if (user == null || !StringUtils.hasText(user.getUserId())) {
+            return;
+        }
+
+        if (!StringUtils.hasText(authServiceBaseUrl)) {
             return;
         }
 
         String url = authServiceBaseUrl + "/internal/v1/auth/users/status";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        if (StringUtils.hasText(actor)) {
+            headers.set("X-User-Id", actor);
+        }
 
         String lifecycleStatus = StringUtils.hasText(user.getLifecycleStatus())
             ? user.getLifecycleStatus().trim().toUpperCase(Locale.ROOT)
@@ -718,7 +953,7 @@ public class UserService {
 
         try {
             restTemplate.postForEntity(url, new HttpEntity<>(payload, headers), Map.class);
-        } catch (RestClientException ex) {
+        } catch (Exception ex) {
             log.warn("Failed to sync auth status for user {}: {}", user.getUserId(), ex.getMessage());
         }
     }
@@ -752,11 +987,17 @@ public class UserService {
         }
     }
 
-    private void provisionAuthUser(UserProfile userProfile, String initialPassword) {
+    private void provisionAuthUser(UserProfile userProfile, String initialPassword, String actor) {
+        if (!StringUtils.hasText(authServiceBaseUrl)) {
+            return;
+        }
         String url = authServiceBaseUrl + "/internal/v1/auth/users/provision";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        if (StringUtils.hasText(actor)) {
+            headers.set("X-User-Id", actor);
+        }
 
         Map<String, String> payload = new HashMap<>();
         payload.put("userId", userProfile.getUserId());
@@ -779,6 +1020,9 @@ public class UserService {
     private void validateSeatAvailability(String tenantId, Boolean isActive, Boolean isBlocked) {
         if (!StringUtils.hasText(tenantId)) {
             throw new BusinessException("tenantId is required for license validation", "TENANT_ID_REQUIRED");
+        }
+        if (!StringUtils.hasText(licenseServiceBaseUrl)) {
+            return;
         }
 
         String url = licenseServiceBaseUrl + "/internal/v1/mdm/license/tenant/" + tenantId + "/validate";
@@ -812,7 +1056,7 @@ public class UserService {
     }
 
     private void syncLicenseUserCount(String tenantId) {
-        if (!StringUtils.hasText(tenantId)) {
+        if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(licenseServiceBaseUrl)) {
             return;
         }
 
@@ -1174,7 +1418,10 @@ public class UserService {
         if (user == null) {
             return null;
         }
-        if (isUserLocked(user)) {
+        if ("DELETED".equalsIgnoreCase(user.getLifecycleStatus())) {
+            return "DELETED";
+        }
+        if (Boolean.TRUE.equals(user.getIsBlocked())) {
             return "BLOCKED";
         }
         if (Boolean.TRUE.equals(user.getIsActive())) {

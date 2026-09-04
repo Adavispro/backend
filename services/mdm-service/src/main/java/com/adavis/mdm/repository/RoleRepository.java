@@ -28,5 +28,9 @@ public interface RoleRepository extends MongoRepository<Role, String> {
 
     boolean existsByTenantIdAndRoleCodeAndRoleIdNot(String tenantId, String roleCode, String roleId);
 
+    List<Role> findByTenantId(String tenantId);
+
+    List<Role> findByTenantIdAndIsActive(String tenantId, Boolean isActive);
+
     List<Role> findByIsActive(Boolean isActive);
 }

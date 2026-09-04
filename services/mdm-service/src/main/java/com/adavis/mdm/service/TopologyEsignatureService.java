@@ -27,11 +27,11 @@ public class TopologyEsignatureService {
 
     public void validateRemarks(String remarks) {
         if (!StringUtils.hasText(remarks)) {
-            throw new BusinessException("Remarks are required for controlled topology action.", "REMARKS_REQUIRED");
+            throw new BusinessException("Remarks are required for controlled action.", "REMARKS_REQUIRED");
         }
         String trimmed = remarks.trim();
         if (trimmed.isEmpty()) {
-            throw new BusinessException("Remarks are required for controlled topology action.", "REMARKS_REQUIRED");
+            throw new BusinessException("Remarks are required for controlled action.", "REMARKS_REQUIRED");
         }
         if (trimmed.length() > MAX_REMARKS_LENGTH) {
             throw new BusinessException("Remarks cannot exceed " + MAX_REMARKS_LENGTH + " characters.", "REMARKS_TOO_LONG");

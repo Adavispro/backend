@@ -4,19 +4,13 @@ import com.adavis.common.dto.ApiResponse;
 import com.adavis.mdm.model.entity.GroupRoleAssignment;
 import com.adavis.mdm.model.entity.UserGroupAssignment;
 import com.adavis.mdm.security.InternalRequestValidator;
+import com.adavis.mdm.security.SecurityContextService;
 import com.adavis.mdm.service.GroupMappingService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -27,20 +21,26 @@ import java.util.Map;
 public class GroupMappingController {
 
     private static final String INTERNAL_AUTH_HEADER = "X-Internal-Auth";
+    private static final String USER_ID_HEADER = "X-User-Id";
 
     private final GroupMappingService groupMappingService;
     private final InternalRequestValidator internalRequestValidator;
+    private final SecurityContextService securityContextService;
 
     @PostMapping("/{groupId}/roles")
     public ResponseEntity<ApiResponse<GroupRoleAssignment>> mapRoleToGroup(
             @PathVariable String groupId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestBody Map<String, Object> request) {
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
         GroupRoleAssignment mapping = groupMappingService.mapRoleToGroup(
                 groupId,
                 toText(request.get("roleId")),
-                toText(request.get("assignedBy")));
+                toText(request.get("assignedBy")),
+                actor);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Role mapped to group successfully", mapping));
     }
@@ -48,8 +48,11 @@ public class GroupMappingController {
     @GetMapping("/{groupId}/roles")
     public ResponseEntity<ApiResponse<List<GroupRoleAssignment>>> getGroupRoleMappings(
             @PathVariable String groupId,
-            @RequestParam(required = false) Boolean isActive) {
-        return ResponseEntity.ok(ApiResponse.success(groupMappingService.getGroupRoleMappings(groupId, isActive)));
+            @RequestParam(required = false) Boolean isActive,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+            HttpServletRequest httpRequest) {
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        return ResponseEntity.ok(ApiResponse.success(groupMappingService.getGroupRoleMappings(groupId, isActive, actor)));
     }
 
     @DeleteMapping("/{groupId}/roles/{roleId}")
@@ -57,9 +60,12 @@ public class GroupMappingController {
             @PathVariable String groupId,
             @PathVariable String roleId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestParam(required = false) String removedBy) {
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+            @RequestParam(required = false) String removedBy,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
-        groupMappingService.unmapRoleFromGroup(groupId, roleId, removedBy);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        groupMappingService.unmapRoleFromGroup(groupId, roleId, removedBy, actor);
         return ResponseEntity.ok(ApiResponse.successMessage("Role unmapped from group successfully"));
     }
 
@@ -67,12 +73,16 @@ public class GroupMappingController {
     public ResponseEntity<ApiResponse<UserGroupAssignment>> mapUserToGroup(
             @PathVariable String groupId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestBody Map<String, Object> request) {
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
         UserGroupAssignment mapping = groupMappingService.mapUserToGroup(
                 groupId,
                 toText(request.get("userId")),
-                toText(request.get("assignedBy")));
+                toText(request.get("assignedBy")),
+                actor);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("User mapped to group successfully", mapping));
     }
@@ -80,8 +90,11 @@ public class GroupMappingController {
     @GetMapping("/{groupId}/users")
     public ResponseEntity<ApiResponse<List<UserGroupAssignment>>> getGroupUserMappings(
             @PathVariable String groupId,
-            @RequestParam(required = false) Boolean isActive) {
-        return ResponseEntity.ok(ApiResponse.success(groupMappingService.getGroupUserMappings(groupId, isActive)));
+            @RequestParam(required = false) Boolean isActive,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+            HttpServletRequest httpRequest) {
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        return ResponseEntity.ok(ApiResponse.success(groupMappingService.getGroupUserMappings(groupId, isActive, actor)));
     }
 
     @DeleteMapping("/{groupId}/users/{userId}")
@@ -89,14 +102,16 @@ public class GroupMappingController {
             @PathVariable String groupId,
             @PathVariable String userId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestParam(required = false) String removedBy) {
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+            @RequestParam(required = false) String removedBy,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
-        groupMappingService.unmapUserFromGroup(groupId, userId, removedBy);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        groupMappingService.unmapUserFromGroup(groupId, userId, removedBy, actor);
         return ResponseEntity.ok(ApiResponse.successMessage("User unmapped from group successfully"));
     }
 
     private String toText(Object value) {
         return value == null ? null : String.valueOf(value);
     }
-
 }

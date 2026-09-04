@@ -12,10 +12,12 @@ import com.adavis.mdm.repository.GroupRoleAssignmentRepository;
 import com.adavis.mdm.repository.RoleRepository;
 import com.adavis.mdm.repository.UserGroupAssignmentRepository;
 import com.adavis.mdm.repository.UserProfileRepository;
+import com.adavis.mdm.security.SecurityContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -33,10 +35,28 @@ public class GroupMappingService {
     private final GroupRoleAssignmentRepository groupRoleAssignmentRepository;
     private final UserGroupAssignmentRepository userGroupAssignmentRepository;
     private final AuditEventPublisher auditEventPublisher;
+    private final SecurityContextService securityContextService;
 
     public GroupRoleAssignment mapRoleToGroup(String groupId, String roleId, String assignedBy) {
+        return mapRoleToGroup(groupId, roleId, assignedBy, null);
+    }
+
+    public GroupRoleAssignment mapRoleToGroup(String groupId, String roleId, String assignedBy, String actorUserId) {
+        String effectiveActor = StringUtils.hasText(actorUserId) ? actorUserId.trim() : (StringUtils.hasText(assignedBy) ? assignedBy.trim() : "SYSTEM");
+
         Group group = getActiveGroup(groupId);
         Role role = getActiveRole(roleId);
+
+        if (StringUtils.hasText(group.getTenantId()) && StringUtils.hasText(role.getTenantId())
+                && !group.getTenantId().equalsIgnoreCase(role.getTenantId())) {
+            throw new BusinessException("Group and role belong to different tenants", "TENANT_MISMATCH");
+        }
+
+        securityContextService.verifyTenantAccess(effectiveActor, group.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(effectiveActor) && securityContextService.isAdminRoleCode(role.getRoleCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot assign administrative role to group", "FORBIDDEN");
+        }
 
         GroupRoleAssignment assignment = groupRoleAssignmentRepository.findByGroupIdAndRoleId(groupId, roleId)
                 .orElseGet(() -> GroupRoleAssignment.builder().groupId(groupId).roleId(roleId).build());
@@ -47,11 +67,11 @@ public class GroupMappingService {
 
         assignment.setIsActive(true);
         assignment.setAssignedAt(Instant.now());
-        assignment.setAssignedBy((assignedBy == null || assignedBy.isBlank()) ? "SYSTEM" : assignedBy.trim());
+        assignment.setAssignedBy(effectiveActor);
 
         GroupRoleAssignment saved = groupRoleAssignmentRepository.save(assignment);
         auditEventPublisher.publish(
-                saved.getAssignedBy(),
+                effectiveActor,
                 "GROUP_ROLE_MAPPED",
                 "MDM_GROUP_ROLE_ASSIGNMENT",
                 groupId,
@@ -64,6 +84,20 @@ public class GroupMappingService {
     }
 
     public void unmapRoleFromGroup(String groupId, String roleId, String removedBy) {
+        unmapRoleFromGroup(groupId, roleId, removedBy, null);
+    }
+
+    public void unmapRoleFromGroup(String groupId, String roleId, String removedBy, String actorUserId) {
+        String effectiveActor = StringUtils.hasText(actorUserId) ? actorUserId.trim() : (StringUtils.hasText(removedBy) ? removedBy.trim() : "SYSTEM");
+
+        Group group = getGroup(groupId);
+        securityContextService.verifyTenantAccess(effectiveActor, group.getTenantId());
+
+        Role role = roleRepository.findByRoleId(roleId).orElse(null);
+        if (role != null && !securityContextService.isSuperAdmin(effectiveActor) && securityContextService.isAdminRoleCode(role.getRoleCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot unmap administrative role", "FORBIDDEN");
+        }
+
         GroupRoleAssignment assignment = groupRoleAssignmentRepository.findByGroupIdAndRoleId(groupId, roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Group-role mapping not found"));
 
@@ -72,12 +106,12 @@ public class GroupMappingService {
         }
 
         assignment.setIsActive(false);
-        assignment.setAssignedBy((removedBy == null || removedBy.isBlank()) ? "SYSTEM" : removedBy.trim());
+        assignment.setAssignedBy(effectiveActor);
         assignment.setAssignedAt(Instant.now());
         groupRoleAssignmentRepository.save(assignment);
 
         auditEventPublisher.publish(
-                assignment.getAssignedBy(),
+                effectiveActor,
                 "GROUP_ROLE_UNMAPPED",
                 "MDM_GROUP_ROLE_ASSIGNMENT",
                 groupId,
@@ -86,7 +120,12 @@ public class GroupMappingService {
     }
 
     public List<GroupRoleAssignment> getGroupRoleMappings(String groupId, Boolean isActive) {
-        getGroup(groupId);
+        return getGroupRoleMappings(groupId, isActive, null);
+    }
+
+    public List<GroupRoleAssignment> getGroupRoleMappings(String groupId, Boolean isActive, String actorUserId) {
+        Group group = getGroup(groupId);
+        securityContextService.verifyTenantAccess(actorUserId, group.getTenantId());
         if (isActive == null) {
             return groupRoleAssignmentRepository.findByGroupIdAndIsActiveTrue(groupId);
         }
@@ -94,8 +133,25 @@ public class GroupMappingService {
     }
 
     public UserGroupAssignment mapUserToGroup(String groupId, String userId, String assignedBy) {
+        return mapUserToGroup(groupId, userId, assignedBy, null);
+    }
+
+    public UserGroupAssignment mapUserToGroup(String groupId, String userId, String assignedBy, String actorUserId) {
+        String effectiveActor = StringUtils.hasText(actorUserId) ? actorUserId.trim() : (StringUtils.hasText(assignedBy) ? assignedBy.trim() : "SYSTEM");
+
         Group group = getActiveGroup(groupId);
         UserProfile user = getActiveUser(userId);
+
+        if (StringUtils.hasText(group.getTenantId()) && StringUtils.hasText(user.getTenantId())
+                && !group.getTenantId().equalsIgnoreCase(user.getTenantId())) {
+            throw new BusinessException("Group and user belong to different tenants", "TENANT_MISMATCH");
+        }
+
+        securityContextService.verifyTenantAccess(effectiveActor, group.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(effectiveActor) && securityContextService.isAdminRoleCode(group.getGroupCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot assign user to administrative group", "FORBIDDEN");
+        }
 
         UserGroupAssignment assignment = userGroupAssignmentRepository.findByUserIdAndGroupId(userId, groupId)
                 .orElseGet(() -> UserGroupAssignment.builder().userId(userId).groupId(groupId).build());
@@ -105,11 +161,11 @@ public class GroupMappingService {
         }
         assignment.setIsActive(true);
         assignment.setAssignedAt(Instant.now());
-        assignment.setAssignedBy((assignedBy == null || assignedBy.isBlank()) ? "SYSTEM" : assignedBy.trim());
+        assignment.setAssignedBy(effectiveActor);
 
         UserGroupAssignment saved = userGroupAssignmentRepository.save(assignment);
         auditEventPublisher.publish(
-                saved.getAssignedBy(),
+                effectiveActor,
                 "USER_GROUP_MAPPED",
                 "MDM_USER_GROUP_ASSIGNMENT",
                 userId,
@@ -122,6 +178,19 @@ public class GroupMappingService {
     }
 
     public void unmapUserFromGroup(String groupId, String userId, String removedBy) {
+        unmapUserFromGroup(groupId, userId, removedBy, null);
+    }
+
+    public void unmapUserFromGroup(String groupId, String userId, String removedBy, String actorUserId) {
+        String effectiveActor = StringUtils.hasText(actorUserId) ? actorUserId.trim() : (StringUtils.hasText(removedBy) ? removedBy.trim() : "SYSTEM");
+
+        Group group = getGroup(groupId);
+        securityContextService.verifyTenantAccess(effectiveActor, group.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(effectiveActor) && securityContextService.isAdminRoleCode(group.getGroupCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot unmap user from administrative group", "FORBIDDEN");
+        }
+
         UserGroupAssignment assignment = userGroupAssignmentRepository.findByUserIdAndGroupId(userId, groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("User-group mapping not found"));
 
@@ -130,12 +199,12 @@ public class GroupMappingService {
         }
 
         assignment.setIsActive(false);
-        assignment.setAssignedBy((removedBy == null || removedBy.isBlank()) ? "SYSTEM" : removedBy.trim());
+        assignment.setAssignedBy(effectiveActor);
         assignment.setAssignedAt(Instant.now());
         userGroupAssignmentRepository.save(assignment);
 
         auditEventPublisher.publish(
-                assignment.getAssignedBy(),
+                effectiveActor,
                 "USER_GROUP_UNMAPPED",
                 "MDM_USER_GROUP_ASSIGNMENT",
                 userId,
@@ -144,7 +213,12 @@ public class GroupMappingService {
     }
 
     public List<UserGroupAssignment> getGroupUserMappings(String groupId, Boolean isActive) {
-        getGroup(groupId);
+        return getGroupUserMappings(groupId, isActive, null);
+    }
+
+    public List<UserGroupAssignment> getGroupUserMappings(String groupId, Boolean isActive, String actorUserId) {
+        Group group = getGroup(groupId);
+        securityContextService.verifyTenantAccess(actorUserId, group.getTenantId());
         if (isActive == null) {
             return userGroupAssignmentRepository.findByGroupIdAndIsActiveTrue(groupId);
         }

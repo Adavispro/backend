@@ -1,8 +1,10 @@
 package com.adavis.mdm.service;
 
 import com.adavis.common.exception.BusinessException;
+import com.adavis.mdm.model.entity.Role;
 import com.adavis.mdm.model.entity.RolePermission;
 import com.adavis.mdm.repository.RolePermissionRepository;
+import com.adavis.mdm.security.SecurityContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,9 +23,19 @@ public class RolePermissionService {
     private final RoleService roleService;
     private final RolePermissionRepository rolePermissionRepository;
     private final AuditEventPublisher auditEventPublisher;
+    private final SecurityContextService securityContextService;
 
     public RolePermission saveRolePermissions(String roleId, RolePermission rolePermission) {
-        roleService.getRoleByRoleId(roleId);
+        return saveRolePermissions(roleId, rolePermission, null);
+    }
+
+    public RolePermission saveRolePermissions(String roleId, RolePermission rolePermission, String actorUserId) {
+        Role role = roleService.getRoleByRoleId(roleId, actorUserId);
+        securityContextService.verifyTenantAccess(actorUserId, role.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(actorUserId) && securityContextService.isAdminRoleCode(role.getRoleCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot modify permissions of administrative role", "FORBIDDEN");
+        }
 
         rolePermission.setRoleId(roleId);
         if (rolePermission.getIsActive() == null) {
@@ -42,7 +54,7 @@ public class RolePermissionService {
 
         RolePermission saved = rolePermissionRepository.save(rolePermission);
         auditEventPublisher.publish(
-                "SYSTEM",
+                actorUserId != null ? actorUserId : "SYSTEM",
                 "ROLE_PERMISSION_SAVED",
                 "MDM_ROLE_PERMISSION",
                 roleId,
@@ -52,7 +64,11 @@ public class RolePermissionService {
     }
 
     public List<RolePermission> getRolePermissions(String roleId, Boolean isActive) {
-        roleService.getRoleByRoleId(roleId);
+        return getRolePermissions(roleId, isActive, null);
+    }
+
+    public List<RolePermission> getRolePermissions(String roleId, Boolean isActive, String actorUserId) {
+        roleService.getRoleByRoleId(roleId, actorUserId);
         if (isActive == null) {
             return rolePermissionRepository.findByRoleIdAndIsActiveTrue(roleId);
         }
@@ -60,12 +76,23 @@ public class RolePermissionService {
     }
 
     public void deactivateRolePermissionsByModule(String roleId, String moduleId) {
+        deactivateRolePermissionsByModule(roleId, moduleId, null);
+    }
+
+    public void deactivateRolePermissionsByModule(String roleId, String moduleId, String actorUserId) {
+        Role role = roleService.getRoleByRoleId(roleId, actorUserId);
+        securityContextService.verifyTenantAccess(actorUserId, role.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(actorUserId) && securityContextService.isAdminRoleCode(role.getRoleCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot deactivate permissions of administrative role", "FORBIDDEN");
+        }
+
         RolePermission permission = rolePermissionRepository.findByRoleIdAndModuleId(roleId, moduleId)
                 .orElseThrow(() -> new BusinessException("Role permission not found for module: " + moduleId, "RESOURCE_NOT_FOUND"));
         permission.setIsActive(false);
         rolePermissionRepository.save(permission);
         auditEventPublisher.publish(
-                "SYSTEM",
+                actorUserId != null ? actorUserId : "SYSTEM",
                 "ROLE_PERMISSION_DEACTIVATED",
                 "MDM_ROLE_PERMISSION",
                 roleId,

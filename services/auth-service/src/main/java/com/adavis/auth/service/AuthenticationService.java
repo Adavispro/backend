@@ -270,6 +270,10 @@ public class AuthenticationService {
     }
 
     public void provisionUserWithInitialPassword(String userId, String username, String email, String initialPassword) {
+        provisionUserWithInitialPassword(userId, username, email, initialPassword, null);
+    }
+
+    public void provisionUserWithInitialPassword(String userId, String username, String email, String initialPassword, String actorUserId) {
         if (initialPassword == null || initialPassword.isBlank()) {
             throw new BusinessException("Initial password is required", "INITIAL_PASSWORD_REQUIRED");
         }
@@ -284,11 +288,16 @@ public class AuthenticationService {
         credential.setUpdatedAt(Instant.now());
         credentialRepository.save(credential);
 
-        auditEventPublisher.publish(userId, username, "USER_PROVISION", "AUTH_USER", userId,
+        String actor = (actorUserId != null && !actorUserId.isBlank()) ? actorUserId : userId;
+        auditEventPublisher.publish(actor, username, "USER_PROVISION", "AUTH_USER", userId,
                 "SUCCESS", null, Map.of("mode", "INITIAL_PASSWORD"));
     }
 
     public void updateUserStatus(String userId, String status, Boolean isLocked) {
+        updateUserStatus(userId, status, isLocked, null);
+    }
+
+    public void updateUserStatus(String userId, String status, Boolean isLocked, String actorUserId) {
         if (userId == null || userId.isBlank()) {
             throw new BusinessException("User ID is required", "USER_ID_REQUIRED");
         }
@@ -320,7 +329,8 @@ public class AuthenticationService {
         user.setUpdatedAt(Instant.now());
         userRepository.save(user);
 
-        auditEventPublisher.publish(userId, user.getUsername(), "USER_STATUS_UPDATED", "AUTH_USER", userId,
+        String actor = (actorUserId != null && !actorUserId.isBlank()) ? actorUserId : userId;
+        auditEventPublisher.publish(actor, user.getUsername(), "USER_STATUS_UPDATED", "AUTH_USER", userId,
                 "SUCCESS", null, Map.of(
                         "status", normalizedStatus,
                         "isLocked", String.valueOf(Boolean.TRUE.equals(user.getIsLocked()))));

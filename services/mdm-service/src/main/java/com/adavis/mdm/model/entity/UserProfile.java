@@ -57,6 +57,17 @@ public class UserProfile {
     @Transient
     private List<Map<String, Object>> supportingDocuments;
 
+    @Transient
+    private String remarks;
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+    private String esignPassword;
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+    private String password;
+
     private Instant createdAt;
     private Instant updatedAt;
 }

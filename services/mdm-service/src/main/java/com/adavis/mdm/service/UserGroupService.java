@@ -6,6 +6,7 @@ import com.adavis.mdm.model.entity.Group;
 import com.adavis.mdm.model.entity.UserGroupAssignment;
 import com.adavis.mdm.repository.GroupRepository;
 import com.adavis.mdm.repository.UserGroupAssignmentRepository;
+import com.adavis.mdm.security.SecurityContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,14 +29,25 @@ public class UserGroupService {
     private final UserGroupAssignmentRepository userGroupAssignmentRepository;
     private final BusinessIdGeneratorService businessIdGeneratorService;
     private final AuditEventPublisher auditEventPublisher;
+    private final SecurityContextService securityContextService;
 
     @CacheEvict(value = "groups", allEntries = true)
     public Group createGroup(Group group) {
+        return createGroup(group, null);
+    }
+
+    @CacheEvict(value = "groups", allEntries = true)
+    public Group createGroup(Group group, String actorUserId) {
         if (!StringUtils.hasText(group.getTenantId())) {
             throw new BusinessException("tenantId is required", "TENANT_ID_REQUIRED");
         }
         if (!StringUtils.hasText(group.getGroupCode())) {
             throw new BusinessException("groupCode is required", "GROUP_CODE_REQUIRED");
+        }
+
+        securityContextService.verifyTenantAccess(actorUserId, group.getTenantId());
+        if (!securityContextService.isSuperAdmin(actorUserId) && securityContextService.isAdminRoleCode(group.getGroupCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot create administrative group", "FORBIDDEN");
         }
 
         group.setGroupId(businessIdGeneratorService.nextId("mdm_user_groups", "groupId", "GRP-", 4));
@@ -56,7 +68,7 @@ public class UserGroupService {
         log.info("Creating group: {}", group.getGroupId());
         Group saved = groupRepository.save(group);
         auditEventPublisher.publish(
-                "SYSTEM",
+                actorUserId != null ? actorUserId : "SYSTEM",
                 "GROUP_CREATED",
                 "MDM_GROUP",
                 saved.getGroupId(),
@@ -67,15 +79,32 @@ public class UserGroupService {
 
     @Cacheable(value = "groups", key = "#groupId")
     public Group getGroupByGroupId(String groupId) {
-        return groupRepository.findByGroupId(groupId)
+        return getGroupByGroupId(groupId, null);
+    }
+
+    public Group getGroupByGroupId(String groupId, String actorUserId) {
+        Group group = groupRepository.findByGroupId(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
+        securityContextService.verifyTenantAccess(actorUserId, group.getTenantId());
+        return group;
     }
 
     public List<Group> getAllGroups() {
-        return getAllGroups(null);
+        return getAllGroups(null, null, null);
     }
 
     public List<Group> getAllGroups(Boolean isActive) {
+        return getAllGroups(null, isActive, null);
+    }
+
+    public List<Group> getAllGroups(String tenantId, Boolean isActive, String actorUserId) {
+        String effectiveTenantId = securityContextService.resolveEffectiveTenantId(actorUserId, tenantId);
+        if (StringUtils.hasText(effectiveTenantId)) {
+            if (isActive == null) {
+                return groupRepository.findByTenantIdAndIsActiveTrue(effectiveTenantId);
+            }
+            return groupRepository.findByTenantIdAndIsActive(effectiveTenantId, isActive);
+        }
         if (isActive == null) {
             return groupRepository.findByIsActiveTrue();
         }
@@ -84,7 +113,23 @@ public class UserGroupService {
 
     @CacheEvict(value = "groups", key = "#groupId")
     public Group updateGroup(String groupId, Group updatedGroup) {
-        Group existing = getGroupByGroupId(groupId);
+        return updateGroup(groupId, updatedGroup, null);
+    }
+
+    @CacheEvict(value = "groups", key = "#groupId")
+    public Group updateGroup(String groupId, Group updatedGroup, String actorUserId) {
+        Group existing = getGroupByGroupId(groupId, actorUserId);
+        securityContextService.verifyTenantAccess(actorUserId, existing.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(actorUserId)) {
+            if (securityContextService.isAdminRoleCode(existing.getGroupCode())
+                    || (StringUtils.hasText(updatedGroup.getGroupCode()) && securityContextService.isAdminRoleCode(updatedGroup.getGroupCode()))) {
+                throw new BusinessException("Privilege escalation detected: cannot modify administrative group", "FORBIDDEN");
+            }
+            if (StringUtils.hasText(updatedGroup.getTenantId()) && !existing.getTenantId().equalsIgnoreCase(updatedGroup.getTenantId())) {
+                throw new BusinessException("Cannot transfer group to another tenant", "FORBIDDEN");
+            }
+        }
 
         String tenantId = StringUtils.hasText(updatedGroup.getTenantId()) ? updatedGroup.getTenantId() : existing.getTenantId();
         String groupCode = StringUtils.hasText(updatedGroup.getGroupCode()) ? updatedGroup.getGroupCode() : existing.getGroupCode();
@@ -102,8 +147,8 @@ public class UserGroupService {
             throw new BusinessException("groupCode already exists: " + groupCode, "DUPLICATE_RESOURCE");
         }
 
-        existing.setTenantId(updatedGroup.getTenantId());
-        existing.setGroupCode(updatedGroup.getGroupCode());
+        existing.setTenantId(tenantId);
+        existing.setGroupCode(groupCode);
         existing.setGroupName(StringUtils.hasText(updatedGroup.getGroupName()) ? updatedGroup.getGroupName() : updatedGroup.getName());
         existing.setName(updatedGroup.getName());
         if (!StringUtils.hasText(existing.getName())) {
@@ -118,7 +163,7 @@ public class UserGroupService {
         log.info("Updating group: {}", groupId);
         Group saved = groupRepository.save(existing);
         auditEventPublisher.publish(
-                "SYSTEM",
+                actorUserId != null ? actorUserId : "SYSTEM",
                 "GROUP_UPDATED",
                 "MDM_GROUP",
                 saved.getGroupId(),
@@ -129,8 +174,18 @@ public class UserGroupService {
 
     @CacheEvict(value = "groups", key = "#groupId")
     public void deleteGroup(String groupId) {
-        Group group = getGroupByGroupId(groupId);
-        
+        deleteGroup(groupId, null);
+    }
+
+    @CacheEvict(value = "groups", key = "#groupId")
+    public void deleteGroup(String groupId, String actorUserId) {
+        Group group = getGroupByGroupId(groupId, actorUserId);
+        securityContextService.verifyTenantAccess(actorUserId, group.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(actorUserId) && securityContextService.isAdminRoleCode(group.getGroupCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot delete administrative group", "FORBIDDEN");
+        }
+
         List<UserGroupAssignment> members = userGroupAssignmentRepository.findByGroupIdAndIsActiveTrue(groupId);
         if (!members.isEmpty()) {
             throw new BusinessException("Cannot delete group with active members", "GROUP_HAS_MEMBERS");
@@ -139,17 +194,28 @@ public class UserGroupService {
         group.setIsActive(false);
         group.setUpdatedAt(Instant.now());
         groupRepository.save(group);
-        auditEventPublisher.publish("SYSTEM", "GROUP_DELETED", "MDM_GROUP", group.getGroupId(), "SUCCESS", Map.of());
+        auditEventPublisher.publish(actorUserId != null ? actorUserId : "SYSTEM", "GROUP_DELETED", "MDM_GROUP", group.getGroupId(), "SUCCESS", Map.of());
         log.info("Deleted group: {}", groupId);
     }
 
     @CacheEvict(value = "groups", key = "#groupId")
     public Group reactivateGroup(String groupId) {
-        Group group = getGroupByGroupId(groupId);
+        return reactivateGroup(groupId, null);
+    }
+
+    @CacheEvict(value = "groups", key = "#groupId")
+    public Group reactivateGroup(String groupId, String actorUserId) {
+        Group group = getGroupByGroupId(groupId, actorUserId);
+        securityContextService.verifyTenantAccess(actorUserId, group.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(actorUserId) && securityContextService.isAdminRoleCode(group.getGroupCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot reactivate administrative group", "FORBIDDEN");
+        }
+
         group.setIsActive(true);
         group.setUpdatedAt(Instant.now());
         Group saved = groupRepository.save(group);
-        auditEventPublisher.publish("SYSTEM", "GROUP_REACTIVATED", "MDM_GROUP", saved.getGroupId(), "SUCCESS", Map.of());
+        auditEventPublisher.publish(actorUserId != null ? actorUserId : "SYSTEM", "GROUP_REACTIVATED", "MDM_GROUP", saved.getGroupId(), "SUCCESS", Map.of());
         return saved;
     }
 

@@ -4,6 +4,7 @@ import com.adavis.common.exception.BusinessException;
 import com.adavis.common.exception.ResourceNotFoundException;
 import com.adavis.mdm.model.entity.Role;
 import com.adavis.mdm.repository.RoleRepository;
+import com.adavis.mdm.security.SecurityContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -25,14 +26,25 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final BusinessIdGeneratorService businessIdGeneratorService;
     private final AuditEventPublisher auditEventPublisher;
+    private final SecurityContextService securityContextService;
 
     @CacheEvict(value = "roles", allEntries = true)
     public Role createRole(Role role) {
+        return createRole(role, null);
+    }
+
+    @CacheEvict(value = "roles", allEntries = true)
+    public Role createRole(Role role, String actorUserId) {
         if (!StringUtils.hasText(role.getTenantId())) {
             throw new BusinessException("tenantId is required", "TENANT_ID_REQUIRED");
         }
         if (!StringUtils.hasText(role.getRoleCode())) {
             throw new BusinessException("roleCode is required", "ROLE_CODE_REQUIRED");
+        }
+
+        securityContextService.verifyTenantAccess(actorUserId, role.getTenantId());
+        if (!securityContextService.isSuperAdmin(actorUserId) && securityContextService.isAdminRoleCode(role.getRoleCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot create administrative role", "FORBIDDEN");
         }
 
         role.setRoleId(businessIdGeneratorService.nextId("mdm_roles", "roleId", "ROLE-", 4));
@@ -47,7 +59,7 @@ public class RoleService {
         normalizeRoleFields(role);
 
         if (role.getParentRoleId() != null) {
-            Role parent = getRoleByRoleId(role.getParentRoleId());
+            Role parent = getRoleByRoleId(role.getParentRoleId(), actorUserId);
             role.setLevel(parent.getLevel() != null ? parent.getLevel() + 1 : 1);
         } else {
             role.setLevel(0);
@@ -60,7 +72,7 @@ public class RoleService {
         log.info("Creating role: {}", role.getRoleId());
         Role saved = roleRepository.save(role);
         auditEventPublisher.publish(
-                "SYSTEM",
+                actorUserId != null ? actorUserId : "SYSTEM",
                 "ROLE_CREATED",
                 "MDM_ROLE",
                 saved.getRoleId(),
@@ -71,15 +83,32 @@ public class RoleService {
 
     @Cacheable(value = "roles", key = "#roleId")
     public Role getRoleByRoleId(String roleId) {
-        return roleRepository.findByRoleId(roleId)
+        return getRoleByRoleId(roleId, null);
+    }
+
+    public Role getRoleByRoleId(String roleId, String actorUserId) {
+        Role role = roleRepository.findByRoleId(roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
+        securityContextService.verifyTenantAccess(actorUserId, role.getTenantId());
+        return role;
     }
 
     public List<Role> getAllRoles() {
-        return getAllRoles(null);
+        return getAllRoles(null, null, null);
     }
 
     public List<Role> getAllRoles(Boolean isActive) {
+        return getAllRoles(null, isActive, null);
+    }
+
+    public List<Role> getAllRoles(String tenantId, Boolean isActive, String actorUserId) {
+        String effectiveTenantId = securityContextService.resolveEffectiveTenantId(actorUserId, tenantId);
+        if (StringUtils.hasText(effectiveTenantId)) {
+            if (isActive == null) {
+                return roleRepository.findByTenantIdAndIsActiveTrue(effectiveTenantId);
+            }
+            return roleRepository.findByTenantIdAndIsActive(effectiveTenantId, isActive);
+        }
         if (isActive == null) {
             return roleRepository.findByIsActiveTrue();
         }
@@ -92,7 +121,23 @@ public class RoleService {
 
     @CacheEvict(value = "roles", key = "#roleId")
     public Role updateRole(String roleId, Role updatedRole) {
-        Role existing = getRoleByRoleId(roleId);
+        return updateRole(roleId, updatedRole, null);
+    }
+
+    @CacheEvict(value = "roles", key = "#roleId")
+    public Role updateRole(String roleId, Role updatedRole, String actorUserId) {
+        Role existing = getRoleByRoleId(roleId, actorUserId);
+        securityContextService.verifyTenantAccess(actorUserId, existing.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(actorUserId)) {
+            if (securityContextService.isAdminRoleCode(existing.getRoleCode())
+                    || (StringUtils.hasText(updatedRole.getRoleCode()) && securityContextService.isAdminRoleCode(updatedRole.getRoleCode()))) {
+                throw new BusinessException("Privilege escalation detected: cannot modify administrative role", "FORBIDDEN");
+            }
+            if (StringUtils.hasText(updatedRole.getTenantId()) && !existing.getTenantId().equalsIgnoreCase(updatedRole.getTenantId())) {
+                throw new BusinessException("Cannot transfer role to another tenant", "FORBIDDEN");
+            }
+        }
 
         String tenantId = StringUtils.hasText(updatedRole.getTenantId()) ? updatedRole.getTenantId() : existing.getTenantId();
         String roleCode = StringUtils.hasText(updatedRole.getRoleCode()) ? updatedRole.getRoleCode() : existing.getRoleCode();
@@ -137,7 +182,7 @@ public class RoleService {
         log.info("Updating role: {}", roleId);
         Role saved = roleRepository.save(existing);
         auditEventPublisher.publish(
-                "SYSTEM",
+                actorUserId != null ? actorUserId : "SYSTEM",
                 "ROLE_UPDATED",
                 "MDM_ROLE",
                 saved.getRoleId(),
@@ -148,8 +193,18 @@ public class RoleService {
 
     @CacheEvict(value = "roles", key = "#roleId")
     public void deleteRole(String roleId) {
-        Role role = getRoleByRoleId(roleId);
-        
+        deleteRole(roleId, null);
+    }
+
+    @CacheEvict(value = "roles", key = "#roleId")
+    public void deleteRole(String roleId, String actorUserId) {
+        Role role = getRoleByRoleId(roleId, actorUserId);
+        securityContextService.verifyTenantAccess(actorUserId, role.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(actorUserId) && securityContextService.isAdminRoleCode(role.getRoleCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot delete administrative role", "FORBIDDEN");
+        }
+
         List<Role> children = roleRepository.findByParentRoleId(roleId);
         if (!children.isEmpty()) {
             throw new BusinessException("Cannot delete role with child roles", "ROLE_HAS_CHILDREN");
@@ -158,17 +213,28 @@ public class RoleService {
         role.setIsActive(false);
         role.setUpdatedAt(Instant.now());
         roleRepository.save(role);
-        auditEventPublisher.publish("SYSTEM", "ROLE_DELETED", "MDM_ROLE", role.getRoleId(), "SUCCESS", Map.of());
+        auditEventPublisher.publish(actorUserId != null ? actorUserId : "SYSTEM", "ROLE_DELETED", "MDM_ROLE", role.getRoleId(), "SUCCESS", Map.of());
         log.info("Deleted role: {}", roleId);
     }
 
     @CacheEvict(value = "roles", key = "#roleId")
     public Role reactivateRole(String roleId) {
-        Role role = getRoleByRoleId(roleId);
+        return reactivateRole(roleId, null);
+    }
+
+    @CacheEvict(value = "roles", key = "#roleId")
+    public Role reactivateRole(String roleId, String actorUserId) {
+        Role role = getRoleByRoleId(roleId, actorUserId);
+        securityContextService.verifyTenantAccess(actorUserId, role.getTenantId());
+
+        if (!securityContextService.isSuperAdmin(actorUserId) && securityContextService.isAdminRoleCode(role.getRoleCode())) {
+            throw new BusinessException("Privilege escalation detected: cannot reactivate administrative role", "FORBIDDEN");
+        }
+
         role.setIsActive(true);
         role.setUpdatedAt(Instant.now());
         Role saved = roleRepository.save(role);
-        auditEventPublisher.publish("SYSTEM", "ROLE_REACTIVATED", "MDM_ROLE", saved.getRoleId(), "SUCCESS", Map.of());
+        auditEventPublisher.publish(actorUserId != null ? actorUserId : "SYSTEM", "ROLE_REACTIVATED", "MDM_ROLE", saved.getRoleId(), "SUCCESS", Map.of());
         return saved;
     }
 

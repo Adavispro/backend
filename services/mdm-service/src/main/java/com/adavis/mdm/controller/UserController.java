@@ -5,7 +5,9 @@ import com.adavis.common.dto.PageResponse;
 import com.adavis.mdm.dto.request.UserOnboardingRequest;
 import com.adavis.mdm.model.entity.UserProfile;
 import com.adavis.mdm.security.InternalRequestValidator;
+import com.adavis.mdm.security.SecurityContextService;
 import com.adavis.mdm.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -25,16 +28,20 @@ import java.util.Map;
 public class UserController {
 
     private static final String INTERNAL_AUTH_HEADER = "X-Internal-Auth";
+    private static final String USER_ID_HEADER = "X-User-Id";
 
     private final UserService userService;
     private final InternalRequestValidator internalRequestValidator;
+    private final SecurityContextService securityContextService;
 
     @PostMapping("/onboard")
     public ResponseEntity<ApiResponse<UserProfile>> createUser(
-            @RequestHeader("X-User-Id") String currentUserId,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @Valid @RequestBody UserOnboardingRequest request) {
+            @Valid @RequestBody UserOnboardingRequest request,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
         UserProfile userProfile = UserProfile.builder()
                 .userId(request.getUserId())
             .userTrackId(request.getUserTrackId())
@@ -54,15 +61,20 @@ public class UserController {
             .isActive(request.getIsActive())
                 .build();
 
+        String remarks = StringUtils.hasText(request.getRemarks()) ? request.getRemarks() : request.getReason();
+        String esignPassword = StringUtils.hasText(request.getEsignPassword()) ? request.getEsignPassword() : request.getPassword();
+
         UserProfile created = userService.createUser(
             userProfile,
             request.getInitialPassword(),
-            currentUserId,
-            currentUserId,
+            actor,
+            actor,
             request.getSupportingDocumentIds(),
             request.getSupportingDocuments(),
             request.getSupportingDocumentType(),
-            request.getReason());
+            remarks,
+            remarks,
+            esignPassword);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("User created successfully", created));
     }
@@ -111,55 +123,95 @@ public class UserController {
     @PutMapping("/{userId}")
     public ResponseEntity<ApiResponse<UserProfile>> updateUser(
             @PathVariable String userId,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @Valid @RequestBody UserProfile userProfile) {
+            @Valid @RequestBody UserProfile userProfile,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
-        UserProfile updated = userService.updateUser(userId, userProfile);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        String remarks = userProfile.getRemarks();
+        String esignPassword = StringUtils.hasText(userProfile.getEsignPassword())
+                ? userProfile.getEsignPassword()
+                : userProfile.getPassword();
+        UserProfile updated = userService.updateUser(userId, userProfile, actor, remarks, esignPassword);
         return ResponseEntity.ok(ApiResponse.success("User updated successfully", updated));
     }
 
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @PathVariable String userId,
-            @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth) {
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+            @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
+            @RequestBody(required = false) Map<String, Object> request,
+            @RequestParam(required = false) String remarks,
+            @RequestParam(required = false) String password,
+            @RequestParam(required = false) String esignPassword,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
-        userService.deleteUser(userId);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        String effectiveRemarks = request != null && request.get("remarks") != null
+                ? String.valueOf(request.get("remarks"))
+                : remarks;
+        if (!StringUtils.hasText(effectiveRemarks) && request != null && request.get("reason") != null) {
+            effectiveRemarks = String.valueOf(request.get("reason"));
+        }
+        String effectivePassword = request != null && request.get("esignPassword") != null
+                ? String.valueOf(request.get("esignPassword"))
+                : (request != null && request.get("password") != null
+                        ? String.valueOf(request.get("password"))
+                        : (StringUtils.hasText(esignPassword) ? esignPassword : password));
+        userService.deleteUser(userId, actor, effectiveRemarks, effectivePassword);
         return ResponseEntity.ok(ApiResponse.successMessage("User deleted successfully"));
     }
 
     @PatchMapping("/{userId}/lifecycle")
     public ResponseEntity<ApiResponse<UserProfile>> updateUserLifecycle(
             @PathVariable String userId,
-            @RequestHeader("X-User-Id") String currentUserId,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
         Object action = request == null ? null : request.get("action");
         String actionValue = action == null ? null : String.valueOf(action);
         String reason = request == null || request.get("reason") == null
             ? null
             : String.valueOf(request.get("reason"));
+        String remarks = request == null || request.get("remarks") == null
+            ? null
+            : String.valueOf(request.get("remarks"));
+        String password = request == null || request.get("password") == null
+            ? null
+            : String.valueOf(request.get("password"));
+        String esignPassword = request == null || request.get("esignPassword") == null
+            ? password
+            : String.valueOf(request.get("esignPassword"));
         String supportingDocumentType = request == null || request.get("supportingDocumentType") == null
             ? null
             : String.valueOf(request.get("supportingDocumentType"));
         UserProfile updated = userService.updateLifecycle(
             userId,
             actionValue,
-            currentUserId,
+            actor,
             toStringList(request == null ? null : request.get("supportingDocumentIds")),
             toMapList(getSupportingDocumentsValue(request)),
             supportingDocumentType,
-            reason);
+            reason,
+            remarks,
+            esignPassword);
         return ResponseEntity.ok(ApiResponse.success("User lifecycle updated successfully", updated));
     }
 
     @PostMapping("/{userId}/password-reset")
     public ResponseEntity<ApiResponse<Map<String, Object>>> resetUserPassword(
             @PathVariable String userId,
-            @RequestHeader("X-User-Id") String currentUserId,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestBody(required = false) Map<String, Object> request) {
+            @RequestBody(required = false) Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
         String tempPassword = request == null || request.get("tempPassword") == null
                 ? null
                 : String.valueOf(request.get("tempPassword"));
@@ -173,7 +225,7 @@ public class UserController {
                 userId,
             null,
                 tempPassword,
-                currentUserId,
+                actor,
                 toStringList(request == null ? null : request.get("supportingDocumentIds")),
                 toMapList(getSupportingDocumentsValue(request)),
                 supportingDocumentType,
@@ -181,77 +233,105 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Password reset completed", response));
     }
 
-        @PostMapping("/{userId}/deactivate")
-        public ResponseEntity<ApiResponse<UserProfile>> deactivateUser(
+    @PostMapping("/{userId}/deactivate")
+    public ResponseEntity<ApiResponse<UserProfile>> deactivateUser(
             @PathVariable String userId,
-            @RequestHeader("X-User-Id") String currentUserId,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestBody(required = false) Map<String, Object> request) {
+            @RequestBody(required = false) Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        String remarks = request == null || request.get("remarks") == null ? null : String.valueOf(request.get("remarks"));
+        String password = request == null || request.get("password") == null ? null : String.valueOf(request.get("password"));
+        String esignPassword = request == null || request.get("esignPassword") == null ? password : String.valueOf(request.get("esignPassword"));
         UserProfile updated = userService.updateLifecycle(
             userId,
             "deactivate",
-            currentUserId,
+            actor,
             toStringList(request == null ? null : request.get("supportingDocumentIds")),
             toMapList(getSupportingDocumentsValue(request)),
             request == null ? null : String.valueOf(request.get("supportingDocumentType")),
-            request == null ? null : String.valueOf(request.get("reason")));
+            request == null ? null : String.valueOf(request.get("reason")),
+            remarks,
+            esignPassword);
         return ResponseEntity.ok(ApiResponse.success("User deactivated successfully", updated));
-        }
+    }
 
-        @PostMapping("/{userId}/activate")
-        public ResponseEntity<ApiResponse<UserProfile>> reactivateUser(
+    @PostMapping("/{userId}/activate")
+    public ResponseEntity<ApiResponse<UserProfile>> reactivateUser(
             @PathVariable String userId,
-            @RequestHeader("X-User-Id") String currentUserId,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestBody(required = false) Map<String, Object> request) {
+            @RequestBody(required = false) Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        String remarks = request == null || request.get("remarks") == null ? null : String.valueOf(request.get("remarks"));
+        String password = request == null || request.get("password") == null ? null : String.valueOf(request.get("password"));
+        String esignPassword = request == null || request.get("esignPassword") == null ? password : String.valueOf(request.get("esignPassword"));
         UserProfile updated = userService.updateLifecycle(
             userId,
             "reactivate",
-            currentUserId,
+            actor,
             toStringList(request == null ? null : request.get("supportingDocumentIds")),
             toMapList(getSupportingDocumentsValue(request)),
             request == null ? null : String.valueOf(request.get("supportingDocumentType")),
-            request == null ? null : String.valueOf(request.get("reason")));
+            request == null ? null : String.valueOf(request.get("reason")),
+            remarks,
+            esignPassword);
         return ResponseEntity.ok(ApiResponse.success("User reactivated successfully", updated));
-        }
+    }
 
-        @PostMapping("/{userId}/block")
-        public ResponseEntity<ApiResponse<UserProfile>> blockUser(
+    @PostMapping("/{userId}/block")
+    public ResponseEntity<ApiResponse<UserProfile>> blockUser(
             @PathVariable String userId,
-            @RequestHeader("X-User-Id") String currentUserId,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestBody(required = false) Map<String, Object> request) {
+            @RequestBody(required = false) Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        String remarks = request == null || request.get("remarks") == null ? null : String.valueOf(request.get("remarks"));
+        String password = request == null || request.get("password") == null ? null : String.valueOf(request.get("password"));
+        String esignPassword = request == null || request.get("esignPassword") == null ? password : String.valueOf(request.get("esignPassword"));
         UserProfile updated = userService.updateLifecycle(
             userId,
             "block",
-            currentUserId,
+            actor,
             toStringList(request == null ? null : request.get("supportingDocumentIds")),
             toMapList(getSupportingDocumentsValue(request)),
             request == null ? null : String.valueOf(request.get("supportingDocumentType")),
-            request == null ? null : String.valueOf(request.get("reason")));
+            request == null ? null : String.valueOf(request.get("reason")),
+            remarks,
+            esignPassword);
         return ResponseEntity.ok(ApiResponse.success("User blocked successfully", updated));
-        }
+    }
 
-        @PostMapping("/{userId}/unblock")
-        public ResponseEntity<ApiResponse<UserProfile>> unblockUser(
+    @PostMapping("/{userId}/unblock")
+    public ResponseEntity<ApiResponse<UserProfile>> unblockUser(
             @PathVariable String userId,
-            @RequestHeader("X-User-Id") String currentUserId,
+            @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
             @RequestHeader(value = INTERNAL_AUTH_HEADER, required = false) String internalAuth,
-            @RequestBody(required = false) Map<String, Object> request) {
+            @RequestBody(required = false) Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         internalRequestValidator.validateInternalGatewayRequest(internalAuth);
+        String actor = securityContextService.resolveActor(currentUserId, httpRequest);
+        String remarks = request == null || request.get("remarks") == null ? null : String.valueOf(request.get("remarks"));
+        String password = request == null || request.get("password") == null ? null : String.valueOf(request.get("password"));
+        String esignPassword = request == null || request.get("esignPassword") == null ? password : String.valueOf(request.get("esignPassword"));
         UserProfile updated = userService.updateLifecycle(
             userId,
             "unblock",
-            currentUserId,
+            actor,
             toStringList(request == null ? null : request.get("supportingDocumentIds")),
             toMapList(getSupportingDocumentsValue(request)),
             request == null ? null : String.valueOf(request.get("supportingDocumentType")),
-            request == null ? null : String.valueOf(request.get("reason")));
+            request == null ? null : String.valueOf(request.get("reason")),
+            remarks,
+            esignPassword);
         return ResponseEntity.ok(ApiResponse.success("User unblocked successfully", updated));
-        }
+    }
 
     private List<String> toStringList(Object value) {
         if (!(value instanceof List<?> rawList)) {

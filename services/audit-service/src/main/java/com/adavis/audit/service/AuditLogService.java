@@ -98,6 +98,13 @@ public class AuditLogService {
         return auditLogRepository.findByUserIdOrderByTimestampDesc(userId, pageable);
     }
 
+    public Page<AuditLog> getAuditTrailsForUserOrEntity(String tenantId, String userId, Pageable pageable) {
+        if (tenantId != null && !tenantId.isBlank()) {
+            return auditLogRepository.findByTenantIdAndUserIdOrEntityIdOrderByTimestampDesc(tenantId.trim(), userId.trim(), pageable);
+        }
+        return auditLogRepository.findByUserIdOrEntityIdOrderByTimestampDesc(userId.trim(), pageable);
+    }
+
     public Page<AuditLog> getAuditTrails(String userId, Pageable pageable) {
         return getAuditTrails(null, userId, pageable);
     }

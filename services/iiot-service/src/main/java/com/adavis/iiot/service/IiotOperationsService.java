@@ -53,6 +53,10 @@ public class IiotOperationsService {
     private static final String CRITICAL_PARAMETERS_COLLECTION = "iiot_equipment_critical_parameters";
     private static final String CRITICAL_PARAMETER_LIMITS_COLLECTION = "iiot_equipment_critical_parameters_limit";
     private static final String PRODUCT_MASTER_COLLECTION = "iiot_product_master";
+    private static final String MDM_PLANTS_COLLECTION = "mdm_plants";
+    private static final String MDM_BLOCKS_COLLECTION = "mdm_blocks";
+    private static final String MDM_AREAS_COLLECTION = "mdm_areas";
+    private static final String MDM_ROOMS_COLLECTION = "mdm_rooms";
     private static final String SOURCE_MAPPING_COLLECTION = "iiot_source_table_mapping";
     private static final String CHECKPOINT_COLLECTION = "iiot_ingestion_checkpoint";
     private static final String JOB_RUN_COLLECTION = "iiot_ingestion_job_run";
@@ -261,11 +265,96 @@ public class IiotOperationsService {
         return reactivateDocumentByBusinessKey(TAG_THRESHOLDS_COLLECTION, "thresholdId", thresholdId);
     }
 
+    private void validateHierarchy(boolean isCreation, String tenantId, String plantId, String blockId, String areaId, String roomId,
+                                  String legacyBlockId, String legacyAreaId, String legacyRoomId) {
+        if (plantId != null && !plantId.isBlank()) {
+            Query plantQuery = new Query(Criteria.where("plantId").is(plantId));
+            if (tenantId != null && !tenantId.isBlank()) {
+                plantQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
+            }
+            Document plant = mongoTemplate.findOne(plantQuery, Document.class, MDM_PLANTS_COLLECTION);
+            if (plant == null) {
+                throw new BusinessException("Plant not found or does not belong to tenant: " + plantId);
+            }
+        }
+
+        if (blockId != null && !blockId.isBlank()) {
+            Query blockExists = new Query(Criteria.where("blockId").is(blockId));
+            boolean existsInMdm = mongoTemplate.exists(blockExists, MDM_BLOCKS_COLLECTION);
+            if (existsInMdm) {
+                Query blockQuery = new Query(Criteria.where("blockId").is(blockId));
+                if (plantId != null && !plantId.isBlank()) {
+                    blockQuery.addCriteria(Criteria.where("plantId").is(plantId));
+                }
+                if (tenantId != null && !tenantId.isBlank()) {
+                    blockQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
+                }
+                Document block = mongoTemplate.findOne(blockQuery, Document.class, MDM_BLOCKS_COLLECTION);
+                if (block == null) {
+                    throw new BusinessException("Block not found or does not belong to plant/tenant: " + blockId);
+                }
+            } else if (isCreation || !blockId.equals(legacyBlockId)) {
+                throw new BusinessException("Block not found: " + blockId);
+            }
+        }
+
+        if (areaId != null && !areaId.isBlank()) {
+            Query areaExists = new Query(Criteria.where("areaId").is(areaId));
+            boolean existsInMdm = mongoTemplate.exists(areaExists, MDM_AREAS_COLLECTION);
+            if (existsInMdm) {
+                Query areaQuery = new Query(Criteria.where("areaId").is(areaId));
+                if (blockId != null && !blockId.isBlank()) {
+                    areaQuery.addCriteria(Criteria.where("blockId").is(blockId));
+                }
+                if (plantId != null && !plantId.isBlank()) {
+                    areaQuery.addCriteria(Criteria.where("plantId").is(plantId));
+                }
+                if (tenantId != null && !tenantId.isBlank()) {
+                    areaQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
+                }
+                Document area = mongoTemplate.findOne(areaQuery, Document.class, MDM_AREAS_COLLECTION);
+                if (area == null) {
+                    throw new BusinessException("Area not found or does not belong to block/plant: " + areaId);
+                }
+            } else if (isCreation || !areaId.equals(legacyAreaId)) {
+                throw new BusinessException("Area not found: " + areaId);
+            }
+        }
+
+        if (roomId != null && !roomId.isBlank()) {
+            Query roomExists = new Query(Criteria.where("roomId").is(roomId));
+            boolean existsInMdm = mongoTemplate.exists(roomExists, MDM_ROOMS_COLLECTION);
+            if (existsInMdm) {
+                Query roomQuery = new Query(Criteria.where("roomId").is(roomId));
+                if (areaId != null && !areaId.isBlank()) {
+                    roomQuery.addCriteria(Criteria.where("areaId").is(areaId));
+                }
+                if (plantId != null && !plantId.isBlank()) {
+                    roomQuery.addCriteria(Criteria.where("plantId").is(plantId));
+                }
+                if (tenantId != null && !tenantId.isBlank()) {
+                    roomQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
+                }
+                Document room = mongoTemplate.findOne(roomQuery, Document.class, MDM_ROOMS_COLLECTION);
+                if (room == null) {
+                    throw new BusinessException("Room not found or does not belong to area/plant: " + roomId);
+                }
+            } else if (isCreation || !roomId.equals(legacyRoomId)) {
+                throw new BusinessException("Room not found: " + roomId);
+            }
+        }
+    }
+
     public Map<String, Object> createEquipmentMaster(Map<String, Object> request) {
         String equipmentId = requireText(request, "equipmentId");
         String equipmentCode = requireText(request, "equipmentCode");
         String tenantId = firstNonBlank(stringValue(request.get("tenantId")), DEFAULT_TENANT_ID);
         String plantId = firstNonBlank(stringValue(request.get("plantId")), DEFAULT_PLANT_ID);
+        String blockId = stringValue(request.get("blockId"));
+        String areaId = stringValue(request.get("areaId"));
+        String roomId = stringValue(request.get("roomId"));
+
+        validateHierarchy(true, tenantId, plantId, blockId, areaId, roomId, null, null, null);
 
         Query query = new Query(new Criteria().orOperator(
                 Criteria.where("equipmentId").is(equipmentId),
@@ -279,6 +368,9 @@ public class IiotOperationsService {
         doc.put("equipmentCode", equipmentCode);
         doc.put("tenantId", tenantId);
         doc.put("plantId", plantId);
+        if (blockId != null && !blockId.isBlank()) {
+            doc.put("blockId", blockId);
+        }
         doc.put("isActive", request.getOrDefault("isActive", true));
         doc.put("createdAt", Date.from(Instant.now()));
         doc.put("updatedAt", Date.from(Instant.now()));
@@ -286,30 +378,74 @@ public class IiotOperationsService {
     }
 
     public List<Map<String, Object>> getEquipmentMasters() {
-        Query query = new Query(new Criteria().orOperator(
-                Criteria.where("isActive").exists(false),
-                Criteria.where("isActive").is(true)));
+        return getEquipmentMasters(null, null);
+    }
+
+    public List<Map<String, Object>> getEquipmentMasters(Boolean isActive, String tenantId) {
+        Query query = new Query();
+        if (isActive != null) {
+            if (isActive) {
+                query.addCriteria(new Criteria().orOperator(
+                        Criteria.where("isActive").exists(false),
+                        Criteria.where("isActive").is(true)));
+            } else {
+                query.addCriteria(Criteria.where("isActive").is(false));
+            }
+        }
+        if (tenantId != null && !tenantId.isBlank()) {
+            query.addCriteria(Criteria.where("tenantId").is(tenantId));
+        }
         query.with(Sort.by(Sort.Direction.ASC, "equipmentId", "equipmentCode"));
         return mongoTemplate.find(query, Document.class, EQUIPMENT_MASTER_COLLECTION).stream().map(this::toMap).toList();
     }
 
     public Map<String, Object> getEquipmentMaster(String equipmentId) {
-        return toMap(requireActiveDocumentByBusinessKey(EQUIPMENT_MASTER_COLLECTION, "equipmentId", equipmentId));
+        Query query = new Query(Criteria.where("equipmentId").is(equipmentId));
+        Document doc = mongoTemplate.findOne(query, Document.class, EQUIPMENT_MASTER_COLLECTION);
+        if (doc == null) {
+            throw new BusinessException("Resource not found: " + equipmentId);
+        }
+        return toMap(doc);
     }
 
     public Map<String, Object> updateEquipmentMaster(String equipmentId, Map<String, Object> request) {
-        Document existing = requireActiveDocumentByBusinessKey(EQUIPMENT_MASTER_COLLECTION, "equipmentId", equipmentId);
+        Query query = new Query(Criteria.where("equipmentId").is(equipmentId));
+        Document existing = mongoTemplate.findOne(query, Document.class, EQUIPMENT_MASTER_COLLECTION);
+        if (existing == null) {
+            throw new BusinessException("Resource not found: " + equipmentId);
+        }
+
+        String tenantId = firstNonBlank(stringValue(request.get("tenantId")),
+                firstNonBlank(existing.getString("tenantId"), DEFAULT_TENANT_ID));
+        String plantId = firstNonBlank(stringValue(request.get("plantId")), existing.getString("plantId"));
+        String blockId = request.containsKey("blockId") ? stringValue(request.get("blockId")) : existing.getString("blockId");
+        String areaId = request.containsKey("areaId") ? stringValue(request.get("areaId")) : existing.getString("areaId");
+        String roomId = request.containsKey("roomId") ? stringValue(request.get("roomId")) : existing.getString("roomId");
+
+        validateHierarchy(false, tenantId, plantId, blockId, areaId, roomId,
+                existing.getString("blockId"), existing.getString("areaId"), existing.getString("roomId"));
+
         request.forEach((k, v) -> {
-            if (!"_id".equals(k) && !"equipmentId".equals(k)) {
+            if (!"_id".equals(k) && !"equipmentId".equals(k) && !"createdAt".equals(k)) {
                 existing.put(k, v);
             }
         });
+        if (blockId != null && !blockId.isBlank()) {
+            existing.put("blockId", blockId);
+        }
+        if (request.containsKey("isActive")) {
+            existing.put("isActive", Boolean.valueOf(String.valueOf(request.get("isActive"))));
+        }
         existing.put("updatedAt", Date.from(Instant.now()));
         return toMap(mongoTemplate.save(existing, EQUIPMENT_MASTER_COLLECTION));
     }
 
     public Map<String, Object> deactivateEquipmentMaster(String equipmentId) {
-        Document existing = requireActiveDocumentByBusinessKey(EQUIPMENT_MASTER_COLLECTION, "equipmentId", equipmentId);
+        Query query = new Query(Criteria.where("equipmentId").is(equipmentId));
+        Document existing = mongoTemplate.findOne(query, Document.class, EQUIPMENT_MASTER_COLLECTION);
+        if (existing == null) {
+            throw new BusinessException("Resource not found: " + equipmentId);
+        }
         existing.put("isActive", false);
         existing.put("updatedAt", Date.from(Instant.now()));
         return toMap(mongoTemplate.save(existing, EQUIPMENT_MASTER_COLLECTION));

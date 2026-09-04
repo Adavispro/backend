@@ -34,6 +34,7 @@ public class PlantTopologyService {
     private static final String ROOMS_COLLECTION = "mdm_rooms";
     private static final String USER_ASSIGNMENTS_COLLECTION = "mdm_user_context_assignments";
     private static final String USER_PROFILES_COLLECTION = "mdm_user_profiles";
+    private static final String USER_GROUPS_COLLECTION = "mdm_user_groups";
 
     private final MongoTemplate mongoTemplate;
     private final BusinessIdGeneratorService businessIdGeneratorService;
@@ -479,40 +480,115 @@ public class PlantTopologyService {
     }
 
     public Map<String, Object> createAssignment(Map<String, Object> request) {
+        return createAssignment(request, null);
+    }
+
+    public Map<String, Object> createAssignment(Map<String, Object> request, String actorUserId) {
         Map<String, Object> payload = normalizeAssignmentPayload(request);
+        String plantId = stringValue(payload.get("plantId"));
+        Document plantDoc = mongoTemplate.findOne(new Query(Criteria.where("plantId").is(plantId)), Document.class, PLANTS_COLLECTION);
+        if (plantDoc == null) {
+            throw new ResourceNotFoundException("Plant", plantId);
+        }
+        String plantTenantId = plantDoc.getString("tenantId");
+        if (StringUtils.hasText(plantTenantId)) {
+            payload.putIfAbsent("tenantId", plantTenantId);
+        }
+        String targetTenantId = stringValue(payload.get("tenantId"));
+        if (!StringUtils.hasText(targetTenantId)) {
+            targetTenantId = plantTenantId;
+        }
+
+        verifyTenantAccess(actorUserId, targetTenantId);
+
+        String userId = stringValue(payload.get("userId"));
+        if (StringUtils.hasText(userId)) {
+            Document userDoc = mongoTemplate.findOne(new Query(Criteria.where("userId").is(userId)), Document.class, USER_PROFILES_COLLECTION);
+            if (userDoc != null) {
+                String userTenant = userDoc.getString("tenantId");
+                if (StringUtils.hasText(userTenant) && !userTenant.equalsIgnoreCase(targetTenantId)) {
+                    throw new BusinessException("User " + userId + " belongs to a different tenant", "TENANT_MISMATCH");
+                }
+            }
+        }
+
+        String groupId = stringValue(payload.get("groupId"));
+        if (StringUtils.hasText(groupId)) {
+            Document groupDoc = mongoTemplate.findOne(new Query(Criteria.where("groupId").is(groupId)), Document.class, USER_GROUPS_COLLECTION);
+            if (groupDoc != null) {
+                String groupTenant = groupDoc.getString("tenantId");
+                if (StringUtils.hasText(groupTenant) && !groupTenant.equalsIgnoreCase(targetTenantId)) {
+                    throw new BusinessException("Group " + groupId + " belongs to a different tenant", "TENANT_MISMATCH");
+                }
+            }
+        }
+
         Map<String, Object> defaults = new LinkedHashMap<>();
         defaults.put("isActive", true);
         Map<String, Object> created = createResource(USER_ASSIGNMENTS_COLLECTION, payload, "assignmentId", "ASGN-", 6, null, defaults);
-        publishAudit("SYSTEM", "ASSIGNMENT_GRANTED", "USER_CONTEXT_ASSIGNMENT", stringValue(created.get("assignmentId")), Map.of());
+        publishAudit(resolveAuditActor(actorUserId), "ASSIGNMENT_GRANTED", "USER_CONTEXT_ASSIGNMENT", stringValue(created.get("assignmentId")), Map.of());
         return created;
     }
 
     public Map<String, Object> createExclusion(Map<String, Object> request) {
-        // Exclude flow is retained as API compatibility, but uses unified assignment model.
-        return createAssignment(request);
+        return createAssignment(request, null);
+    }
+
+    public Map<String, Object> createExclusion(Map<String, Object> request, String actorUserId) {
+        return createAssignment(request, actorUserId);
     }
 
     public Map<String, Object> createIiotAssignment(Map<String, Object> request) {
-        return createAssignment(request);
+        return createAssignment(request, null);
+    }
+
+    public Map<String, Object> createIiotAssignment(Map<String, Object> request, String actorUserId) {
+        return createAssignment(request, actorUserId);
     }
 
     public Map<String, Object> createIiotExclusion(Map<String, Object> request) {
-        // Exclude flow is retained as API compatibility, but uses unified assignment model.
-        return createExclusion(request);
+        return createAssignment(request, null);
+    }
+
+    public Map<String, Object> createIiotExclusion(Map<String, Object> request, String actorUserId) {
+        return createAssignment(request, actorUserId);
     }
 
     public List<Map<String, Object>> listAssignments(Boolean isActive) {
-        return listResources(USER_ASSIGNMENTS_COLLECTION, Sort.by(Sort.Direction.ASC, "assignmentId"), isActive);
+        return listAssignments(null, isActive, null);
+    }
+
+    public List<Map<String, Object>> listAssignments(String tenantId, Boolean isActive, String actorUserId) {
+        String effectiveTenantId = resolveEffectiveTenantId(actorUserId, tenantId);
+        return listResources(USER_ASSIGNMENTS_COLLECTION, Sort.by(Sort.Direction.ASC, "assignmentId"), isActive, effectiveTenantId);
     }
 
     public void deleteAssignment(String assignmentId) {
+        deleteAssignment(assignmentId, null);
+    }
+
+    public void deleteAssignment(String assignmentId, String actorUserId) {
+        Document existing = findActive(USER_ASSIGNMENTS_COLLECTION, "assignmentId", assignmentId);
+        String tenantId = existing.getString("tenantId");
+        verifyTenantAccess(actorUserId, tenantId);
         deleteResource(USER_ASSIGNMENTS_COLLECTION, "assignmentId", assignmentId);
-        publishAudit("SYSTEM", "ASSIGNMENT_DELETED", "USER_CONTEXT_ASSIGNMENT", assignmentId, Map.of());
+        publishAudit(resolveAuditActor(actorUserId), "ASSIGNMENT_DELETED", "USER_CONTEXT_ASSIGNMENT", assignmentId, Map.of());
     }
 
     public Map<String, Object> reactivateAssignment(String assignmentId) {
+        return reactivateAssignment(assignmentId, null);
+    }
+
+    public Map<String, Object> reactivateAssignment(String assignmentId, String actorUserId) {
+        Query query = new Query(Criteria.where("assignmentId").is(assignmentId));
+        Document existing = mongoTemplate.findOne(query, Document.class, USER_ASSIGNMENTS_COLLECTION);
+        if (existing == null) {
+            throw new ResourceNotFoundException("Resource", assignmentId);
+        }
+        String tenantId = existing.getString("tenantId");
+        verifyTenantAccess(actorUserId, tenantId);
         Map<String, Object> reactivated = reactivateResource(USER_ASSIGNMENTS_COLLECTION, "assignmentId", assignmentId, false);
-        publishAudit("SYSTEM", "ASSIGNMENT_REACTIVATED", "USER_CONTEXT_ASSIGNMENT", assignmentId, Map.of());
+        publishAudit(resolveAuditActor(actorUserId), "ASSIGNMENT_REACTIVATED", "USER_CONTEXT_ASSIGNMENT", assignmentId, Map.of());
         return reactivated;
     }
 
@@ -842,6 +918,9 @@ public class PlantTopologyService {
         normalizeTrimmedField(payload, "departmentId");
         normalizeTrimmedField(payload, "resourceType");
         normalizeTrimmedField(payload, "resourceId");
+        normalizeTrimmedField(payload, "userId");
+        normalizeTrimmedField(payload, "groupId");
+        normalizeTrimmedField(payload, "tenantId");
 
         String plantId = stringValue(payload.get("plantId"));
         String resourceType = stringValue(payload.get("resourceType"));

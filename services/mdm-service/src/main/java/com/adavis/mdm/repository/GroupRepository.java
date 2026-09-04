@@ -26,5 +26,9 @@ public interface GroupRepository extends MongoRepository<Group, String> {
 
     boolean existsByTenantIdAndGroupCodeAndGroupIdNot(String tenantId, String groupCode, String groupId);
 
+    List<Group> findByTenantId(String tenantId);
+
+    List<Group> findByTenantIdAndIsActive(String tenantId, Boolean isActive);
+
     List<Group> findByIsActive(Boolean isActive);
 }

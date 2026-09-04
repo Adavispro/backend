@@ -33,8 +33,13 @@ public class LicenseController {
     @PostMapping("/tenant")
     public ApiResponse<LicenseResponse> activateLicense(
             @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+            @RequestHeader(value = TENANT_ID_HEADER, required = false) String requestingTenantId,
             @Valid @RequestBody ApplyLicenseRequest request) {
         request.setPerformedBy(firstNonBlank(request.getPerformedBy(), currentUserId));
+        String targetTenantId = licenseService.extractTenantIdFromToken(request.getEncryptedLicenseToken());
+        if (targetTenantId != null) {
+            verifyTenantIsolation(currentUserId, requestingTenantId, targetTenantId);
+        }
         LicenseResponse response = licenseService.applyLicense(request);
         return ApiResponse.success("License action applied successfully", response);
     }
@@ -45,14 +50,19 @@ public class LicenseController {
             @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
             @RequestHeader(value = TENANT_ID_HEADER, required = false) String requestingTenantId) {
         verifyTenantIsolation(currentUserId, requestingTenantId, tenantId);
-        return ApiResponse.success(licenseService.getActiveLicenseByTenantId(tenantId));
+        return ApiResponse.success(licenseService.getLicenseByTenantId(tenantId));
     }
 
     @PutMapping("/{licenseId}/upgrade")
     public ApiResponse<LicenseResponse> upgradeLicense(
             @PathVariable String licenseId,
             @RequestHeader(value = USER_ID_HEADER, required = false) String currentUserId,
+            @RequestHeader(value = TENANT_ID_HEADER, required = false) String requestingTenantId,
             @RequestBody Map<String, Object> request) {
+        String targetTenantId = licenseService.getTenantIdByLicenseId(licenseId);
+        if (targetTenantId != null) {
+            verifyTenantIsolation(currentUserId, requestingTenantId, targetTenantId);
+        }
         return ApiResponse.success(
                 "License action applied successfully",
                 licenseService.upgradeLicenseById(

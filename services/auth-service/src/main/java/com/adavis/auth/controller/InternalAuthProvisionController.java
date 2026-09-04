@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,15 +28,19 @@ public class InternalAuthProvisionController {
     private final SessionService sessionService;
 
     @PostMapping("/provision")
-    public ResponseEntity<ApiResponse<Void>> provisionUser(@Valid @RequestBody UserProvisionRequest request) {
+    public ResponseEntity<ApiResponse<Void>> provisionUser(
+            @RequestHeader(value = "X-User-Id", required = false) String actorUserId,
+            @Valid @RequestBody UserProvisionRequest request) {
         authService.provisionUserWithInitialPassword(
-                request.getUserId(), request.getUsername(), request.getEmail(), request.getInitialPassword());
+                request.getUserId(), request.getUsername(), request.getEmail(), request.getInitialPassword(), actorUserId);
         return ResponseEntity.ok(ApiResponse.successMessage("User provisioned with initial password"));
     }
 
     @PostMapping("/status")
-    public ResponseEntity<ApiResponse<Void>> updateUserStatus(@Valid @RequestBody UserStatusUpdateRequest request) {
-        authService.updateUserStatus(request.getUserId(), request.getStatus(), request.getIsLocked());
+    public ResponseEntity<ApiResponse<Void>> updateUserStatus(
+            @RequestHeader(value = "X-User-Id", required = false) String actorUserId,
+            @Valid @RequestBody UserStatusUpdateRequest request) {
+        authService.updateUserStatus(request.getUserId(), request.getStatus(), request.getIsLocked(), actorUserId);
         return ResponseEntity.ok(ApiResponse.successMessage("User status updated"));
     }
 

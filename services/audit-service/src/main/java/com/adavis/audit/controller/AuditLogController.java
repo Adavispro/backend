@@ -44,6 +44,17 @@ public class AuditLogController {
         return ApiResponse.success(PageResponse.from(auditLogs));
     }
 
+    @GetMapping({"/trails/user/{userId}", "/logs/user/{userId}"})
+    public ApiResponse<PageResponse<AuditLog>> getAuditTrailsByUser(
+            @PathVariable String userId,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
+        Page<AuditLog> auditLogs = auditLogService.getAuditTrailsForUserOrEntity(tenantId, userId, pageable);
+        return ApiResponse.success(PageResponse.from(auditLogs));
+    }
+
     @GetMapping("/login-history")
     public ApiResponse<PageResponse<AuditLog>> getLoginHistory(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,

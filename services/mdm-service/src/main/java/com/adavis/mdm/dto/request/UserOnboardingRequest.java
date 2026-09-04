@@ -49,7 +49,11 @@ public class UserOnboardingRequest {
     private List<Map<String, Object>> supportingDocuments;
     private String supportingDocumentType;
     private String reason;
+    private String remarks;
 
     @NotBlank(message = "Initial password is required")
     private String initialPassword;
+
+    private String esignPassword;
+    private String password;
 }

@@ -96,10 +96,32 @@ public class LicenseService {
         return switch (actionType) {
             case "ACTIVATE" -> activateLicense(request.getEncryptedLicenseToken(), actor);
             case "UPGRADE", "RENEW" -> upgradeLicense(request.getEncryptedLicenseToken(), actor, reason);
-            case "SUSPEND", "REACTIVATE" -> {
+            case "SUSPEND" -> {
                 License existing = findLicenseByEncryptedToken(request.getEncryptedLicenseToken());
-                String nextStatus = "SUSPEND".equals(actionType) ? "SUSPENDED" : "ACTIVE";
-                updateLicenseStatus(existing.getId(), nextStatus, reason);
+                if ("SUSPENDED".equalsIgnoreCase(existing.getStatus())) {
+                    throw new BusinessException("License is already suspended");
+                }
+                if ("EXPIRED".equalsIgnoreCase(existing.getStatus())) {
+                    throw new BusinessException("Cannot suspend expired license");
+                }
+                if (!"ACTIVE".equalsIgnoreCase(existing.getStatus())) {
+                    throw new BusinessException("Only active licenses can be suspended. Current status: " + existing.getStatus());
+                }
+                updateLicenseStatus(existing.getId(), "SUSPENDED", reason, actor);
+                yield mapToResponse(refreshLicense(existing.getId()));
+            }
+            case "REACTIVATE" -> {
+                License existing = findLicenseByEncryptedToken(request.getEncryptedLicenseToken());
+                if ("ACTIVE".equalsIgnoreCase(existing.getStatus())) {
+                    throw new BusinessException("License is already active");
+                }
+                if ("EXPIRED".equalsIgnoreCase(existing.getStatus())) {
+                    throw new BusinessException("Cannot reactivate expired license. Please renew the license.");
+                }
+                if (!"SUSPENDED".equalsIgnoreCase(existing.getStatus())) {
+                    throw new BusinessException("Only suspended licenses can be reactivated. Current status: " + existing.getStatus());
+                }
+                updateLicenseStatus(existing.getId(), "ACTIVE", reason, actor);
                 yield mapToResponse(refreshLicense(existing.getId()));
             }
             default -> throw new BusinessException("Unsupported actionType: " + actionType);
@@ -117,10 +139,20 @@ public class LicenseService {
         }
         String resolvedLicenseKey = firstNonBlank(stringClaim(claims.get("licenseKey")), encryptedLicenseToken);
 
-        // Idempotent activate: one license per tenant.
+        // Reject duplicate activate if already active; or activate if inactive
         var existingLicense = licenseRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         if (existingLicense.isPresent()) {
-            return mapToResponse(existingLicense.get());
+            License existing = existingLicense.get();
+            if ("ACTIVE".equalsIgnoreCase(existing.getStatus())) {
+                throw new BusinessException("License already activated for this tenant: " + tenantId);
+            }
+            existing.setStatus("ACTIVE");
+            existing.setUpdatedAt(Instant.now());
+            existing.setUpdatedBy(actor);
+            License saved = licenseRepository.save(existing);
+            createHistory(saved, "ACTIVATED", existing.getStatus(), "ACTIVE", null, saved.getMaxUsers(), null, saved.getModules(), null, saved.getExpiryDate(), "License activated", actor);
+            publishAuditEvent(saved, "LICENSE_ACTIVATED", actor, "SUCCESS", null, null, snapshot(saved));
+            return mapToResponse(saved);
         }
 
         Map<String, Object> planClaims = safeMap(claims.get("plan"));
@@ -218,8 +250,7 @@ public class LicenseService {
     }
 
     private LicenseResponse applyTokenUpgrade(License license, Claims tokenClaims, String actor, String reason) {
-
-        if (!"ACTIVE".equals(license.getStatus())) {
+        if (!"ACTIVE".equals(license.getStatus()) && !"EXPIRED".equals(license.getStatus())) {
             throw new BusinessException("Cannot upgrade non-active license. Current status: " + license.getStatus());
         }
 
@@ -304,6 +335,7 @@ public class LicenseService {
             license.setUpgradeCount(0);
         }
         license.setUpgradeCount(license.getUpgradeCount() + 1);
+        license.setStatus("ACTIVE");
         license.setUpdatedAt(Instant.now());
         license.setUpdatedBy(actor);
 
@@ -366,26 +398,33 @@ public class LicenseService {
 
     @Transactional
     public void updateLicenseStatus(String licenseId, String status, String reason) {
+        updateLicenseStatus(licenseId, status, reason, "SYSTEM");
+    }
+
+    @Transactional
+    public void updateLicenseStatus(String licenseId, String status, String reason, String actor) {
         License license = licenseRepository.findById(licenseId)
                 .orElseThrow(() -> new ResourceNotFoundException("License not found: " + licenseId));
 
+        String effectiveActor = (actor != null && !actor.isBlank()) ? actor : "SYSTEM";
         String oldStatus = license.getStatus();
         license.setStatus(status);
         license.setUpdatedAt(Instant.now());
+        license.setUpdatedBy(effectiveActor);
         licenseRepository.save(license);
 
         // Log history
         createHistory(license, "STATUS_CHANGED", oldStatus, status,
                 null, null, null, null,
-                null, null, reason, "SYSTEM");
+                null, null, reason, effectiveActor);
 
         Map<String, Object> before = new HashMap<>();
         before.put("status", oldStatus);
         Map<String, Object> after = new HashMap<>();
         after.put("status", status);
-        publishAuditEvent(license, "LICENSE_STATUS_CHANGED", "SYSTEM", "SUCCESS", reason, before, after);
+        publishAuditEvent(license, "LICENSE_STATUS_CHANGED", effectiveActor, "SUCCESS", reason, before, after);
 
-        log.info("License {} status changed from {} to {}", licenseId, oldStatus, status);
+        log.info("License {} status changed from {} to {} by {}", licenseId, oldStatus, status, effectiveActor);
     }
 
     @Scheduled(cron = "0 0 * * * *") // Run every hour
@@ -408,6 +447,12 @@ public class LicenseService {
 
     public LicenseResponse getActiveLicenseByTenantId(String tenantId) {
         return mapToResponse(getActiveLicenseEntityByTenantId(tenantId));
+    }
+
+    public LicenseResponse getLicenseByTenantId(String tenantId) {
+        License license = licenseRepository.findByTenantIdAndIsDeletedFalse(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("License not found for tenant: " + tenantId));
+        return mapToResponse(license);
     }
 
     public ModuleResponse getModulesByTenantId(String tenantId) {
@@ -577,9 +622,41 @@ public class LicenseService {
     }
 
     private License findLicenseByEncryptedToken(String encryptedLicenseToken) {
-        Claims tokenClaims = parseAndValidateLicenseToken(encryptedLicenseToken);
-        String tenantId = tokenClaims.get("tenantId", String.class);
-        return getActiveLicenseEntityByTenantId(tenantId);
+        if (encryptedLicenseToken == null || encryptedLicenseToken.isBlank()) {
+            throw new BusinessException("encryptedLicenseToken is required");
+        }
+        try {
+            Claims tokenClaims = parseAndValidateLicenseToken(encryptedLicenseToken);
+            String tenantId = tokenClaims.get("tenantId", String.class);
+            if (tenantId != null && !tenantId.isBlank()) {
+                return licenseRepository.findByTenantIdAndIsDeletedFalse(tenantId)
+                        .orElseThrow(() -> new ResourceNotFoundException("License not found for tenant: " + tenantId));
+            }
+        } catch (Exception ex) {
+            // Check if raw licenseKey was supplied instead of signed JWT token
+            return licenseRepository.findByLicenseKeyAndIsDeletedFalse(encryptedLicenseToken)
+                    .orElseThrow(() -> new ResourceNotFoundException("License not found for token: " + ex.getMessage()));
+        }
+        throw new ResourceNotFoundException("License not found for token");
+    }
+
+    public String extractTenantIdFromToken(String token) {
+        if (token == null || token.isBlank()) {
+            return null;
+        }
+        try {
+            Claims claims = parseAndValidateLicenseToken(token);
+            return claims.get("tenantId", String.class);
+        } catch (Exception ex) {
+            return licenseRepository.findByLicenseKeyAndIsDeletedFalse(token)
+                    .map(this::resolveTenantId)
+                    .orElse(null);
+        }
+    }
+
+    public String getTenantIdByLicenseId(String licenseId) {
+        License license = refreshLicense(licenseId);
+        return resolveTenantId(license);
     }
 
     private License refreshLicense(String id) {
@@ -645,8 +722,12 @@ public class LicenseService {
                                               Integer validityYears, String planId,
                                               List<String> modules, Integer maxUsers,
                                               String reason, String actor) {
-        log.info("Renewing license for tenant: {} by actor: {}", tenantId, actor);
-        License license = getActiveLicenseEntityByTenantId(tenantId);
+        License license = licenseRepository.findByTenantIdAndIsDeletedFalse(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("License not found for tenant: " + tenantId));
+
+        if ("SUSPENDED".equalsIgnoreCase(license.getStatus())) {
+            throw new BusinessException("Cannot renew suspended license. Please reactivate first.");
+        }
 
         if (encryptedLicenseToken != null && !encryptedLicenseToken.isBlank()) {
             Claims tokenClaims = parseAndValidateLicenseToken(encryptedLicenseToken);
@@ -756,6 +837,8 @@ public class LicenseService {
 
         List<Path> candidates = List.of(
                 Path.of(privateKeyPath),
+                Path.of("backend/license_generation_module/keys/private_key.pem"),
+                Path.of("backend/license_generation_module/keys_txt/private_key.txt"),
                 Path.of("license_generation_module/keys/private_key.pem"),
                 Path.of("license_generation_module/keys_txt/private_key.txt"),
                 Path.of("ADAVIS_PLATFORM_BACKEND/license_generation_module/keys/private_key.pem"),
@@ -817,6 +900,8 @@ public class LicenseService {
 
         List<Path> candidates = List.of(
                 Path.of(publicKeyPath),
+                Path.of("backend/license_generation_module/keys/public_key.pem"),
+                Path.of("backend/license_generation_module/keys_txt/public_key.txt"),
                 Path.of("license_generation_module/keys/public_key.pem"),
                 Path.of("license_generation_module/keys_txt/public_key.txt"),
                 Path.of("ADAVIS_PLATFORM_BACKEND/license_generation_module/keys/public_key.pem"),
