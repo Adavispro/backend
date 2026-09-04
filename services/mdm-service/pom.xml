@@ -143,6 +143,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
                         <skipTests>${skipTests}</skipTests>
+                        <argLine>-XX:+EnableDynamicAgentLoading -Dnet.bytebuddy.experimental=true</argLine>
                     </configuration>
                 </plugin>
         </plugins>

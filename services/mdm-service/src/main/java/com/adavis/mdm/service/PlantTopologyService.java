@@ -2,6 +2,7 @@ package com.adavis.mdm.service;
 
 import com.adavis.common.exception.BusinessException;
 import com.adavis.common.exception.ResourceNotFoundException;
+import com.adavis.common.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.springframework.data.domain.Sort;
@@ -18,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -31,10 +33,12 @@ public class PlantTopologyService {
     private static final String AREAS_COLLECTION = "mdm_areas";
     private static final String ROOMS_COLLECTION = "mdm_rooms";
     private static final String USER_ASSIGNMENTS_COLLECTION = "mdm_user_context_assignments";
+    private static final String USER_PROFILES_COLLECTION = "mdm_user_profiles";
 
     private final MongoTemplate mongoTemplate;
     private final BusinessIdGeneratorService businessIdGeneratorService;
     private final AuditEventPublisher auditEventPublisher;
+    private final TopologyEsignatureService topologyEsignatureService;
 
     public Map<String, Object> createTenant(Map<String, Object> request, String actorUserId) {
         Map<String, Object> payload = normalizeTenantPayload(request, true);
@@ -107,191 +111,371 @@ public class PlantTopologyService {
     }
 
     public Map<String, Object> reactivatePlant(String plantId, String actorUserId) {
+        return reactivatePlant(plantId, null, actorUserId);
+    }
+
+    public Map<String, Object> reactivatePlant(String plantId, Map<String, Object> request, String actorUserId) {
+        Query query = new Query(Criteria.where("plantId").is(plantId));
+        Document existing = mongoTemplate.findOne(query, Document.class, PLANTS_COLLECTION);
+        if (existing == null) {
+            throw new ResourceNotFoundException("Resource", plantId);
+        }
+        Map<String, Object> before = toMap(existing);
+        String remarks = extractRemarks(request);
+        String tenantId = stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "PLANT_REACTIVATED", "MDM_PLANT", plantId, request, tenantId);
+
         Map<String, Object> reactivated = reactivateResource(PLANTS_COLLECTION, "plantId", plantId, false);
-        publishAudit(actorUserId, "PLANT_REACTIVATED", "MDM_PLANT", plantId,
-            resourceMetadata(reactivated, "plantCode"));
+        publishControlledAudit(actorUserId, "PLANT_REACTIVATED", "MDM_PLANT", plantId,
+            before, reactivated, resourceMetadata(reactivated, "plantCode"), remarks);
         return reactivated;
     }
 
     public Map<String, Object> reactivateBlock(String blockId, String actorUserId) {
+        return reactivateBlock(blockId, null, actorUserId);
+    }
+
+    public Map<String, Object> reactivateBlock(String blockId, Map<String, Object> request, String actorUserId) {
+        Query query = new Query(Criteria.where("blockId").is(blockId));
+        Document existing = mongoTemplate.findOne(query, Document.class, BLOCKS_COLLECTION);
+        if (existing == null) {
+            throw new ResourceNotFoundException("Resource", blockId);
+        }
+        Map<String, Object> before = toMap(existing);
+        String remarks = extractRemarks(request);
+        String tenantId = stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "BLOCK_REACTIVATED", "MDM_BLOCK", blockId, request, tenantId);
+
         Map<String, Object> reactivated = reactivateResource(BLOCKS_COLLECTION, "blockId", blockId, false);
-        publishAudit(actorUserId, "BLOCK_REACTIVATED", "MDM_BLOCK", blockId,
-            resourceMetadata(reactivated, "blockCode"));
+        publishControlledAudit(actorUserId, "BLOCK_REACTIVATED", "MDM_BLOCK", blockId,
+            before, reactivated, resourceMetadata(reactivated, "blockCode"), remarks);
         return reactivated;
     }
 
     public Map<String, Object> reactivateArea(String areaId, String actorUserId) {
+        return reactivateArea(areaId, null, actorUserId);
+    }
+
+    public Map<String, Object> reactivateArea(String areaId, Map<String, Object> request, String actorUserId) {
+        Query query = new Query(Criteria.where("areaId").is(areaId));
+        Document existing = mongoTemplate.findOne(query, Document.class, AREAS_COLLECTION);
+        if (existing == null) {
+            throw new ResourceNotFoundException("Resource", areaId);
+        }
+        Map<String, Object> before = toMap(existing);
+        String remarks = extractRemarks(request);
+        String tenantId = stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "AREA_REACTIVATED", "MDM_AREA", areaId, request, tenantId);
+
         Map<String, Object> reactivated = reactivateResource(AREAS_COLLECTION, "areaId", areaId, false);
-        publishAudit(actorUserId, "AREA_REACTIVATED", "MDM_AREA", areaId,
-            resourceMetadata(reactivated, "areaCode"));
+        publishControlledAudit(actorUserId, "AREA_REACTIVATED", "MDM_AREA", areaId,
+            before, reactivated, resourceMetadata(reactivated, "areaCode"), remarks);
         return reactivated;
     }
 
     public Map<String, Object> reactivateRoom(String roomId, String actorUserId) {
+        return reactivateRoom(roomId, null, actorUserId);
+    }
+
+    public Map<String, Object> reactivateRoom(String roomId, Map<String, Object> request, String actorUserId) {
+        Query query = new Query(Criteria.where("roomId").is(roomId));
+        Document existing = mongoTemplate.findOne(query, Document.class, ROOMS_COLLECTION);
+        if (existing == null) {
+            throw new ResourceNotFoundException("Resource", roomId);
+        }
+        Map<String, Object> before = toMap(existing);
+        String remarks = extractRemarks(request);
+        String tenantId = stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "ROOM_REACTIVATED", "MDM_ROOM", roomId, request, tenantId);
+
         Map<String, Object> reactivated = reactivateResource(ROOMS_COLLECTION, "roomId", roomId, false);
-        publishAudit(actorUserId, "ROOM_REACTIVATED", "MDM_ROOM", roomId,
-            resourceMetadata(reactivated, "roomCode"));
+        publishControlledAudit(actorUserId, "ROOM_REACTIVATED", "MDM_ROOM", roomId,
+            before, reactivated, resourceMetadata(reactivated, "roomCode"), remarks);
         return reactivated;
     }
 
     public Map<String, Object> createPlant(Map<String, Object> request, String actorUserId) {
+        String remarks = extractRemarks(request);
+        String tenantId = request != null ? stringValue(request.get("tenantId")) : null;
+        enforceControlledAction(actorUserId, "PLANT_CREATED", "MDM_PLANT", stringValue(request != null ? request.get("plantCode") : null), request, tenantId);
+
         Map<String, Object> payload = normalizeTopologyPayload(request);
         ensureUniqueFieldValue(PLANTS_COLLECTION, "plantCode", stringValue(payload.get("plantCode")), null, null);
         Map<String, Object> created = createResource(PLANTS_COLLECTION, payload, "plantId", "PLNT-", 4, null, Map.of(
             "isActive", true));
-        publishAudit(actorUserId, "PLANT_CREATED", "MDM_PLANT", stringValue(created.get("plantId")),
-            emptyAuditState(), created, resourceMetadata(created, "plantCode"));
+        publishControlledAudit(actorUserId, "PLANT_CREATED", "MDM_PLANT", stringValue(created.get("plantId")),
+            emptyAuditState(), created, resourceMetadata(created, "plantCode"), remarks);
         return created;
     }
 
     public List<Map<String, Object>> listPlants(Boolean isActive) {
-        return listResources(PLANTS_COLLECTION, Sort.by(Sort.Direction.ASC, "plantId", "plantCode"), isActive);
+        return listPlants(null, isActive, null);
+    }
+
+    public List<Map<String, Object>> listPlants(String tenantId, Boolean isActive) {
+        return listPlants(tenantId, isActive, null);
+    }
+
+    public List<Map<String, Object>> listPlants(String tenantId, Boolean isActive, String actorUserId) {
+        String effectiveTenantId = resolveEffectiveTenantId(actorUserId, tenantId);
+        return listResources(PLANTS_COLLECTION, Sort.by(Sort.Direction.ASC, "plantId", "plantCode"), isActive, effectiveTenantId);
     }
 
     public Map<String, Object> getPlant(String plantId) {
-        return getResource(PLANTS_COLLECTION, "plantId", plantId);
+        return getPlant(plantId, null);
+    }
+
+    public Map<String, Object> getPlant(String plantId, String actorUserId) {
+        Map<String, Object> resource = getResource(PLANTS_COLLECTION, "plantId", plantId);
+        verifyTenantAccess(actorUserId, stringValue(resource.get("tenantId")));
+        return resource;
     }
 
     public Map<String, Object> updatePlant(String plantId, Map<String, Object> request, String actorUserId) {
         Map<String, Object> before = getResource(PLANTS_COLLECTION, "plantId", plantId);
+        String remarks = extractRemarks(request);
+        String tenantId = request != null && request.containsKey("tenantId") ? stringValue(request.get("tenantId")) : stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "PLANT_UPDATED", "MDM_PLANT", plantId, request, tenantId);
+
         Map<String, Object> payload = normalizeTopologyPayload(request);
         ensureUniqueFieldValue(PLANTS_COLLECTION, "plantCode", stringValue(payload.get("plantCode")), "plantId", plantId);
         Map<String, Object> updated = updateResource(PLANTS_COLLECTION, "plantId", plantId, payload);
-        publishAudit(actorUserId, "PLANT_UPDATED", "MDM_PLANT", plantId,
-            before, updated, resourceMetadata(updated, "plantCode"));
+        publishControlledAudit(actorUserId, "PLANT_UPDATED", "MDM_PLANT", plantId,
+            before, updated, resourceMetadata(updated, "plantCode"), remarks);
         return updated;
     }
 
     public void deletePlant(String plantId, String actorUserId) {
+        deletePlant(plantId, null, actorUserId);
+    }
+
+    public void deletePlant(String plantId, Map<String, Object> request, String actorUserId) {
         Document existing = findActive(PLANTS_COLLECTION, "plantId", plantId);
         Map<String, Object> before = toMap(existing);
+        String remarks = extractRemarks(request);
+        String tenantId = stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "PLANT_DEACTIVATED", "MDM_PLANT", plantId, request, tenantId);
+
         Map<String, Object> metadata = resourceMetadata(before, "plantCode");
         deleteResource(PLANTS_COLLECTION, "plantId", plantId);
-        publishAudit(actorUserId, "PLANT_DELETED", "MDM_PLANT", plantId,
-            before, markInactive(before), metadata);
+        publishControlledAudit(actorUserId, "PLANT_DEACTIVATED", "MDM_PLANT", plantId,
+            before, markInactive(before), metadata, remarks);
     }
 
     public Map<String, Object> createBlock(Map<String, Object> request, String actorUserId) {
+        String remarks = extractRemarks(request);
+        String tenantId = request != null ? stringValue(request.get("tenantId")) : null;
+        enforceControlledAction(actorUserId, "BLOCK_CREATED", "MDM_BLOCK", stringValue(request != null ? request.get("blockCode") : null), request, tenantId);
+
         Map<String, Object> payload = normalizeTopologyPayload(request);
         String blockCode = stringValue(payload.get("blockCode"));
         requireTextField(blockCode, "blockCode", "BLOCK_CODE_REQUIRED");
         ensureUniqueFieldValue(BLOCKS_COLLECTION, "blockCode", blockCode, null, null);
         Map<String, Object> created = createResource(BLOCKS_COLLECTION, payload, "blockId", "BLK-", 4, Map.of("blockCode", "blockId"), Map.of(
             "isActive", true));
-        publishAudit(actorUserId, "BLOCK_CREATED", "MDM_BLOCK", stringValue(created.get("blockId")),
-            emptyAuditState(), created, resourceMetadata(created, "blockCode"));
+        publishControlledAudit(actorUserId, "BLOCK_CREATED", "MDM_BLOCK", stringValue(created.get("blockId")),
+            emptyAuditState(), created, resourceMetadata(created, "blockCode"), remarks);
         return created;
     }
 
     public List<Map<String, Object>> listBlocks(Boolean isActive) {
-        return listResources(BLOCKS_COLLECTION, Sort.by(Sort.Direction.ASC, "blockId", "blockCode"), isActive);
+        return listBlocks(null, isActive, null);
+    }
+
+    public List<Map<String, Object>> listBlocks(String tenantId, Boolean isActive) {
+        return listBlocks(tenantId, isActive, null);
+    }
+
+    public List<Map<String, Object>> listBlocks(String tenantId, Boolean isActive, String actorUserId) {
+        String effectiveTenantId = resolveEffectiveTenantId(actorUserId, tenantId);
+        return listResources(BLOCKS_COLLECTION, Sort.by(Sort.Direction.ASC, "blockId", "blockCode"), isActive, effectiveTenantId);
     }
 
     public Map<String, Object> getBlock(String blockId) {
-        return getResource(BLOCKS_COLLECTION, "blockId", blockId);
+        return getBlock(blockId, null);
+    }
+
+    public Map<String, Object> getBlock(String blockId, String actorUserId) {
+        Map<String, Object> resource = getResource(BLOCKS_COLLECTION, "blockId", blockId);
+        verifyTenantAccess(actorUserId, stringValue(resource.get("tenantId")));
+        return resource;
     }
 
     public Map<String, Object> updateBlock(String blockId, Map<String, Object> request, String actorUserId) {
         Map<String, Object> before = getResource(BLOCKS_COLLECTION, "blockId", blockId);
+        String remarks = extractRemarks(request);
+        String tenantId = request != null && request.containsKey("tenantId") ? stringValue(request.get("tenantId")) : stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "BLOCK_UPDATED", "MDM_BLOCK", blockId, request, tenantId);
+
         Map<String, Object> payload = normalizeTopologyPayload(request);
         String blockCode = stringValue(payload.get("blockCode"));
         requireTextField(blockCode, "blockCode", "BLOCK_CODE_REQUIRED");
         ensureUniqueFieldValue(BLOCKS_COLLECTION, "blockCode", blockCode, "blockId", blockId);
         Map<String, Object> updated = updateResource(BLOCKS_COLLECTION, "blockId", blockId, payload);
-        publishAudit(actorUserId, "BLOCK_UPDATED", "MDM_BLOCK", blockId,
-            before, updated, resourceMetadata(updated, "blockCode"));
+        publishControlledAudit(actorUserId, "BLOCK_UPDATED", "MDM_BLOCK", blockId,
+            before, updated, resourceMetadata(updated, "blockCode"), remarks);
         return updated;
     }
 
     public void deleteBlock(String blockId, String actorUserId) {
+        deleteBlock(blockId, null, actorUserId);
+    }
+
+    public void deleteBlock(String blockId, Map<String, Object> request, String actorUserId) {
         Document existing = findActive(BLOCKS_COLLECTION, "blockId", blockId);
         Map<String, Object> before = toMap(existing);
+        String remarks = extractRemarks(request);
+        String tenantId = stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "BLOCK_DEACTIVATED", "MDM_BLOCK", blockId, request, tenantId);
+
         Map<String, Object> metadata = resourceMetadata(before, "blockCode");
         deleteResource(BLOCKS_COLLECTION, "blockId", blockId);
-        publishAudit(actorUserId, "BLOCK_DELETED", "MDM_BLOCK", blockId,
-            before, markInactive(before), metadata);
+        publishControlledAudit(actorUserId, "BLOCK_DELETED", "MDM_BLOCK", blockId,
+            before, markInactive(before), metadata, remarks);
     }
 
     public Map<String, Object> createArea(Map<String, Object> request, String actorUserId) {
+        String remarks = extractRemarks(request);
+        String tenantId = request != null ? stringValue(request.get("tenantId")) : null;
+        enforceControlledAction(actorUserId, "AREA_CREATED", "MDM_AREA", stringValue(request != null ? request.get("areaCode") : null), request, tenantId);
+
         Map<String, Object> payload = normalizeTopologyPayload(request);
         String areaCode = stringValue(payload.get("areaCode"));
         requireTextField(areaCode, "areaCode", "AREA_CODE_REQUIRED");
         ensureUniqueFieldValue(AREAS_COLLECTION, "areaCode", areaCode, null, null);
         Map<String, Object> created = createResource(AREAS_COLLECTION, payload, "areaId", "AREA-", 4, Map.of("areaCode", "areaId"), Map.of(
             "isActive", true));
-        publishAudit(actorUserId, "AREA_CREATED", "MDM_AREA", stringValue(created.get("areaId")),
-            emptyAuditState(), created, resourceMetadata(created, "areaCode"));
+        publishControlledAudit(actorUserId, "AREA_CREATED", "MDM_AREA", stringValue(created.get("areaId")),
+            emptyAuditState(), created, resourceMetadata(created, "areaCode"), remarks);
         return created;
     }
 
     public List<Map<String, Object>> listAreas(Boolean isActive) {
-        return listResources(AREAS_COLLECTION, Sort.by(Sort.Direction.ASC, "areaId", "areaCode"), isActive);
+        return listAreas(null, isActive, null);
+    }
+
+    public List<Map<String, Object>> listAreas(String tenantId, Boolean isActive) {
+        return listAreas(tenantId, isActive, null);
+    }
+
+    public List<Map<String, Object>> listAreas(String tenantId, Boolean isActive, String actorUserId) {
+        String effectiveTenantId = resolveEffectiveTenantId(actorUserId, tenantId);
+        return listResources(AREAS_COLLECTION, Sort.by(Sort.Direction.ASC, "areaId", "areaCode"), isActive, effectiveTenantId);
     }
 
     public Map<String, Object> getArea(String areaId) {
-        return getResource(AREAS_COLLECTION, "areaId", areaId);
+        return getArea(areaId, null);
+    }
+
+    public Map<String, Object> getArea(String areaId, String actorUserId) {
+        Map<String, Object> resource = getResource(AREAS_COLLECTION, "areaId", areaId);
+        verifyTenantAccess(actorUserId, stringValue(resource.get("tenantId")));
+        return resource;
     }
 
     public Map<String, Object> updateArea(String areaId, Map<String, Object> request, String actorUserId) {
         Map<String, Object> before = getResource(AREAS_COLLECTION, "areaId", areaId);
+        String remarks = extractRemarks(request);
+        String tenantId = request != null && request.containsKey("tenantId") ? stringValue(request.get("tenantId")) : stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "AREA_UPDATED", "MDM_AREA", areaId, request, tenantId);
+
         Map<String, Object> payload = normalizeTopologyPayload(request);
         String areaCode = stringValue(payload.get("areaCode"));
         requireTextField(areaCode, "areaCode", "AREA_CODE_REQUIRED");
         ensureUniqueFieldValue(AREAS_COLLECTION, "areaCode", areaCode, "areaId", areaId);
         Map<String, Object> updated = updateResource(AREAS_COLLECTION, "areaId", areaId, payload);
-        publishAudit(actorUserId, "AREA_UPDATED", "MDM_AREA", areaId,
-            before, updated, resourceMetadata(updated, "areaCode"));
+        publishControlledAudit(actorUserId, "AREA_UPDATED", "MDM_AREA", areaId,
+            before, updated, resourceMetadata(updated, "areaCode"), remarks);
         return updated;
     }
 
     public void deleteArea(String areaId, String actorUserId) {
+        deleteArea(areaId, null, actorUserId);
+    }
+
+    public void deleteArea(String areaId, Map<String, Object> request, String actorUserId) {
         Document existing = findActive(AREAS_COLLECTION, "areaId", areaId);
         Map<String, Object> before = toMap(existing);
+        String remarks = extractRemarks(request);
+        String tenantId = stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "AREA_DEACTIVATED", "MDM_AREA", areaId, request, tenantId);
+
         Map<String, Object> metadata = resourceMetadata(before, "areaCode");
         deleteResource(AREAS_COLLECTION, "areaId", areaId);
-        publishAudit(actorUserId, "AREA_DELETED", "MDM_AREA", areaId,
-            before, markInactive(before), metadata);
+        publishControlledAudit(actorUserId, "AREA_DELETED", "MDM_AREA", areaId,
+            before, markInactive(before), metadata, remarks);
     }
 
     public Map<String, Object> createRoom(Map<String, Object> request, String actorUserId) {
+        String remarks = extractRemarks(request);
+        String tenantId = request != null ? stringValue(request.get("tenantId")) : null;
+        enforceControlledAction(actorUserId, "ROOM_CREATED", "MDM_ROOM", stringValue(request != null ? request.get("roomCode") : null), request, tenantId);
+
         Map<String, Object> payload = normalizeTopologyPayload(request);
         String roomCode = stringValue(payload.get("roomCode"));
         requireTextField(roomCode, "roomCode", "ROOM_CODE_REQUIRED");
         ensureUniqueFieldValue(ROOMS_COLLECTION, "roomCode", roomCode, null, null);
         Map<String, Object> created = createResource(ROOMS_COLLECTION, payload, "roomId", "ROOM-", 4, Map.of("roomCode", "roomId"), Map.of(
             "isActive", true));
-        publishAudit(actorUserId, "ROOM_CREATED", "MDM_ROOM", stringValue(created.get("roomId")),
-            emptyAuditState(), created, resourceMetadata(created, "roomCode"));
+        publishControlledAudit(actorUserId, "ROOM_CREATED", "MDM_ROOM", stringValue(created.get("roomId")),
+            emptyAuditState(), created, resourceMetadata(created, "roomCode"), remarks);
         return created;
     }
 
     public List<Map<String, Object>> listRooms(Boolean isActive) {
-        return listResources(ROOMS_COLLECTION, Sort.by(Sort.Direction.ASC, "roomId", "roomCode"), isActive);
+        return listRooms(null, isActive, null);
+    }
+
+    public List<Map<String, Object>> listRooms(String tenantId, Boolean isActive) {
+        return listRooms(tenantId, isActive, null);
+    }
+
+    public List<Map<String, Object>> listRooms(String tenantId, Boolean isActive, String actorUserId) {
+        String effectiveTenantId = resolveEffectiveTenantId(actorUserId, tenantId);
+        return listResources(ROOMS_COLLECTION, Sort.by(Sort.Direction.ASC, "roomId", "roomCode"), isActive, effectiveTenantId);
     }
 
     public Map<String, Object> getRoom(String roomId) {
-        return getResource(ROOMS_COLLECTION, "roomId", roomId);
+        return getRoom(roomId, null);
+    }
+
+    public Map<String, Object> getRoom(String roomId, String actorUserId) {
+        Map<String, Object> resource = getResource(ROOMS_COLLECTION, "roomId", roomId);
+        verifyTenantAccess(actorUserId, stringValue(resource.get("tenantId")));
+        return resource;
     }
 
     public Map<String, Object> updateRoom(String roomId, Map<String, Object> request, String actorUserId) {
         Map<String, Object> before = getResource(ROOMS_COLLECTION, "roomId", roomId);
+        String remarks = extractRemarks(request);
+        String tenantId = request != null && request.containsKey("tenantId") ? stringValue(request.get("tenantId")) : stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "ROOM_UPDATED", "MDM_ROOM", roomId, request, tenantId);
+
         Map<String, Object> payload = normalizeTopologyPayload(request);
         String roomCode = stringValue(payload.get("roomCode"));
         requireTextField(roomCode, "roomCode", "ROOM_CODE_REQUIRED");
         ensureUniqueFieldValue(ROOMS_COLLECTION, "roomCode", roomCode, "roomId", roomId);
         Map<String, Object> updated = updateResource(ROOMS_COLLECTION, "roomId", roomId, payload);
-        publishAudit(actorUserId, "ROOM_UPDATED", "MDM_ROOM", roomId,
-            before, updated, resourceMetadata(updated, "roomCode"));
+        publishControlledAudit(actorUserId, "ROOM_UPDATED", "MDM_ROOM", roomId,
+            before, updated, resourceMetadata(updated, "roomCode"), remarks);
         return updated;
     }
 
     public void deleteRoom(String roomId, String actorUserId) {
+        deleteRoom(roomId, null, actorUserId);
+    }
+
+    public void deleteRoom(String roomId, Map<String, Object> request, String actorUserId) {
         Document existing = findActive(ROOMS_COLLECTION, "roomId", roomId);
         Map<String, Object> before = toMap(existing);
+        String remarks = extractRemarks(request);
+        String tenantId = stringValue(before.get("tenantId"));
+        enforceControlledAction(actorUserId, "ROOM_DEACTIVATED", "MDM_ROOM", roomId, request, tenantId);
+
         Map<String, Object> metadata = resourceMetadata(before, "roomCode");
         deleteResource(ROOMS_COLLECTION, "roomId", roomId);
-        publishAudit(actorUserId, "ROOM_DELETED", "MDM_ROOM", roomId,
-            before, markInactive(before), metadata);
+        publishControlledAudit(actorUserId, "ROOM_DELETED", "MDM_ROOM", roomId,
+            before, markInactive(before), metadata, remarks);
     }
 
     public Map<String, Object> createAssignment(Map<String, Object> request) {
@@ -364,11 +548,18 @@ public class PlantTopologyService {
     }
 
     private List<Map<String, Object>> listResources(String collectionName, Sort sort, Boolean isActive) {
-        Query query;
+        return listResources(collectionName, sort, isActive, null);
+    }
+
+    private List<Map<String, Object>> listResources(String collectionName, Sort sort, Boolean isActive, String tenantId) {
+        Query query = new Query();
         if (isActive == null) {
-            query = new Query(Criteria.where("isActive").is(true));
+            query.addCriteria(Criteria.where("isActive").is(true));
         } else {
-            query = new Query(Criteria.where("isActive").is(isActive));
+            query.addCriteria(Criteria.where("isActive").is(isActive));
+        }
+        if (StringUtils.hasText(tenantId)) {
+            query.addCriteria(Criteria.where("tenantId").is(tenantId.trim()));
         }
         query.with(sort);
         return mongoTemplate.find(query, Document.class, collectionName).stream().map(this::toMap).toList();
@@ -389,7 +580,8 @@ public class PlantTopologyService {
             });
         }
         existing.put("updatedAt", Date.from(Instant.now()));
-        return toMap(mongoTemplate.save(existing, collectionName));
+        Document saved = mongoTemplate.save(existing, collectionName);
+        return toMap(saved != null ? saved : existing);
     }
 
     private void deleteResource(String collectionName, String idField, String idValue) {
@@ -416,7 +608,8 @@ public class PlantTopologyService {
             existing.put("status", "Active");
         }
         existing.put("updatedAt", Date.from(Instant.now()));
-        return toMap(mongoTemplate.save(existing, collectionName));
+        Document saved = mongoTemplate.save(existing, collectionName);
+        return toMap(saved != null ? saved : existing);
     }
 
     private boolean exists(String collectionName, String idField, String idValue) {
@@ -503,6 +696,121 @@ public class PlantTopologyService {
         }
         return metadata;
     }
+    private String extractRemarks(Map<String, Object> request) {
+        if (request == null) return null;
+        Object remarks = request.get("remarks");
+        if (remarks == null) remarks = request.get("remark");
+        if (remarks == null) remarks = request.get("reason");
+        return remarks == null ? null : String.valueOf(remarks);
+    }
+
+    private String extractPassword(Map<String, Object> request) {
+        if (request == null) return null;
+        Object pass = request.get("password");
+        if (pass == null) pass = request.get("esignaturePassword");
+        if (pass == null) pass = request.get("signaturePassword");
+        return pass == null ? null : String.valueOf(pass);
+    }
+
+    private String resolveActingUserId(String actorUserId) {
+        if (StringUtils.hasText(actorUserId) && !"SYSTEM".equalsIgnoreCase(actorUserId.trim())) {
+            return actorUserId.trim();
+        }
+        throw new UnauthorizedException("Authenticated user context is required for electronic signature.", "AUTH_CONTEXT_REQUIRED");
+    }
+
+    public void verifyTenantAccess(String actorUserId, String targetTenantId) {
+        if (!StringUtils.hasText(actorUserId) || "SUPER_ADMIN".equalsIgnoreCase(actorUserId.trim())) {
+            return;
+        }
+        if (!StringUtils.hasText(targetTenantId)) {
+            return;
+        }
+        Query query = new Query(new Criteria().orOperator(
+                Criteria.where("userId").regex("^" + Pattern.quote(actorUserId.trim()) + "$", "i"),
+                Criteria.where("username").regex("^" + Pattern.quote(actorUserId.trim()) + "$", "i")
+        ));
+        Document profile = mongoTemplate.findOne(query, Document.class, USER_PROFILES_COLLECTION);
+        if (profile != null) {
+            String title = profile.getString("title");
+            if (title != null && (title.equalsIgnoreCase("Super Admin") || title.equalsIgnoreCase("Platform Super Administrator"))) {
+                return;
+            }
+            String userTenantId = profile.getString("tenantId");
+            if (userTenantId != null && !userTenantId.equalsIgnoreCase(targetTenantId.trim())) {
+                throw new BusinessException("Access to tenant " + targetTenantId + " is forbidden.", "FORBIDDEN");
+            }
+        }
+    }
+
+    private String resolveEffectiveTenantId(String actorUserId, String requestedTenantId) {
+        if (!StringUtils.hasText(actorUserId) || "SUPER_ADMIN".equalsIgnoreCase(actorUserId.trim())) {
+            return requestedTenantId;
+        }
+        Query query = new Query(new Criteria().orOperator(
+                Criteria.where("userId").regex("^" + Pattern.quote(actorUserId.trim()) + "$", "i"),
+                Criteria.where("username").regex("^" + Pattern.quote(actorUserId.trim()) + "$", "i")
+        ));
+        Document profile = mongoTemplate.findOne(query, Document.class, USER_PROFILES_COLLECTION);
+        if (profile != null) {
+            String title = profile.getString("title");
+            if (title != null && (title.equalsIgnoreCase("Super Admin") || title.equalsIgnoreCase("Platform Super Administrator"))) {
+                return requestedTenantId;
+            }
+            String userTenantId = profile.getString("tenantId");
+            if (StringUtils.hasText(requestedTenantId) && userTenantId != null && !userTenantId.equalsIgnoreCase(requestedTenantId.trim())) {
+                throw new BusinessException("Access to tenant " + requestedTenantId + " is forbidden.", "FORBIDDEN");
+            }
+            return userTenantId != null ? userTenantId : requestedTenantId;
+        }
+        return requestedTenantId;
+    }
+
+    private void enforceControlledAction(
+            String actorUserId,
+            String action,
+            String entity,
+            String entityId,
+            Map<String, Object> request,
+            String tenantId) {
+        String remarks = extractRemarks(request);
+        topologyEsignatureService.validateRemarks(remarks);
+
+        String actingUser = resolveActingUserId(actorUserId);
+        verifyTenantAccess(actingUser, tenantId);
+
+        String password = extractPassword(request);
+        topologyEsignatureService.verifyEsignature(actingUser, password, action + " on " + entity + " " + (entityId != null ? entityId : ""), tenantId);
+    }
+
+    private void publishControlledAudit(
+            String actorUserId,
+            String action,
+            String entity,
+            String entityId,
+            Map<String, Object> before,
+            Map<String, Object> after,
+            Map<String, Object> metadata,
+            String remarks) {
+        Map<String, Object> finalMetadata = new LinkedHashMap<>(metadata == null ? Map.of() : metadata);
+        if (StringUtils.hasText(remarks)) {
+            finalMetadata.put("remarks", remarks.trim());
+        }
+        finalMetadata.put("esignatureVerified", true);
+        finalMetadata.put("complianceStandard", "21_CFR_PART_11");
+        finalMetadata.put("verifiedAt", Instant.now().toString());
+
+        auditEventPublisher.publish(
+            resolveAuditActor(actorUserId),
+            action,
+            entity,
+            entityId,
+            "SUCCESS",
+            before == null ? emptyAuditState() : before,
+            after == null ? emptyAuditState() : after,
+            finalMetadata
+        );
+    }
 
     private Map<String, Object> normalizeTenantPayload(Map<String, Object> request, boolean isCreate) {
         Map<String, Object> payload = new LinkedHashMap<>(request == null ? Map.of() : request);
@@ -521,6 +829,9 @@ public class PlantTopologyService {
     private Map<String, Object> normalizeTopologyPayload(Map<String, Object> request) {
         Map<String, Object> payload = new LinkedHashMap<>(request == null ? Map.of() : request);
         payload.remove("status");
+        payload.remove("password");
+        payload.remove("esignaturePassword");
+        payload.remove("signaturePassword");
         return payload;
     }
 

@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -63,8 +64,15 @@ public class MdmAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 2. Resolve acting user ID
+        // 2. Resolve acting user ID and tenant ID
         String userId = resolveUserId(request);
+        if (userId != null && !userId.isBlank()) {
+            request.setAttribute("authenticatedUserId", userId.trim());
+            String tenantId = resolveTenantId(request, userId.trim());
+            if (tenantId != null && !tenantId.isBlank()) {
+                request.setAttribute("authenticatedTenantId", tenantId.trim());
+            }
+        }
 
         // 3. Pure internal service-to-service requests (only without user context)
         String internalAuth = request.getHeader("X-Internal-Auth");
@@ -131,9 +139,14 @@ public class MdmAuthorizationFilter extends OncePerRequestFilter {
     }
 
     private String resolveUserId(HttpServletRequest request) {
-        String headerUserId = request.getHeader("X-User-Id");
-        if (headerUserId != null && !headerUserId.isBlank()) {
-            return headerUserId.trim();
+        String internalAuth = request.getHeader("X-Internal-Auth");
+        boolean isTrustedGatewayCall = internalAuthHeaderValue != null && internalAuthHeaderValue.equals(internalAuth);
+
+        if (isTrustedGatewayCall) {
+            String headerUserId = request.getHeader("X-User-Id");
+            if (headerUserId != null && !headerUserId.isBlank()) {
+                return headerUserId.trim();
+            }
         }
 
         String authHeader = request.getHeader("Authorization");
@@ -148,6 +161,30 @@ public class MdmAuthorizationFilter extends OncePerRequestFilter {
                 }
             } catch (Exception e) {
                 log.debug("JWT token validation in MdmAuthorizationFilter failed: {}", e.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private String resolveTenantId(HttpServletRequest request, String userId) {
+        String internalAuth = request.getHeader("X-Internal-Auth");
+        boolean isTrustedGatewayCall = internalAuthHeaderValue != null && internalAuthHeaderValue.equals(internalAuth);
+
+        if (isTrustedGatewayCall) {
+            String headerTenantId = request.getHeader("X-Tenant-Id");
+            if (headerTenantId != null && !headerTenantId.isBlank()) {
+                return headerTenantId.trim();
+            }
+        }
+
+        if (userId != null && !userId.isBlank()) {
+            Query query = new Query(new Criteria().orOperator(
+                    Criteria.where("userId").regex("^" + Pattern.quote(userId.trim()) + "$", "i"),
+                    Criteria.where("username").regex("^" + Pattern.quote(userId.trim()) + "$", "i")
+            ));
+            Document profile = mongoTemplate.findOne(query, Document.class, USER_PROFILES_COLLECTION);
+            if (profile != null) {
+                return profile.getString("tenantId");
             }
         }
         return null;
