@@ -12,8 +12,6 @@ import com.adavis.dto.auth.response.LoginInitiateResponse;
 import com.adavis.dto.auth.response.SessionResponse;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -26,9 +24,9 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping({"/api/v1/auth", "/api/auth"})
-@RequiredArgsConstructor
-@Slf4j
 public class AuthenticationController {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthenticationController.class);
 
     private static final Pattern JSON_FIELD_PATTERN_TEMPLATE =
             Pattern.compile("\"%s\"\\s*:\\s*(?:\"([^\"]*)\"|([^,}\\r\\n]+))");
@@ -36,6 +34,14 @@ public class AuthenticationController {
     private final AuthenticationService authService;
     private final PasswordPolicyService passwordPolicyService;
     private final SessionService sessionService;
+
+    public AuthenticationController(AuthenticationService authService,
+                                    PasswordPolicyService passwordPolicyService,
+                                    SessionService sessionService) {
+        this.authService = authService;
+        this.passwordPolicyService = passwordPolicyService;
+        this.sessionService = sessionService;
+    }
 
     // ============================================
     // LOGIN FLOW
@@ -102,6 +108,19 @@ public class AuthenticationController {
         String userId = authService.getCurrentUser(token).getUserId();
         List<SessionResponse> sessions = sessionService.getActiveSessions(userId);
         return ResponseEntity.ok(ApiResponse.success("Active sessions fetched successfully", sessions));
+    }
+
+    /**
+     * Heartbeat - extend active session activity
+     */
+    @PostMapping({"/session/heartbeat", "/heartbeat"})
+    public ResponseEntity<ApiResponse<SessionResponse>> heartbeat(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            HttpServletRequest httpRequest) {
+        String deviceInfo = httpRequest.getHeader("User-Agent");
+        String ipAddress = getClientIp(httpRequest);
+        SessionResponse response = authService.heartbeat(token, ipAddress, deviceInfo);
+        return ResponseEntity.ok(ApiResponse.success("Session heartbeat updated", response));
     }
 
     /**

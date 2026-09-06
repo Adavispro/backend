@@ -13,6 +13,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import com.adavis.common.exception.UnauthorizedException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -230,5 +232,108 @@ class SessionServiceTest {
 
         assertFalse(expiredSession.getIsActive());
         verify(sessionRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    void testHeartbeatSession_Success() {
+        Instant now = Instant.now();
+        Session activeSession = Session.builder()
+                .id("sess-hb-1")
+                .sessionId("sess-hb-1")
+                .userId("USR-001")
+                .tenantId("TNT-0001")
+                .lastActivity(now.minusSeconds(300))
+                .expiresAt(now.plusSeconds(900))
+                .isActive(true)
+                .build();
+
+        when(sessionRepository.findById("sess-hb-1")).thenReturn(Optional.of(activeSession));
+        when(sessionRepository.save(any(Session.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Session result = sessionService.heartbeatSession("sess-hb-1", "USR-001", "127.0.0.1", "Chrome");
+
+        assertNotNull(result);
+        assertEquals("sess-hb-1", result.getSessionId());
+        assertTrue(result.getLastActivity().isAfter(now.minusSeconds(5)));
+        assertTrue(result.getExpiresAt().isAfter(now.plusSeconds(1700)));
+        verify(sessionRepository, times(1)).save(activeSession);
+    }
+
+    @Test
+    void testHeartbeatSession_InactiveSession_ThrowsUnauthorized() {
+        Session inactiveSession = Session.builder()
+                .id("sess-hb-2")
+                .sessionId("sess-hb-2")
+                .userId("USR-001")
+                .tenantId("TNT-0001")
+                .lastActivity(Instant.now().minusSeconds(600))
+                .expiresAt(Instant.now().plusSeconds(900))
+                .isActive(false)
+                .build();
+
+        when(sessionRepository.findById("sess-hb-2")).thenReturn(Optional.of(inactiveSession));
+
+        assertThrows(UnauthorizedException.class, () ->
+                sessionService.heartbeatSession("sess-hb-2", "USR-001", "127.0.0.1", "Chrome"));
+    }
+
+    @Test
+    void testHeartbeatSession_ExpiredSession_ThrowsUnauthorized() {
+        Instant now = Instant.now();
+        Session expiredSession = Session.builder()
+                .id("sess-hb-3")
+                .sessionId("sess-hb-3")
+                .userId("USR-001")
+                .tenantId("TNT-0001")
+                .lastActivity(now.minusSeconds(600))
+                .expiresAt(now.minusSeconds(10)) // Expired
+                .isActive(true)
+                .build();
+
+        when(sessionRepository.findById("sess-hb-3")).thenReturn(Optional.of(expiredSession));
+
+        assertThrows(UnauthorizedException.class, () ->
+                sessionService.heartbeatSession("sess-hb-3", "USR-001", "127.0.0.1", "Chrome"));
+    }
+
+    @Test
+    void testHeartbeatSession_UserMismatch_ThrowsUnauthorized() {
+        Session session = Session.builder()
+                .id("sess-hb-4")
+                .sessionId("sess-hb-4")
+                .userId("USR-OTHER")
+                .tenantId("TNT-0001")
+                .lastActivity(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(1800))
+                .isActive(true)
+                .build();
+
+        when(sessionRepository.findById("sess-hb-4")).thenReturn(Optional.of(session));
+
+        assertThrows(UnauthorizedException.class, () ->
+                sessionService.heartbeatSession("sess-hb-4", "USR-001", "127.0.0.1", "Chrome"));
+    }
+
+    @Test
+    void testHeartbeatSession_FallbackToActiveSessionByUserId() {
+        Instant now = Instant.now();
+        Session activeSession = Session.builder()
+                .id("sess-hb-5")
+                .sessionId("sess-hb-5")
+                .userId("USR-001")
+                .ipAddress("192.168.1.100")
+                .lastActivity(now.minusSeconds(120))
+                .expiresAt(now.plusSeconds(1000))
+                .isActive(true)
+                .build();
+
+        when(sessionRepository.findByUserIdAndIsActiveTrue("USR-001")).thenReturn(List.of(activeSession));
+        when(sessionRepository.save(any(Session.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Session result = sessionService.heartbeatSession(null, "USR-001", "192.168.1.100", "Mozilla");
+
+        assertNotNull(result);
+        assertEquals("sess-hb-5", result.getSessionId());
+        verify(sessionRepository, times(1)).save(activeSession);
     }
 }

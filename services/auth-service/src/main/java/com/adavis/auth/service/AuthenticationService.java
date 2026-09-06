@@ -12,8 +12,8 @@ import com.adavis.common.exception.UnauthorizedException;
 import com.adavis.dto.auth.response.AuthResponse;
 import com.adavis.dto.auth.response.CurrentUserResponse;
 import com.adavis.dto.auth.response.LoginInitiateResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.adavis.dto.auth.response.SessionResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -38,11 +38,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class AuthenticationService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthenticationService.class);
 
     private final UserRepository userRepository;
     private final CredentialRepository credentialRepository;
@@ -54,6 +54,28 @@ public class AuthenticationService {
     private final AuditEventPublisher auditEventPublisher;
     private final RedisTemplate<String, String> redisTemplate;
     private final MongoTemplate mongoTemplate;
+
+    public AuthenticationService(UserRepository userRepository,
+                                 CredentialRepository credentialRepository,
+                                 SessionRepository sessionRepository,
+                                 PasswordEncoder passwordEncoder,
+                                 JwtService jwtService,
+                                 SessionService sessionService,
+                                 PasswordPolicyService passwordPolicyService,
+                                 AuditEventPublisher auditEventPublisher,
+                                 @Qualifier("redisTemplate") RedisTemplate<String, String> redisTemplate,
+                                 MongoTemplate mongoTemplate) {
+        this.userRepository = userRepository;
+        this.credentialRepository = credentialRepository;
+        this.sessionRepository = sessionRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.sessionService = sessionService;
+        this.passwordPolicyService = passwordPolicyService;
+        this.auditEventPublisher = auditEventPublisher;
+        this.redisTemplate = redisTemplate;
+        this.mongoTemplate = mongoTemplate;
+    }
 
     private static final String BLACKLIST_PREFIX = "blacklist:";
     private static final String SUPER_ADMIN_USER_ID = "SUPER_ADMIN";
@@ -438,7 +460,45 @@ public class AuthenticationService {
         }
     }
 
-    private boolean isTokenBlacklisted(String token) {
+    public SessionResponse heartbeat(String token, String ipAddress, String deviceInfo) {
+        String bearerToken = token;
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            bearerToken = bearerToken.substring(7);
+        }
+
+        if (bearerToken == null || bearerToken.isBlank()) {
+            throw new UnauthorizedException("Authorization token is required");
+        }
+
+        if (!jwtService.validateToken(bearerToken)) {
+            throw new UnauthorizedException("Invalid access token");
+        }
+
+        if (isTokenBlacklisted(bearerToken)) {
+            throw new UnauthorizedException("Token has been revoked");
+        }
+
+        Date expiry = jwtService.getExpirationDate(bearerToken);
+        if (expiry != null && expiry.before(new Date())) {
+            throw new UnauthorizedException("Token has expired");
+        }
+
+        String userId = jwtService.extractUserId(bearerToken);
+        String sessionId = jwtService.extractSessionId(bearerToken);
+
+        if (userId == null || userId.isBlank()) {
+            throw new UnauthorizedException("User identity missing from token");
+        }
+
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+        validateUserCanLogin(user);
+
+        Session session = sessionService.heartbeatSession(sessionId, userId, ipAddress, deviceInfo);
+        return sessionService.toResponse(session);
+    }
+
+    public boolean isTokenBlacklisted(String token) {
         return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + token));
     }
 

@@ -3,9 +3,8 @@ package com.adavis.auth.service;
 import com.adavis.auth.model.entity.Session;
 import com.adavis.auth.repository.SessionRepository;
 import com.adavis.auth.model.entity.User;
+import com.adavis.common.exception.UnauthorizedException;
 import com.adavis.dto.auth.response.SessionResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,14 +19,19 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class SessionService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SessionService.class);
+
     private final SessionRepository sessionRepository;
     private final AuditEventPublisher auditEventPublisher;
+
+    public SessionService(SessionRepository sessionRepository, AuditEventPublisher auditEventPublisher) {
+        this.sessionRepository = sessionRepository;
+        this.auditEventPublisher = auditEventPublisher;
+    }
 
     @Value("${session.timeout-minutes:30}")
     private int sessionTimeoutMinutes;
@@ -227,7 +231,66 @@ public class SessionService {
         );
     }
 
-    private SessionResponse toResponse(Session session) {
+    public Session heartbeatSession(String sessionId, String userId, String ipAddress, String deviceInfo) {
+        expireSessions();
+
+        if (userId == null || userId.isBlank()) {
+            throw new UnauthorizedException("User context is required");
+        }
+
+        Session session = null;
+        if (sessionId != null && !sessionId.isBlank()) {
+            session = sessionRepository.findById(sessionId).orElse(null);
+        }
+
+        if (session == null) {
+            List<Session> activeSessions = sessionRepository.findByUserIdAndIsActiveTrue(userId);
+            if (!activeSessions.isEmpty()) {
+                session = activeSessions.stream()
+                        .filter(s -> ipAddress != null && ipAddress.equals(s.getIpAddress()))
+                        .max(Comparator.comparing(Session::getLastActivity, Comparator.nullsLast(Comparator.naturalOrder())))
+                        .orElseGet(() -> activeSessions.stream()
+                                .max(Comparator.comparing(Session::getLastActivity, Comparator.nullsLast(Comparator.naturalOrder())))
+                                .orElse(activeSessions.get(0)));
+            }
+        }
+
+        if (session == null) {
+            throw new UnauthorizedException("No active session found for user");
+        }
+
+        if (!Boolean.TRUE.equals(session.getIsActive())) {
+            throw new UnauthorizedException("Session is inactive");
+        }
+
+        if (session.getUserId() != null && !session.getUserId().equalsIgnoreCase(userId)) {
+            throw new UnauthorizedException("Session does not belong to user");
+        }
+
+        Instant now = Instant.now();
+        if (session.getExpiresAt() != null && session.getExpiresAt().isBefore(now)) {
+            session.setIsActive(false);
+            sessionRepository.save(session);
+            publishSessionAudit("SESSION_EXPIRED", session);
+            throw new UnauthorizedException("Session has expired");
+        }
+
+        session.setLastActivity(now);
+        session.setExpiresAt(now.plusSeconds(sessionTimeoutMinutes * 60L));
+        if (deviceInfo != null && !deviceInfo.isBlank()) {
+            session.setDeviceInfo(deviceInfo);
+        }
+        if (ipAddress != null && !ipAddress.isBlank()) {
+            session.setIpAddress(ipAddress);
+        }
+
+        Session saved = sessionRepository.save(session);
+        publishSessionAudit("SESSION_HEARTBEAT", saved);
+        log.info("Heartbeat received for session {} user {}", saved.getSessionId(), userId);
+        return saved;
+    }
+
+    public SessionResponse toResponse(Session session) {
         return SessionResponse.builder()
                 .sessionId(session.getSessionId())
                 .userId(session.getUserId())
