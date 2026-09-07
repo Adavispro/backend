@@ -33,10 +33,10 @@ public class SessionService {
         this.auditEventPublisher = auditEventPublisher;
     }
 
-    @Value("${session.timeout-minutes:30}")
+    @Value("${session.timeout-minutes:120}")
     private int sessionTimeoutMinutes;
 
-    @Value("${session.idle-threshold-minutes:10}")
+    @Value("${session.idle-threshold-minutes:120}")
     private int idleThresholdMinutes;
 
     // ✅ This method exists and is used by AuthService
