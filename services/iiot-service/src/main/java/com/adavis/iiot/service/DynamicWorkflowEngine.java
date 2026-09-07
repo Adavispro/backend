@@ -971,11 +971,11 @@ public class DynamicWorkflowEngine {
             approval.put("deferralReason", effectiveComment);
         } else if ("UNDER_REVIEW".equalsIgnoreCase(targetStatus)) {
             approval.put("assignedRole", "PRODUCTION_REVIEWER");
-            if (!supervisorName.isEmpty()) {
-                approval.put("assignedTo", supervisorName);
-            } else {
-                approval.remove("assignedTo");
-            }
+            approval.remove("assignedTo");
+            approval.remove("activeReviewer");
+            approval.remove("activeReviewerRole");
+            approval.remove("claimedAt");
+            summary.remove("assignedTo");
             if ("SEND_FOR_REVIEW".equalsIgnoreCase(actionCode) || "SUBMIT_FOR_REVIEW".equalsIgnoreCase(actionCode)) {
                 approval.put("requestedBy", userId);
                 approval.put("requestedAt", now);
@@ -994,11 +994,11 @@ public class DynamicWorkflowEngine {
             approval.put("assignedRole", "QA_APPROVER");
             approval.put("reviewedBy", userId);
             approval.put("reviewedAt", now);
-            if (!supervisorName.isEmpty()) {
-                approval.put("assignedTo", supervisorName);
-            } else {
-                approval.remove("assignedTo");
-            }
+            approval.remove("assignedTo");
+            approval.remove("activeReviewer");
+            approval.remove("activeReviewerRole");
+            approval.remove("claimedAt");
+            summary.remove("assignedTo");
             if ("SUBMIT_RESPONSE".equalsIgnoreCase(actionCode) || "SUBMIT_JUSTIFICATION".equalsIgnoreCase(actionCode) || "PROVIDE_ADDITIONAL_INFO".equalsIgnoreCase(actionCode)) {
                 approval.put("responseProvidedBy", userId);
                 approval.put("responseProvidedAt", now);
@@ -1011,6 +1011,9 @@ public class DynamicWorkflowEngine {
             approval.put("assignedRole", "PRODUCTION_OPERATOR");
             approval.remove("assignedTo");
             approval.remove("activeReviewer");
+            approval.remove("activeReviewerRole");
+            approval.remove("claimedAt");
+            summary.remove("assignedTo");
             approval.put("returnedFromStage", targetAction.getFromStageCode());
             approval.put("rejectedBy", userId);
             approval.put("rejectedAt", now);
@@ -1038,10 +1041,10 @@ public class DynamicWorkflowEngine {
             instance.setLastActionCode(actionCode);
             instance.setLastActionBy(userId);
             instance.setLastActionAt(now.toInstant());
-            if ("RETURNED_TO_OPERATOR".equalsIgnoreCase(targetStatus) || "REJECTED".equalsIgnoreCase(targetStatus)) {
-                instance.setAssignedTo(null);
+            if ("APPROVED".equalsIgnoreCase(targetStatus)) {
+                instance.setAssignedTo(userId);
             } else {
-                instance.setAssignedTo(!supervisorName.isEmpty() ? supervisorName : null);
+                instance.setAssignedTo(null);
             }
             instance.setIsTerminal("APPROVED".equalsIgnoreCase(targetStatus));
             instance.setUpdatedAt(now.toInstant());
@@ -1207,61 +1210,34 @@ public class DynamicWorkflowEngine {
     // DASHBOARD COUNTS
     // ============================================
 
-    public Map<String, Object> getDashboardCounts(String userId, String userRole, String tenantId, String plantId) {
+    public Map<String, Object> getDashboardCounts(
+            String userId, String userRole, String tenantId, String plantId) {
+
         userId = userId != null ? userId.trim() : "SYSTEM";
         userRole = userRole != null && !userRole.isBlank() ? userRole.toUpperCase(Locale.ROOT).trim() : resolveUserRoleCode(userId);
 
-        Query query = new Query();
-        if (tenantId != null && !tenantId.isBlank()) {
-            query.addCriteria(new Criteria().orOperator(
-                    Criteria.where("tenantId").is(tenantId),
-                    Criteria.where("tenantId").exists(false),
-                    Criteria.where("tenantId").is(null)
-            ));
-        }
-
-        List<Document> summaries = mongoTemplate.find(query, Document.class, BATCH_SUMMARY_COLLECTION);
-
-        int pendingMyAction = 0;
+        List<Map<String, Object>> myActions = getMyActions(userId, userRole, tenantId, plantId, Collections.emptyMap());
+        int pendingMyAction = myActions.size();
         int pendingReview = 0;
         int pendingApproval = 0;
         int completedActions = 0;
 
-        for (Document summary : summaries) {
-            String batchNo = summary.getString("batchNo");
-            String lotNo = summary.getString("lotNo");
-            @SuppressWarnings("unchecked")
-            List<Document> stages = (List<Document>) summary.get("stages");
-            if (stages == null) continue;
+        for (Map<String, Object> item : myActions) {
+            String status = (String) item.get("rawStatus");
+            if (status == null) status = "PENDING";
+            status = status.toUpperCase(Locale.ROOT);
 
-            for (Document stage : stages) {
-                String equipmentCode = stage.getString("equipmentCode");
-                Document approval = stage.get("approval", Document.class);
-                String status = approval != null && approval.getString("status") != null 
-                        ? approval.getString("status").toUpperCase(Locale.ROOT) : "PENDING";
-
-                if ("UNDER_REVIEW".equals(status) || "IN_REVIEW".equals(status)) {
-                    pendingReview++;
-                } else if ("REVIEWER_REVIEWED".equals(status) || "PENDING_APPROVAL".equals(status)) {
-                    pendingApproval++;
-                } else if ("APPROVED".equals(status) || "REJECTED".equals(status) || "DEFERRED".equals(status)) {
-                    completedActions++;
-                }
-
-                // Check if actionable for this user
-                List<AllowedActionDto> allowed = getAllowedActions(
-                        userId, userRole, tenantId, plantId, batchNo, lotNo, equipmentCode);
-                if (!allowed.isEmpty()) {
-                    pendingMyAction++;
-                }
+            if ("UNDER_REVIEW".equals(status) || "IN_REVIEW".equals(status)) {
+                pendingReview++;
+            } else if ("REVIEWER_REVIEWED".equals(status) || "PENDING_APPROVAL".equals(status)) {
+                pendingApproval++;
+            } else if ("APPROVED".equals(status) || "COMPLETED".equals(status)) {
+                completedActions++;
             }
         }
 
-        // Synchronize pendingMyAction strictly with getMyActions
-        int myActionsCount = getMyActions(userId, userRole, tenantId, plantId, Collections.emptyMap()).size();
-
         Map<String, Object> counts = new LinkedHashMap<>();
-        counts.put("pendingMyAction", myActionsCount);
+        counts.put("pendingMyAction", pendingMyAction);
         counts.put("pendingReview", pendingReview);
         counts.put("pendingApproval", pendingApproval);
         counts.put("completedActions", completedActions);
@@ -1374,8 +1350,8 @@ public class DynamicWorkflowEngine {
                     }
                 }
 
-                // If already claimed by another user, exclude from pending available queue
-                if (assignedTo != null && !assignedTo.isBlank() && (userId == null || !assignedTo.equalsIgnoreCase(userId))) {
+                // Pending Batches is the unassigned group queue: If already claimed by any user, exclude from pending queue
+                if (assignedTo != null && !assignedTo.isBlank()) {
                     continue;
                 }
 
@@ -1529,9 +1505,14 @@ public class DynamicWorkflowEngine {
                 String rawStatus = approval != null && approval.getString("status") != null
                         ? approval.getString("status").toUpperCase(Locale.ROOT) : "PENDING";
 
-                // Exclude terminal stages
-                if ("APPROVED".equals(rawStatus) || "COMPLETED".equals(rawStatus) || "DEFERRED".equals(rawStatus) || "REJECTED".equals(rawStatus)) {
-                    continue;
+                // Exclude terminal stages unless approved/completed by this user
+                boolean isTerminal = "APPROVED".equals(rawStatus) || "COMPLETED".equals(rawStatus) || "DEFERRED".equals(rawStatus) || "REJECTED".equals(rawStatus);
+                if (isTerminal) {
+                    boolean isApprovedByMe = ("APPROVED".equals(rawStatus) || "COMPLETED".equals(rawStatus)) && approval != null
+                            && (userId.equalsIgnoreCase(approval.getString("approvedBy")) || userId.equalsIgnoreCase(approval.getString("transitionedBy")));
+                    if (!isApprovedByMe) {
+                        continue;
+                    }
                 }
 
                 // Check if assigned to this user
@@ -1546,7 +1527,7 @@ public class DynamicWorkflowEngine {
                     }
                 }
 
-                if (!isAssignedToUser) {
+                if (!isAssignedToUser && !isTerminal) {
                     continue;
                 }
 
@@ -2073,6 +2054,7 @@ public class DynamicWorkflowEngine {
             Query q = new Query(Criteria.where("batchNo").is(batchNo));
             Document summary = mongoTemplate.findOne(q, Document.class, BATCH_SUMMARY_COLLECTION);
             if (summary != null) {
+                summary.remove("assignedTo");
                 @SuppressWarnings("unchecked")
                 List<Document> stages = (List<Document>) summary.get("stages");
                 if (stages != null) {
