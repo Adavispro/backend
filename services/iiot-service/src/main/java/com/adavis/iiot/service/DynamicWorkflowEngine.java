@@ -1217,7 +1217,7 @@ public class DynamicWorkflowEngine {
         userRole = userRole != null && !userRole.isBlank() ? userRole.toUpperCase(Locale.ROOT).trim() : resolveUserRoleCode(userId);
 
         List<Map<String, Object>> myActions = getMyActions(userId, userRole, tenantId, plantId, Collections.emptyMap());
-        int pendingMyAction = myActions.size();
+        int pendingMyAction = 0;
         int pendingReview = 0;
         int pendingApproval = 0;
         int completedActions = 0;
@@ -1226,6 +1226,15 @@ public class DynamicWorkflowEngine {
             String status = (String) item.get("rawStatus");
             if (status == null) status = "PENDING";
             status = status.toUpperCase(Locale.ROOT);
+
+            String batchNo = (String) item.get("batchNo");
+            String lotNo = (String) item.get("lotNo");
+            String eqCode = (String) item.get("equipmentCode");
+            List<AllowedActionDto> allowed = getAllowedActions(
+                    userId, userRole, tenantId, plantId, batchNo, lotNo, eqCode);
+            if (!allowed.isEmpty()) {
+                pendingMyAction++;
+            }
 
             if ("UNDER_REVIEW".equals(status) || "IN_REVIEW".equals(status)) {
                 pendingReview++;
@@ -1527,7 +1536,24 @@ public class DynamicWorkflowEngine {
                     }
                 }
 
-                if (!isAssignedToUser && !isTerminal) {
+                // Check if requested/submitted by this user (for stages in-flight undergoing review/approval or returned)
+                String requestedBy = approval != null ? approval.getString("requestedBy") : null;
+                if (requestedBy == null && stage.getString("requestedBy") != null) {
+                    requestedBy = stage.getString("requestedBy");
+                }
+                if (requestedBy == null && approval != null && approval.getString("transitionedBy") != null) {
+                    requestedBy = approval.getString("transitionedBy");
+                }
+                if (requestedBy == null && stage.getString("operatorName") != null) {
+                    requestedBy = stage.getString("operatorName");
+                }
+                boolean isRequestedByUser = requestedBy != null && requestedBy.equalsIgnoreCase(userId);
+                boolean isSubmittedInFlight = isRequestedByUser && (
+                        "UNDER_REVIEW".equals(rawStatus) || "IN_REVIEW".equals(rawStatus) ||
+                        "REVIEWER_REVIEWED".equals(rawStatus) || "PENDING_APPROVAL".equals(rawStatus) ||
+                        "RETURNED_TO_OPERATOR".equals(rawStatus) || "REJECTED".equals(rawStatus));
+
+                if (!isAssignedToUser && !isSubmittedInFlight && !isTerminal) {
                     continue;
                 }
 
