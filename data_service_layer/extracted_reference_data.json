@@ -1138,6 +1138,222 @@
         "newValue": null,
         "reason": null,
         "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 21:07:44",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 21:07:45",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 21:49:31",
+        "description": "AUTO STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "RAKING",
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 21:50:39",
+        "description": "PC SEAL VENT",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:00:50",
+        "description": "PC SEAL VENT",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:00:52",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:01:01",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "8961 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:06:08",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:06:09",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:07:30",
+        "description": "AUTO STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "LOD CHECK",
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:08:24",
+        "description": "PC SEAL VENT",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:34:33",
+        "description": "PC SEAL VENT",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:34:37",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:34:38",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:39:10",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:39:11",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:45:56",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:45:57",
+        "description": "AUTO START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:46:13",
+        "description": "AUTO STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "LOD CHECK",
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 22:46:54",
+        "description": "PC SEAL VENT",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 23:25:13",
+        "description": "PC SEAL VENT",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 23:25:18",
+        "description": "ACKNOWLEDGE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 23:26:01",
+        "description": "AUTO DISCHARGE START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 23:36:01",
+        "description": "AUTO DISCHARGE STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 23:37:03",
+        "description": "AUTO DISCHARGE START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 23:45:01",
+        "description": "AUTO DISCHARGE STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "96599 (PB3 FBDC0220 Operator)"
+      },
+      {
+        "dateTime": "09/02/2026 23:47:01",
+        "description": "BATCH END",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "98204 (PB3 FBDC0220 Supervisor)"
       }
     ]
   },

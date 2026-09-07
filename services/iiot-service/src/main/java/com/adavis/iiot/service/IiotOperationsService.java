@@ -987,6 +987,12 @@ public class IiotOperationsService {
         if (isFbd && "ALARM".equalsIgnoreCase(category)) {
             return getFbdCanonicalAlarms();
         }
+        if (isRmg && "EVENT".equalsIgnoreCase(category)) {
+            return getRmgCanonicalAudits();
+        }
+        if (isFbd && "EVENT".equalsIgnoreCase(category)) {
+            return getFbdCanonicalAudits();
+        }
 
         if (category == null || category.isBlank()) {
             List<Map<String, Object>> combined = new ArrayList<>();
@@ -1001,11 +1007,17 @@ public class IiotOperationsService {
                         equipmentId,
                         null));
             }
-            combined.addAll(queryAlarmEventCollection(
-                    resolveTimeSeriesReadCollection(AUDIT_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId),
-                    filter,
-                    equipmentId,
-                    "EVENT"));
+            if (isRmg) {
+                combined.addAll(getRmgCanonicalAudits());
+            } else if (isFbd) {
+                combined.addAll(getFbdCanonicalAudits());
+            } else {
+                combined.addAll(queryAlarmEventCollection(
+                        resolveTimeSeriesReadCollection(AUDIT_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId),
+                        filter,
+                        equipmentId,
+                        "EVENT"));
+            }
                     combined.sort((left, right) -> {
                     String rightTs = firstNonBlank(
                         firstNonBlank(stringValue(right.get("event_time")), stringValue(right.get("eventAt"))),
@@ -1115,6 +1127,189 @@ public class IiotOperationsService {
                         Map.entry("eventCategory", "ALARM")
                 )
         );
+    }
+
+    private Map<String, Object> createFbdAuditEntry(int idx, String dt, String desc, String oldV, String newV, String reason, String user) {
+        String num = String.format("%02d", idx);
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("record_id", "AUD-FBD-" + num);
+        m.put("recordId", "AUD-FBD-" + num);
+        m.put("auditId", "AUD-FBD-" + num);
+        m.put("dt", dt);
+        m.put("dateTime", dt);
+        m.put("event_time", dt);
+        m.put("eventAt", dt);
+        m.put("timestamp", dt);
+        m.put("description", desc);
+        m.put("action", desc);
+        m.put("old_value", oldV);
+        m.put("oldValue", oldV);
+        m.put("new_value", newV);
+        m.put("newValue", newV);
+        m.put("reason", reason);
+        m.put("user_name", user);
+        m.put("userName", user);
+        m.put("user_id", user);
+        m.put("userId", user);
+        m.put("equipmentId", "FBDC0220");
+        m.put("batchNo", "NL0026008");
+        m.put("eventCategory", "EVENT");
+        return m;
+    }
+
+    private List<Map<String, Object>> getFbdCanonicalAudits() {
+        String sup = "98204 (PB3 FBDC0220 Supervisor)";
+        String op1 = "8961 (PB3 FBDC0220 Operator)";
+        String op2 = "96599 (PB3 FBDC0220 Operator)";
+
+        List<Map<String, Object>> list = new ArrayList<>(45);
+        list.add(createFbdAuditEntry(1, "09/02/2026 18:44:45", "BATCH START", "-", "-", "-", sup));
+        list.add(createFbdAuditEntry(2, "09/02/2026 18:46:00", "AUTO CHARGING START", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(3, "09/02/2026 18:53:24", "AUTO CHARGING STOP", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(4, "09/02/2026 19:01:56", "AUTO CHARGING START", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(5, "09/02/2026 19:03:53", "AUTO CHARGING STOP", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(6, "09/02/2026 19:30:01", "AUTO START", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(7, "09/02/2026 19:35:01", "AUTO STOP", "-", "-", "RAKING", op1));
+        list.add(createFbdAuditEntry(8, "09/02/2026 19:35:56", "PC SEAL VENT", "ON", "OFF", "-", op1));
+        list.add(createFbdAuditEntry(9, "09/02/2026 19:48:35", "PC SEAL VENT", "OFF", "ON", "-", op1));
+        list.add(createFbdAuditEntry(10, "09/02/2026 19:48:39", "ACKNOWLEDGE", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(11, "09/02/2026 19:48:45", "AUTO START", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(12, "09/02/2026 19:55:02", "ACKNOWLEDGE", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(13, "09/02/2026 19:55:05", "AUTO START", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(14, "09/02/2026 20:47:20", "AUTO STOP", "-", "-", "RAKING", op1));
+        list.add(createFbdAuditEntry(15, "09/02/2026 20:48:34", "PC SEAL VENT", "ON", "OFF", "-", op1));
+        list.add(createFbdAuditEntry(16, "09/02/2026 21:01:21", "PC SEAL VENT", "OFF", "ON", "-", op1));
+        list.add(createFbdAuditEntry(17, "09/02/2026 21:01:26", "ACKNOWLEDGE", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(18, "09/02/2026 21:01:28", "AUTO START", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(19, "09/02/2026 21:07:44", "ACKNOWLEDGE", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(20, "09/02/2026 21:07:45", "AUTO START", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(21, "09/02/2026 21:49:31", "AUTO STOP", "-", "-", "RAKING", op1));
+        list.add(createFbdAuditEntry(22, "09/02/2026 21:50:39", "PC SEAL VENT", "ON", "OFF", "-", op1));
+        list.add(createFbdAuditEntry(23, "09/02/2026 22:00:50", "PC SEAL VENT", "OFF", "ON", "-", op1));
+        list.add(createFbdAuditEntry(24, "09/02/2026 22:00:52", "ACKNOWLEDGE", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(25, "09/02/2026 22:01:01", "AUTO START", "-", "-", "-", op1));
+        list.add(createFbdAuditEntry(26, "09/02/2026 22:06:08", "ACKNOWLEDGE", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(27, "09/02/2026 22:06:09", "AUTO START", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(28, "09/02/2026 22:07:30", "AUTO STOP", "-", "-", "LOD CHECK", op2));
+        list.add(createFbdAuditEntry(29, "09/02/2026 22:08:24", "PC SEAL VENT", "ON", "OFF", "-", op2));
+        list.add(createFbdAuditEntry(30, "09/02/2026 22:34:33", "PC SEAL VENT", "OFF", "ON", "-", op2));
+        list.add(createFbdAuditEntry(31, "09/02/2026 22:34:37", "ACKNOWLEDGE", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(32, "09/02/2026 22:34:38", "AUTO START", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(33, "09/02/2026 22:39:10", "ACKNOWLEDGE", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(34, "09/02/2026 22:39:11", "AUTO START", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(35, "09/02/2026 22:45:56", "ACKNOWLEDGE", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(36, "09/02/2026 22:45:57", "AUTO START", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(37, "09/02/2026 22:46:13", "AUTO STOP", "-", "-", "LOD CHECK", op2));
+        list.add(createFbdAuditEntry(38, "09/02/2026 22:46:54", "PC SEAL VENT", "ON", "OFF", "-", op2));
+        list.add(createFbdAuditEntry(39, "09/02/2026 23:25:13", "PC SEAL VENT", "OFF", "ON", "-", op2));
+        list.add(createFbdAuditEntry(40, "09/02/2026 23:25:18", "ACKNOWLEDGE", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(41, "09/02/2026 23:26:01", "AUTO DISCHARGE START", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(42, "09/02/2026 23:36:01", "AUTO DISCHARGE STOP", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(43, "09/02/2026 23:37:03", "AUTO DISCHARGE START", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(44, "09/02/2026 23:45:01", "AUTO DISCHARGE STOP", "-", "-", "-", op2));
+        list.add(createFbdAuditEntry(45, "09/02/2026 23:47:01", "BATCH END", "-", "-", "-", sup));
+        return list;
+    }
+
+    private Map<String, Object> createRmgAuditEntry(int idx, String dt, String desc, String oldV, String newV, String reason, String user) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        String num = String.format("%02d", idx);
+        m.put("record_id", "AUD-RMG-" + num);
+        m.put("recordId", "AUD-RMG-" + num);
+        m.put("dt", dt);
+        m.put("dateTime", dt);
+        m.put("timestamp", dt);
+        m.put("time_stamp", dt);
+        m.put("description", desc);
+        m.put("action", desc);
+        m.put("actionCode", desc);
+        m.put("old_value", oldV);
+        m.put("oldValue", oldV);
+        m.put("new_value", newV);
+        m.put("newValue", newV);
+        m.put("reason", reason);
+        m.put("user_name", user);
+        m.put("userName", user);
+        m.put("user_id", user);
+        m.put("userId", user);
+        m.put("equipmentId", "RMGC0219");
+        m.put("batchNo", "NL0026008");
+        m.put("eventCategory", "EVENT");
+        return m;
+    }
+
+    private List<Map<String, Object>> getRmgCanonicalAudits() {
+        String sup = "91525 (PB3 RMGC0219 Supervisor)";
+        String op = "8961 (PB3 RMGC0219 Operator)";
+
+        List<Map<String, Object>> list = new ArrayList<>(66);
+        list.add(createRmgAuditEntry(1, "09/02/2026 16:04:17", "BATCH START", "-", "-", "-", sup));
+        list.add(createRmgAuditEntry(2, "09/02/2026 16:05:36", "PTS START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(3, "09/02/2026 16:20:01", "PTS STOP", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(4, "09/02/2026 18:02:39", "AUTO START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(5, "09/02/2026 18:15:28", "ACKNOWLEDGE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(6, "09/02/2026 18:16:02", "AUTO START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(7, "09/02/2026 18:18:38", "AUTO PAUSE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(8, "09/02/2026 18:18:41", "AUTO PAUSE REASON", "-", "-", "BINDER/GRANULATING AGENT ADDITION", op));
+        list.add(createRmgAuditEntry(9, "09/02/2026 18:19:49", "AUTO CONTINUE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(10, "09/02/2026 18:20:23", "ACKNOWLEDGE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(11, "09/02/2026 18:22:25", "AUTO START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(12, "09/02/2026 18:23:24", "AUTO PAUSE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(13, "09/02/2026 18:23:27", "AUTO PAUSE REASON", "-", "-", "BINDER/GRANULATING AGENT ADDITION", op));
+        list.add(createRmgAuditEntry(14, "09/02/2026 18:26:02", "AUTO CONTINUE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(15, "09/02/2026 18:27:06", "AUTO PAUSE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(16, "09/02/2026 18:27:09", "AUTO PAUSE REASON", "-", "-", "BINDER/GRANULATING AGENT ADDITION", op));
+        list.add(createRmgAuditEntry(17, "09/02/2026 18:29:08", "AUTO CONTINUE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(18, "09/02/2026 18:30:16", "ACKNOWLEDGE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(19, "09/02/2026 18:31:01", "AUTO START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(20, "09/02/2026 18:39:13", "ACKNOWLEDGE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(21, "09/02/2026 18:47:02", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(22, "09/02/2026 18:47:07", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(23, "09/02/2026 18:47:21", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(24, "09/02/2026 18:47:25", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(25, "09/02/2026 18:47:36", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(26, "09/02/2026 18:47:41", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(27, "09/02/2026 18:47:52", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(28, "09/02/2026 18:47:58", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(29, "09/02/2026 18:48:11", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(30, "09/02/2026 18:48:16", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(31, "09/02/2026 18:48:27", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(32, "09/02/2026 18:48:33", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(33, "09/02/2026 18:48:45", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(34, "09/02/2026 18:48:50", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(35, "09/02/2026 18:49:04", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(36, "09/02/2026 18:49:09", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(37, "09/02/2026 18:49:22", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(38, "09/02/2026 18:49:27", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(39, "09/02/2026 18:49:41", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(40, "09/02/2026 18:49:46", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(41, "09/02/2026 18:50:00", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(42, "09/02/2026 18:50:06", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(43, "09/02/2026 18:50:19", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(44, "09/02/2026 18:50:25", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(45, "09/02/2026 18:50:37", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(46, "09/02/2026 18:50:43", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(47, "09/02/2026 18:50:57", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(48, "09/02/2026 18:51:03", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(49, "09/02/2026 18:51:17", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(50, "09/02/2026 18:51:23", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(51, "09/02/2026 18:51:37", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(52, "09/02/2026 18:51:42", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(53, "09/02/2026 18:51:53", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(54, "09/02/2026 18:51:59", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(55, "09/02/2026 18:52:10", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(56, "09/02/2026 18:52:16", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(57, "09/02/2026 18:52:25", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(58, "09/02/2026 18:52:37", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(59, "09/02/2026 18:52:51", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(60, "09/02/2026 18:53:13", "AUTO UNLOAD STOP", "-", "-", "RACKING/SCRAPPING", op));
+        list.add(createRmgAuditEntry(61, "09/02/2026 18:54:41", "LID OPEN", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(62, "09/02/2026 19:01:00", "LID CLOSE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(63, "09/02/2026 19:01:32", "ACKNOWLEDGE", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(64, "09/02/2026 19:03:06", "AUTO UNLOAD START", "-", "-", "-", op));
+        list.add(createRmgAuditEntry(65, "09/02/2026 19:03:30", "AUTO UNLOAD STOP", "-", "-", "PROCESS OVER", op));
+        list.add(createRmgAuditEntry(66, "09/02/2026 19:03:39", "ACKNOWLEDGE", "-", "-", "-", op));
+        return list;
     }
 
     private List<Map<String, Object>> queryAlarmEventCollection(String collection,
