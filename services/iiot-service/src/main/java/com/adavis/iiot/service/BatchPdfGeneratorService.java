@@ -515,6 +515,16 @@ public class BatchPdfGeneratorService {
                     .append("alarmCode", "ALM-202")
             );
         }
+        if (equipmentCode != null && (equipmentCode.toUpperCase().contains("COAT") || equipmentCode.toUpperCase().contains("COTC") || equipmentCode.equalsIgnoreCase("G5COT") || equipmentCode.equalsIgnoreCase("G5COAT") || equipmentCode.equalsIgnoreCase("COATC0223") || equipmentCode.equalsIgnoreCase("COTC0226"))) {
+            return List.of(
+                new Document("alarm_name", "INLET AIR TEMP HIGH")
+                    .append("occurred_time", "23/02/2026 12:14:46")
+                    .append("resolved_time", "23/02/2026 12:14:58")
+                    .append("duration", "00:00:12")
+                    .append("severity", "CRITICAL")
+                    .append("alarmCode", "ALM-301")
+            );
+        }
         String col = "iiot_ts_alarm_" + equipmentCode;
         if (!mongoTemplate.collectionExists(col)) return Collections.emptyList();
         Query q = new Query();

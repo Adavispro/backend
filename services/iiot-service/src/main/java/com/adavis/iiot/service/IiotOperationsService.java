@@ -989,6 +989,9 @@ public class IiotOperationsService {
         if (isFbd && "ALARM".equalsIgnoreCase(category)) {
             return getFbdCanonicalAlarms();
         }
+        if (isCoat && "ALARM".equalsIgnoreCase(category)) {
+            return getCoatCanonicalAlarms();
+        }
         if (isRmg && "EVENT".equalsIgnoreCase(category)) {
             return getRmgCanonicalAudits();
         }
@@ -1008,6 +1011,8 @@ public class IiotOperationsService {
                 combined.addAll(getRmgCanonicalAlarms());
             } else if (isFbd) {
                 combined.addAll(getFbdCanonicalAlarms());
+            } else if (isCoat) {
+                combined.addAll(getCoatCanonicalAlarms());
             } else {
                 combined.addAll(queryAlarmEventCollection(
                         resolveTimeSeriesReadCollection(ALARM_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId),
@@ -1135,6 +1140,27 @@ public class IiotOperationsService {
                         Map.entry("duration", "-"),
                         Map.entry("severity", "CRITICAL"),
                         Map.entry("equipmentId", "FBDC0220"),
+                        Map.entry("batchNo", "NL0026008"),
+                        Map.entry("eventCategory", "ALARM")
+                )
+        );
+    }
+
+    private List<Map<String, Object>> getCoatCanonicalAlarms() {
+        return List.of(
+                Map.ofEntries(
+                        Map.entry("alarmCode", "ALM-301"),
+                        Map.entry("alarm_name", "INLET AIR TEMP HIGH"),
+                        Map.entry("alarmName", "INLET AIR TEMP HIGH"),
+                        Map.entry("description", "INLET AIR TEMP HIGH"),
+                        Map.entry("msg_text", "INLET AIR TEMP HIGH"),
+                        Map.entry("occurred_time", "23/02/2026 12:14:46"),
+                        Map.entry("occurredTime", "23/02/2026 12:14:46"),
+                        Map.entry("resolved_time", "23/02/2026 12:14:58"),
+                        Map.entry("resolvedTime", "23/02/2026 12:14:58"),
+                        Map.entry("duration", "00:00:12"),
+                        Map.entry("severity", "CRITICAL"),
+                        Map.entry("equipmentId", "COTC0226"),
                         Map.entry("batchNo", "NL0026008"),
                         Map.entry("eventCategory", "ALARM")
                 )

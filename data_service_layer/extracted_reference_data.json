@@ -1657,16 +1657,10 @@
     ],
     "alarmSummary": [
       {
-        "alarmName": "SPRAY GUN CHOKED",
-        "occurredTime": "12/02/2026 10:14:20",
-        "resolvedTime": "12/02/2026 10:18:45",
-        "duration": "00:04:25"
-      },
-      {
-        "alarmName": "EXHAUST AIR FLOW LOW",
-        "occurredTime": "12/02/2026 11:02:10",
-        "resolvedTime": "12/02/2026 11:05:00",
-        "duration": "00:02:50"
+        "alarmName": "INLET AIR TEMP HIGH",
+        "occurredTime": "23/02/2026 12:14:46",
+        "resolvedTime": "23/02/2026 12:14:58",
+        "duration": "00:00:12"
       }
     ],
     "auditTrail": [

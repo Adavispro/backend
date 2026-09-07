@@ -426,8 +426,7 @@ def build_alarm_data(dataset_id: str, from_time: str, to_time: str):
 
     if family == "COAT":
         coat_alarms = [
-            ("SPRAY GUN CHOKED", "12/02/2026 10:14:20", "12/02/2026 10:18:45", "00:04:25", 301),
-            ("EXHAUST AIR FLOW LOW", "12/02/2026 11:02:10", "12/02/2026 11:05:00", "00:02:50", 302),
+            ("INLET AIR TEMP HIGH", "23/02/2026 12:14:46", "23/02/2026 12:14:58", "00:00:12", 301),
         ]
         return [
             {
