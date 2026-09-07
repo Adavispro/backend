@@ -48,6 +48,9 @@ public class NotificationDocument {
     private String actorUserId;
     private String deepLink;
     private String idempotencyKey;
+    private String assignedTo;
+    private String assignedRole;
+    private String assignmentScope;
 
     public NotificationDocument() {}
 
@@ -78,6 +81,9 @@ public class NotificationDocument {
         private String actorUserId;
         private String deepLink;
         private String idempotencyKey;
+        private String assignedTo;
+        private String assignedRole;
+        private String assignmentScope;
 
         public NotificationDocumentBuilder id(String v) { this.id = v; return this; }
         public NotificationDocumentBuilder notificationId(String v) { this.notificationId = v; return this; }
@@ -101,6 +107,9 @@ public class NotificationDocument {
         public NotificationDocumentBuilder actorUserId(String v) { this.actorUserId = v; return this; }
         public NotificationDocumentBuilder deepLink(String v) { this.deepLink = v; return this; }
         public NotificationDocumentBuilder idempotencyKey(String v) { this.idempotencyKey = v; return this; }
+        public NotificationDocumentBuilder assignedTo(String v) { this.assignedTo = v; return this; }
+        public NotificationDocumentBuilder assignedRole(String v) { this.assignedRole = v; return this; }
+        public NotificationDocumentBuilder assignmentScope(String v) { this.assignmentScope = v; return this; }
 
         public NotificationDocument build() {
             NotificationDocument doc = new NotificationDocument();
@@ -126,6 +135,9 @@ public class NotificationDocument {
             doc.actorUserId = this.actorUserId;
             doc.deepLink = this.deepLink;
             doc.idempotencyKey = this.idempotencyKey;
+            doc.assignedTo = this.assignedTo;
+            doc.assignedRole = this.assignedRole;
+            doc.assignmentScope = this.assignmentScope;
             return doc;
         }
     }
@@ -174,4 +186,10 @@ public class NotificationDocument {
     public void setDeepLink(String deepLink) { this.deepLink = deepLink; }
     public String getIdempotencyKey() { return idempotencyKey; }
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+    public String getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(String assignedTo) { this.assignedTo = assignedTo; }
+    public String getAssignedRole() { return assignedRole; }
+    public void setAssignedRole(String assignedRole) { this.assignedRole = assignedRole; }
+    public String getAssignmentScope() { return assignmentScope; }
+    public void setAssignmentScope(String assignmentScope) { this.assignmentScope = assignmentScope; }
 }

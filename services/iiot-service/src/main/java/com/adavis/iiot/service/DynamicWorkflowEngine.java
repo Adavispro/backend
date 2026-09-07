@@ -1227,12 +1227,21 @@ public class DynamicWorkflowEngine {
             if (status == null) status = "PENDING";
             status = status.toUpperCase(Locale.ROOT);
 
-            String batchNo = (String) item.get("batchNo");
-            String lotNo = (String) item.get("lotNo");
-            String eqCode = (String) item.get("equipmentCode");
-            List<AllowedActionDto> allowed = getAllowedActions(
-                    userId, userRole, tenantId, plantId, batchNo, lotNo, eqCode);
-            if (!allowed.isEmpty()) {
+            Object allowedObj = item.get("allowedActions");
+            boolean hasAllowed = false;
+            if (allowedObj instanceof List<?> list && !list.isEmpty()) {
+                hasAllowed = true;
+            } else if (Boolean.TRUE.equals(item.get("isAssignedToMe"))) {
+                String batchNo = (String) item.get("batchNo");
+                String lotNo = (String) item.get("lotNo");
+                String eqCode = (String) item.get("equipmentCode");
+                try {
+                    List<AllowedActionDto> allowed = getAllowedActions(
+                            userId, userRole, tenantId, plantId, batchNo, lotNo, eqCode);
+                    hasAllowed = !allowed.isEmpty();
+                } catch (Exception ignored) {}
+            }
+            if (hasAllowed) {
                 pendingMyAction++;
             }
 
@@ -1481,6 +1490,22 @@ public class DynamicWorkflowEngine {
             }
         }
 
+        // Query workflow action history to identify batch stages where this user performed actions
+        Query historyQuery = new Query(Criteria.where("performedBy").regex("^" + userId.trim() + "$", "i"));
+        List<WorkflowActionHistory> userHistories = mongoTemplate.find(historyQuery, WorkflowActionHistory.class, HISTORY_COLLECTION);
+        Set<String> participatedEntityKeys = new HashSet<>();
+        for (WorkflowActionHistory h : userHistories) {
+            String bNo = h.getBatchNo();
+            String lNo = h.getLotNo();
+            String eqC = h.getEquipmentCode();
+            if (bNo != null && eqC != null) {
+                participatedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
+                if (lNo != null) {
+                    participatedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + lNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
+                }
+            }
+        }
+
         for (Document summary : summaries) {
             String batchNo = summary.getString("batchNo");
             String lotNo = summary.getString("lotNo");
@@ -1514,46 +1539,70 @@ public class DynamicWorkflowEngine {
                 String rawStatus = approval != null && approval.getString("status") != null
                         ? approval.getString("status").toUpperCase(Locale.ROOT) : "PENDING";
 
-                // Exclude terminal stages unless approved/completed by this user
                 boolean isTerminal = "APPROVED".equals(rawStatus) || "COMPLETED".equals(rawStatus) || "DEFERRED".equals(rawStatus) || "REJECTED".equals(rawStatus);
-                if (isTerminal) {
-                    boolean isApprovedByMe = ("APPROVED".equals(rawStatus) || "COMPLETED".equals(rawStatus)) && approval != null
-                            && (userId.equalsIgnoreCase(approval.getString("approvedBy")) || userId.equalsIgnoreCase(approval.getString("transitionedBy")));
-                    if (!isApprovedByMe) {
-                        continue;
-                    }
-                }
 
-                // Check if assigned to this user
+                // 1. Check direct active assignment to this user
                 String assignedTo = approval != null ? approval.getString("assignedTo") : null;
                 boolean isAssignedToUser = assignedTo != null && assignedTo.equalsIgnoreCase(userId);
 
-                if (!isAssignedToUser && batchNo != null && !equipmentCode.isBlank()) {
-                    String key1 = batchNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT);
-                    String key2 = lotNo != null ? batchNo.toUpperCase(Locale.ROOT) + ":" + lotNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT) : null;
-                    if (assignedEntityKeys.contains(key1) || (key2 != null && assignedEntityKeys.contains(key2))) {
+                String key1 = (batchNo != null && !equipmentCode.isBlank()) ? batchNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT) : "";
+                String key2 = (batchNo != null && lotNo != null && !equipmentCode.isBlank()) ? batchNo.toUpperCase(Locale.ROOT) + ":" + lotNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT) : "";
+
+                if (!isAssignedToUser && !key1.isEmpty()) {
+                    if (assignedEntityKeys.contains(key1) || (!key2.isEmpty() && assignedEntityKeys.contains(key2))) {
                         isAssignedToUser = true;
                     }
                 }
 
-                // Check if requested/submitted by this user (for stages in-flight undergoing review/approval or returned)
+                // 2. Check historical participation / workflow ownership across all roles
+                // (a) Operator who created or submitted the stage
                 String requestedBy = approval != null ? approval.getString("requestedBy") : null;
                 if (requestedBy == null && stage.getString("requestedBy") != null) {
                     requestedBy = stage.getString("requestedBy");
                 }
-                if (requestedBy == null && approval != null && approval.getString("transitionedBy") != null) {
-                    requestedBy = approval.getString("transitionedBy");
-                }
                 if (requestedBy == null && stage.getString("operatorName") != null) {
                     requestedBy = stage.getString("operatorName");
                 }
-                boolean isRequestedByUser = requestedBy != null && requestedBy.equalsIgnoreCase(userId);
-                boolean isSubmittedInFlight = isRequestedByUser && (
-                        "UNDER_REVIEW".equals(rawStatus) || "IN_REVIEW".equals(rawStatus) ||
-                        "REVIEWER_REVIEWED".equals(rawStatus) || "PENDING_APPROVAL".equals(rawStatus) ||
-                        "RETURNED_TO_OPERATOR".equals(rawStatus) || "REJECTED".equals(rawStatus));
+                boolean isOperatorOfStage = requestedBy != null && requestedBy.equalsIgnoreCase(userId);
 
-                if (!isAssignedToUser && !isSubmittedInFlight && !isTerminal) {
+                // (b) Reviewer who reviewed or submitted the stage for QA
+                String reviewedBy = approval != null ? approval.getString("reviewedBy") : null;
+                if (reviewedBy == null && approval != null && approval.getString("activeReviewer") != null) {
+                    reviewedBy = approval.getString("activeReviewer");
+                }
+                boolean isReviewerOfStage = reviewedBy != null && reviewedBy.equalsIgnoreCase(userId);
+
+                // (c) Approver who approved or released the stage
+                String approvedBy = approval != null ? approval.getString("approvedBy") : null;
+                boolean isApproverOfStage = approvedBy != null && approvedBy.equalsIgnoreCase(userId);
+
+                // (d) Transitioner / Deferrer / Rejecter
+                String transitionedBy = approval != null ? approval.getString("transitionedBy") : null;
+                String deferredBy = approval != null ? approval.getString("deferredBy") : null;
+                String rejectedBy = approval != null ? approval.getString("rejectedBy") : null;
+                String additionalInfoBy = approval != null ? approval.getString("additionalInfoRequestedBy") : null;
+                boolean isOtherActor = (transitionedBy != null && transitionedBy.equalsIgnoreCase(userId))
+                        || (deferredBy != null && deferredBy.equalsIgnoreCase(userId))
+                        || (rejectedBy != null && rejectedBy.equalsIgnoreCase(userId))
+                        || (additionalInfoBy != null && additionalInfoBy.equalsIgnoreCase(userId));
+
+                // (e) Action history recorded for this user
+                boolean hasHistoryAction = (!key1.isEmpty() && participatedEntityKeys.contains(key1))
+                        || (!key2.isEmpty() && participatedEntityKeys.contains(key2));
+
+                boolean isParticipant = isOperatorOfStage || isReviewerOfStage || isApproverOfStage || isOtherActor || hasHistoryAction;
+
+                // Qualification rule:
+                // Include in personal queue if:
+                // - Specifically assigned to this user (active actionable task)
+                // - OR user participated in this stage (post-submission tracking or completed actions)
+                if (!isAssignedToUser && !isParticipant) {
+                    continue;
+                }
+
+                // For terminal stages, ensure the user actually participated in this stage
+                // (excludes approved batches that merely had a stale assignment without participation)
+                if (isTerminal && !isParticipant) {
                     continue;
                 }
 
@@ -1619,8 +1668,20 @@ public class DynamicWorkflowEngine {
                 item.put("displayStatus", displayStatus);
                 item.put("lastAction", lastAction);
                 item.put("lastActionAt", lastActionAt);
-                item.put("assignedTo", userId);
-                item.put("allowedActions", Collections.emptyList());
+                List<AllowedActionDto> allowed = Collections.emptyList();
+                if (isAssignedToUser) {
+                    try {
+                        allowed = getAllowedActions(
+                                userId, userRole, tenantId, plantId, batchNo, lotNo, equipmentCode);
+                    } catch (Exception ignored) {
+                        allowed = Collections.emptyList();
+                    }
+                }
+
+                item.put("assignedTo", assignedTo != null ? assignedTo : "");
+                item.put("isAssignedToMe", isAssignedToUser);
+                item.put("isParticipant", isParticipant);
+                item.put("allowedActions", allowed != null ? allowed : Collections.emptyList());
                 item.put("summaryRef", summary);
 
                 result.add(item);

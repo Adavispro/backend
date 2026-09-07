@@ -56,8 +56,9 @@ public class NotificationServiceTest {
         assertEquals("TNT-0001", saved.getTenantId());
         assertEquals("PLNT-0001", saved.getPlantId());
         assertEquals("INFO", saved.getSeverity());
-        assertTrue(saved.getDeepLink().contains("/iiot/my-actions"));
+        assertTrue(saved.getDeepLink().contains("/iiot/pending-reports"));
         assertTrue(saved.getDeepLink().contains("BATCH-101"));
+        assertEquals("GROUP", saved.getAssignmentScope());
         assertFalse(saved.getIsRead());
     }
 

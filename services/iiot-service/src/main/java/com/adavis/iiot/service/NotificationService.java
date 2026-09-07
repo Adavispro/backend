@@ -45,7 +45,19 @@ public class NotificationService {
             String title = "Batch Workflow Update";
             String message = "Workflow update on batch " + batchNo;
             String severity = "INFO";
-            String deepLink = "/iiot/my-actions?batchNo=" + encode(batchNo);
+            String deepLink = "/iiot/pending-reports?batchNo=" + encode(batchNo);
+            String assignedTo = null;
+            String assignedRole = null;
+            String assignmentScope = "GROUP";
+
+            if (stage != null && stage.get("approval") instanceof Document appDoc) {
+                if (appDoc.getString("assignedTo") != null && !appDoc.getString("assignedTo").isBlank()) {
+                    assignedTo = appDoc.getString("assignedTo");
+                }
+                if (appDoc.getString("assignedRole") != null && !appDoc.getString("assignedRole").isBlank()) {
+                    assignedRole = appDoc.getString("assignedRole");
+                }
+            }
 
             switch (normTarget) {
                 case "UNDER_REVIEW":
@@ -55,7 +67,14 @@ public class NotificationService {
                     message = String.format("Batch %s (Lot: %s, Stage: %s) submitted for QA review by %s.",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId);
                     severity = "INFO";
-                    deepLink = String.format("/iiot/my-actions?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    if (assignedRole == null) assignedRole = "PRODUCTION_REVIEWER";
+                    if (assignedTo != null && !assignedTo.isBlank()) {
+                        assignmentScope = "USER";
+                        deepLink = String.format("/iiot/my-actions?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    } else {
+                        assignmentScope = "GROUP";
+                        deepLink = String.format("/iiot/pending-reports?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    }
                     recipients = recipientResolver.resolveQAReviewers(effectiveTenantId, effectivePlantId, actorUserId);
                     break;
 
@@ -66,7 +85,14 @@ public class NotificationService {
                     message = String.format("Batch %s (Lot: %s, Stage: %s) verified by QA Reviewer %s and awaiting release approval.",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId);
                     severity = "INFO";
-                    deepLink = String.format("/iiot/my-actions?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    if (assignedRole == null) assignedRole = "QA_APPROVER";
+                    if (assignedTo != null && !assignedTo.isBlank()) {
+                        assignmentScope = "USER";
+                        deepLink = String.format("/iiot/my-actions?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    } else {
+                        assignmentScope = "GROUP";
+                        deepLink = String.format("/iiot/pending-reports?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    }
                     String assignedSupervisor = stage != null ? stage.getString("supervisorName") : null;
                     recipients = recipientResolver.resolveShiftSupervisors(effectiveTenantId, effectivePlantId, assignedSupervisor, actorUserId);
                     break;
@@ -77,6 +103,7 @@ public class NotificationService {
                     message = String.format("Batch %s (Lot: %s, Stage: %s) has been approved for release by Supervisor %s.",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId);
                     severity = "SUCCESS";
+                    assignmentScope = "BROADCAST";
                     deepLink = String.format("/iiot/approved-batches?batchNo=%s", encode(batchNo));
                     recipients = recipientResolver.resolveBatchParticipants(effectiveTenantId, effectivePlantId, batchNo, equipmentCode, stage, actorUserId);
                     break;
@@ -88,7 +115,11 @@ public class NotificationService {
                     message = String.format("Batch %s (Lot: %s, Stage: %s) was REJECTED by Supervisor %s. Reason: %s",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId, reasonText);
                     severity = "ERROR";
-                    deepLink = String.format("/iiot/pending-reports?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    if (assignedRole == null) assignedRole = "PRODUCTION_OPERATOR";
+                    assignmentScope = (assignedTo != null && !assignedTo.isBlank()) ? "USER" : "GROUP";
+                    deepLink = (assignedTo != null && !assignedTo.isBlank())
+                            ? String.format("/iiot/my-actions?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode))
+                            : String.format("/iiot/pending-reports?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
                     recipients = recipientResolver.resolveBatchParticipants(effectiveTenantId, effectivePlantId, batchNo, equipmentCode, stage, actorUserId);
                     break;
 
@@ -100,7 +131,11 @@ public class NotificationService {
                     message = String.format("Batch %s (Lot: %s, Stage: %s) was returned for correction by %s. Reason: %s",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId, returnReason);
                     severity = "WARNING";
-                    deepLink = String.format("/iiot/pending-reports?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
+                    if (assignedRole == null) assignedRole = "PRODUCTION_OPERATOR";
+                    assignmentScope = (assignedTo != null && !assignedTo.isBlank()) ? "USER" : "GROUP";
+                    deepLink = (assignedTo != null && !assignedTo.isBlank())
+                            ? String.format("/iiot/my-actions?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode))
+                            : String.format("/iiot/pending-reports?batchNo=%s&equipmentCode=%s", encode(batchNo), encode(equipmentCode));
                     recipients = recipientResolver.resolveBatchParticipants(effectiveTenantId, effectivePlantId, batchNo, equipmentCode, stage, actorUserId);
                     break;
 
@@ -111,6 +146,7 @@ public class NotificationService {
                     message = String.format("Batch %s (Lot: %s, Stage: %s) processing was DEFERRED by %s. Justification: %s",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId, deferReason);
                     severity = "WARNING";
+                    assignmentScope = "GROUP";
                     deepLink = String.format("/iiot/deferred-batches?batchNo=%s", encode(batchNo));
                     recipients = recipientResolver.resolveBatchParticipants(effectiveTenantId, effectivePlantId, batchNo, equipmentCode, stage, actorUserId);
                     break;
@@ -121,7 +157,8 @@ public class NotificationService {
                     message = String.format("Batch %s (Lot: %s, Stage: %s) was ESCALATED by %s for immediate managerial review.",
                             batchNo, lotNo != null ? lotNo : "-", equipmentCode != null ? equipmentCode : "-", actorUserId);
                     severity = "WARNING";
-                    deepLink = String.format("/iiot/my-actions?batchNo=%s", encode(batchNo));
+                    assignmentScope = "GROUP";
+                    deepLink = String.format("/iiot/pending-reports?batchNo=%s", encode(batchNo));
                     recipients = recipientResolver.resolveUsersByRoleCodes(
                             Set.of("QA_APPROVER", "SHIFT_SUPERVISOR", "PLATFORM_SUPER_ADMIN"),
                             effectiveTenantId, effectivePlantId, actorUserId);
@@ -166,6 +203,9 @@ public class NotificationService {
                         .createdAt(now)
                         .actorUserId(actorUserId)
                         .idempotencyKey(idempotencyKey)
+                        .assignedTo(assignedTo)
+                        .assignedRole(assignedRole)
+                        .assignmentScope(assignmentScope)
                         .build();
 
                 persistNotificationIfUnique(doc, idempotencyKey);
@@ -217,6 +257,8 @@ public class NotificationService {
                 .createdAt(now)
                 .actorUserId(actorUserId)
                 .idempotencyKey(idempotencyKey)
+                .assignedTo(canonicalRecipient)
+                .assignmentScope("USER")
                 .build();
 
         persistNotificationIfUnique(doc, idempotencyKey);
@@ -261,6 +303,7 @@ public class NotificationService {
                     .createdAt(now)
                     .actorUserId(actorUserId)
                     .idempotencyKey(idempotencyKey)
+                    .assignmentScope("GROUP")
                     .build();
 
             persistNotificationIfUnique(doc, idempotencyKey);
