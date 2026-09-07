@@ -983,93 +983,15 @@
     "alarmSummary": [
       {
         "alarmName": "PC AIR PRESSURE LOW",
-        "occurredTime": "09/02/2026 19:36:03",
-        "resolvedTime": "09/02/2026 19:48:39",
-        "duration": "00:12:36"
+        "occurredTime": "08/02/2026 18:43:46",
+        "resolvedTime": "-",
+        "duration": "-"
       },
       {
         "alarmName": "EARTH FAULT",
-        "occurredTime": "09/02/2026 19:37:15",
-        "resolvedTime": "09/02/2026 19:48:39",
-        "duration": "00:11:24"
-      },
-      {
-        "alarmName": "INLET TEMP HIGH",
-        "occurredTime": "09/02/2026 19:51:21",
-        "resolvedTime": "09/02/2026 19:55:02",
-        "duration": "00:03:41"
-      },
-      {
-        "alarmName": "PC AIR PRESSURE LOW",
-        "occurredTime": "09/02/2026 20:48:40",
-        "resolvedTime": "09/02/2026 21:01:26",
-        "duration": "00:12:46"
-      },
-      {
-        "alarmName": "EARTH FAULT",
-        "occurredTime": "09/02/2026 20:49:48",
-        "resolvedTime": "09/02/2026 21:01:26",
-        "duration": "00:11:38"
-      },
-      {
-        "alarmName": "INLET TEMP HIGH",
-        "occurredTime": "09/02/2026 21:03:55",
-        "resolvedTime": "09/02/2026 21:07:44",
-        "duration": "00:03:49"
-      },
-      {
-        "alarmName": "PC AIR PRESSURE LOW",
-        "occurredTime": "09/02/2026 21:50:45",
-        "resolvedTime": "09/02/2026 22:00:52",
-        "duration": "00:10:07"
-      },
-      {
-        "alarmName": "EARTH FAULT",
-        "occurredTime": "09/02/2026 21:51:51",
-        "resolvedTime": "09/02/2026 22:00:52",
-        "duration": "00:09:01"
-      },
-      {
-        "alarmName": "INLET TEMP HIGH",
-        "occurredTime": "09/02/2026 22:03:26",
-        "resolvedTime": "09/02/2026 22:06:08",
-        "duration": "00:02:42"
-      },
-      {
-        "alarmName": "PC AIR PRESSURE LOW",
-        "occurredTime": "09/02/2026 22:08:31",
-        "resolvedTime": "09/02/2026 22:34:37",
-        "duration": "00:26:06"
-      },
-      {
-        "alarmName": "EARTH FAULT",
-        "occurredTime": "09/02/2026 22:09:34",
-        "resolvedTime": "09/02/2026 22:34:37",
-        "duration": "00:25:03"
-      },
-      {
-        "alarmName": "INLET TEMP HIGH",
-        "occurredTime": "09/02/2026 22:37:13",
-        "resolvedTime": "09/02/2026 22:39:10",
-        "duration": "00:01:57"
-      },
-      {
-        "alarmName": "INLET TEMP HIGH",
-        "occurredTime": "09/02/2026 22:45:11",
-        "resolvedTime": "09/02/2026 22:45:56",
-        "duration": "00:00:45"
-      },
-      {
-        "alarmName": "PC AIR PRESSURE LOW",
-        "occurredTime": "09/02/2026 22:47:01",
-        "resolvedTime": "09/02/2026 23:25:18",
-        "duration": "00:38:17"
-      },
-      {
-        "alarmName": "EARTH FAULT",
-        "occurredTime": "09/02/2026 22:48:04",
-        "resolvedTime": "09/02/2026 23:25:18",
-        "duration": "00:37:14"
+        "occurredTime": "08/02/2026 18:44:55",
+        "resolvedTime": "-",
+        "duration": "-"
       }
     ],
     "auditTrail": [

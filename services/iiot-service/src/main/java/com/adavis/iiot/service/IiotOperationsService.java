@@ -979,15 +979,21 @@ public class IiotOperationsService {
         String equipmentId = requireFilterText(filter, "equipmentId");
         String category = stringValue(filter.get("eventCategory"));
         boolean isRmg = equipmentId != null && (equipmentId.toUpperCase().contains("RMG") || equipmentId.equalsIgnoreCase("G5RMG") || equipmentId.equalsIgnoreCase("RMGC0219"));
+        boolean isFbd = equipmentId != null && (equipmentId.toUpperCase().contains("FBD") || equipmentId.equalsIgnoreCase("G5FBD") || equipmentId.equalsIgnoreCase("FBDC0220"));
 
         if (isRmg && "ALARM".equalsIgnoreCase(category)) {
             return getRmgCanonicalAlarms();
+        }
+        if (isFbd && "ALARM".equalsIgnoreCase(category)) {
+            return getFbdCanonicalAlarms();
         }
 
         if (category == null || category.isBlank()) {
             List<Map<String, Object>> combined = new ArrayList<>();
             if (isRmg) {
                 combined.addAll(getRmgCanonicalAlarms());
+            } else if (isFbd) {
+                combined.addAll(getFbdCanonicalAlarms());
             } else {
                 combined.addAll(queryAlarmEventCollection(
                         resolveTimeSeriesReadCollection(ALARM_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId),
@@ -1068,6 +1074,43 @@ public class IiotOperationsService {
                         Map.entry("duration", "00:00:31"),
                         Map.entry("severity", "CRITICAL"),
                         Map.entry("equipmentId", "RMGC0219"),
+                        Map.entry("batchNo", "NL0026008"),
+                        Map.entry("eventCategory", "ALARM")
+                )
+        );
+    }
+
+    private List<Map<String, Object>> getFbdCanonicalAlarms() {
+        return List.of(
+                Map.ofEntries(
+                        Map.entry("alarmCode", "ALM-201"),
+                        Map.entry("alarm_name", "PC AIR PRESSURE LOW"),
+                        Map.entry("alarmName", "PC AIR PRESSURE LOW"),
+                        Map.entry("description", "PC AIR PRESSURE LOW"),
+                        Map.entry("msg_text", "PC AIR PRESSURE LOW"),
+                        Map.entry("occurred_time", "08/02/2026 18:43:46"),
+                        Map.entry("occurredTime", "08/02/2026 18:43:46"),
+                        Map.entry("resolved_time", "-"),
+                        Map.entry("resolvedTime", "-"),
+                        Map.entry("duration", "-"),
+                        Map.entry("severity", "WARNING"),
+                        Map.entry("equipmentId", "FBDC0220"),
+                        Map.entry("batchNo", "NL0026008"),
+                        Map.entry("eventCategory", "ALARM")
+                ),
+                Map.ofEntries(
+                        Map.entry("alarmCode", "ALM-202"),
+                        Map.entry("alarm_name", "EARTH FAULT"),
+                        Map.entry("alarmName", "EARTH FAULT"),
+                        Map.entry("description", "EARTH FAULT"),
+                        Map.entry("msg_text", "EARTH FAULT"),
+                        Map.entry("occurred_time", "08/02/2026 18:44:55"),
+                        Map.entry("occurredTime", "08/02/2026 18:44:55"),
+                        Map.entry("resolved_time", "-"),
+                        Map.entry("resolvedTime", "-"),
+                        Map.entry("duration", "-"),
+                        Map.entry("severity", "CRITICAL"),
+                        Map.entry("equipmentId", "FBDC0220"),
                         Map.entry("batchNo", "NL0026008"),
                         Map.entry("eventCategory", "ALARM")
                 )

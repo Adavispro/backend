@@ -491,6 +491,22 @@ public class BatchPdfGeneratorService {
                     .append("alarmCode", "ALM-103")
             );
         }
+        if (equipmentCode != null && (equipmentCode.toUpperCase().contains("FBD") || equipmentCode.equalsIgnoreCase("G5FBD") || equipmentCode.equalsIgnoreCase("FBDC0220"))) {
+            return List.of(
+                new Document("alarm_name", "PC AIR PRESSURE LOW")
+                    .append("occurred_time", "08/02/2026 18:43:46")
+                    .append("resolved_time", "-")
+                    .append("duration", "-")
+                    .append("severity", "WARNING")
+                    .append("alarmCode", "ALM-201"),
+                new Document("alarm_name", "EARTH FAULT")
+                    .append("occurred_time", "08/02/2026 18:44:55")
+                    .append("resolved_time", "-")
+                    .append("duration", "-")
+                    .append("severity", "CRITICAL")
+                    .append("alarmCode", "ALM-202")
+            );
+        }
         String col = "iiot_ts_alarm_" + equipmentCode;
         if (!mongoTemplate.collectionExists(col)) return Collections.emptyList();
         Query q = new Query();
