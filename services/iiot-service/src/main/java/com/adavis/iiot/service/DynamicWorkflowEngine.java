@@ -1257,14 +1257,369 @@ public class DynamicWorkflowEngine {
             }
         }
 
+        // Synchronize pendingMyAction strictly with getMyActions
+        int myActionsCount = getMyActions(userId, userRole, tenantId, plantId, Collections.emptyMap()).size();
+
         Map<String, Object> counts = new LinkedHashMap<>();
-        counts.put("pendingMyAction", pendingMyAction);
+        counts.put("pendingMyAction", myActionsCount);
         counts.put("pendingReview", pendingReview);
         counts.put("pendingApproval", pendingApproval);
         counts.put("completedActions", completedActions);
         counts.put("userRole", userRole);
         counts.put("userId", userId);
         return counts;
+    }
+
+    // ============================================
+    // PENDING BATCHES (GROUP / TEAM QUEUE)
+    // ============================================
+
+    public List<Map<String, Object>> getPendingBatches(
+            String userId, String userRole, String tenantId, String plantId, Map<String, Object> filters) {
+
+        Query query = new Query();
+        List<Criteria> andCriteria = new ArrayList<>();
+        if (tenantId != null && !tenantId.isBlank()) {
+            andCriteria.add(new Criteria().orOperator(
+                    Criteria.where("tenantId").is(tenantId),
+                    Criteria.where("tenantId").exists(false),
+                    Criteria.where("tenantId").is(null)
+            ));
+        }
+        if (plantId != null && !plantId.isBlank()) {
+            andCriteria.add(new Criteria().orOperator(
+                    Criteria.where("plantId").is(plantId),
+                    Criteria.where("plantId").exists(false),
+                    Criteria.where("plantId").is(null)
+            ));
+        }
+        if (!andCriteria.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(andCriteria.toArray(new Criteria[0])));
+        }
+
+        List<Document> summaries = mongoTemplate.find(query, Document.class, BATCH_SUMMARY_COLLECTION);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        String filterBatchNo = filters != null ? (String) filters.get("batchNo") : null;
+        String filterProduct = filters != null ? (String) filters.get("productCode") : null;
+        String filterEqType = filters != null ? (String) filters.get("equipmentType") : null;
+        String filterLotNo = filters != null ? (String) filters.get("lotNo") : null;
+        String filterStatus = filters != null ? (String) filters.get("status") : null;
+        String filterSearch = filters != null ? (String) filters.get("search") : null;
+
+        for (Document summary : summaries) {
+            String batchNo = summary.getString("batchNo");
+            if (filterBatchNo != null && !filterBatchNo.isBlank() && !filterBatchNo.equalsIgnoreCase(batchNo)) {
+                continue;
+            }
+            String lotNo = summary.getString("lotNo");
+            if (filterLotNo != null && !filterLotNo.isBlank() && !filterLotNo.equalsIgnoreCase(lotNo)) {
+                continue;
+            }
+            String productCode = summary.getString("productCode");
+            if (filterProduct != null && !filterProduct.isBlank() && !filterProduct.equalsIgnoreCase(productCode)) {
+                continue;
+            }
+            String productName = summary.getString("productName");
+            if (productName == null) productName = "Finasteride USP 5 mg";
+
+            String summaryId = summary.get("_id") != null ? summary.get("_id").toString() : batchNo;
+
+            @SuppressWarnings("unchecked")
+            List<Document> stages = (List<Document>) summary.get("stages");
+            if (stages == null) continue;
+
+            for (Document stage : stages) {
+                String equipmentCode = stage.getString("equipmentCode");
+                if (equipmentCode == null) equipmentCode = stage.getString("equipmentId");
+                if (equipmentCode == null) equipmentCode = "";
+
+                String equipmentType = stage.getString("equipmentType");
+                if (equipmentType == null && equipmentCode.length() >= 3) {
+                    equipmentType = equipmentCode.substring(equipmentCode.length() - 3);
+                }
+                if (equipmentType == null) equipmentType = "RMG";
+                equipmentType = equipmentType.toUpperCase(Locale.ROOT);
+
+                if (filterEqType != null && !filterEqType.isBlank() && !"ALL".equalsIgnoreCase(filterEqType)
+                        && !filterEqType.equalsIgnoreCase(equipmentType)) {
+                    continue;
+                }
+
+                Document approval = stage.get("approval", Document.class);
+                String rawStatus = approval != null && approval.getString("status") != null
+                        ? approval.getString("status").toUpperCase(Locale.ROOT) : "PENDING";
+
+                // Exclude terminal stages
+                if ("APPROVED".equals(rawStatus) || "COMPLETED".equals(rawStatus) || "DEFERRED".equals(rawStatus) || "REJECTED".equals(rawStatus)) {
+                    continue;
+                }
+
+                if (filterStatus != null && !filterStatus.isBlank() && !"ALL".equalsIgnoreCase(filterStatus)
+                        && !filterStatus.equalsIgnoreCase(rawStatus)) {
+                    continue;
+                }
+
+                // Check assignment: Must NOT be currently owned by another user
+                String assignedTo = approval != null ? approval.getString("assignedTo") : null;
+                if (assignedTo == null || assignedTo.isBlank()) {
+                    Query wfq = new Query(Criteria.where("batchNo").is(batchNo)
+                            .and("equipmentCode").is(equipmentCode));
+                    if (lotNo != null && !lotNo.isBlank()) {
+                        wfq.addCriteria(Criteria.where("lotNo").is(lotNo));
+                    }
+                    WorkflowInstance inst = mongoTemplate.findOne(wfq, WorkflowInstance.class, INSTANCE_COLLECTION);
+                    if (inst != null && inst.getAssignedTo() != null && !inst.getAssignedTo().isBlank()) {
+                        assignedTo = inst.getAssignedTo();
+                    }
+                }
+
+                // If already claimed by another user, exclude from pending available queue
+                if (assignedTo != null && !assignedTo.isBlank() && (userId == null || !assignedTo.equalsIgnoreCase(userId))) {
+                    continue;
+                }
+
+                if (filterSearch != null && !filterSearch.isBlank()) {
+                    String term = filterSearch.toLowerCase(Locale.ROOT);
+                    boolean match = batchNo.toLowerCase(Locale.ROOT).contains(term)
+                            || (lotNo != null && lotNo.toLowerCase(Locale.ROOT).contains(term))
+                            || productName.toLowerCase(Locale.ROOT).contains(term)
+                            || (productCode != null && productCode.toLowerCase(Locale.ROOT).contains(term))
+                            || equipmentCode.toLowerCase(Locale.ROOT).contains(term);
+                    if (!match) continue;
+                }
+
+                int sequence = 1;
+                Object seqObj = stage.get("sequenceOrder");
+                if (seqObj instanceof Number) {
+                    sequence = ((Number) seqObj).intValue();
+                } else if (stage.get("stageOrder") instanceof Number) {
+                    sequence = ((Number) stage.get("stageOrder")).intValue();
+                }
+
+                String displayStatus = rawStatus.replace('_', ' ');
+                if ("REVIEWER_REVIEWED".equals(rawStatus) || "PENDING_APPROVAL".equals(rawStatus)) {
+                    displayStatus = "Pending Approval";
+                } else if ("UNDER_REVIEW".equals(rawStatus) || "IN_REVIEW".equals(rawStatus)) {
+                    displayStatus = "Under Review";
+                } else if ("RETURNED_TO_OPERATOR".equals(rawStatus) || "RETURNED".equals(rawStatus) || "REJECTED".equals(rawStatus) || "SENT_BACK".equals(rawStatus)) {
+                    displayStatus = "Returned / Rejected";
+                } else if ("PENDING".equals(rawStatus) || "NOT_STARTED".equals(rawStatus)) {
+                    displayStatus = "Pending Submission";
+                }
+
+                String pendingSince = "";
+                if (approval != null && approval.get("transitionedAt") != null) {
+                    pendingSince = approval.get("transitionedAt").toString();
+                } else if (stage.get("stageEndAt") != null) {
+                    pendingSince = stage.get("stageEndAt").toString();
+                } else if (summary.get("updatedAt") != null) {
+                    pendingSince = summary.get("updatedAt").toString();
+                }
+
+                String id = summaryId + ":" + batchNo + ":" + (lotNo != null ? lotNo : "") + ":" + equipmentCode + ":" + sequence;
+
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("id", id);
+                item.put("batchNo", batchNo);
+                item.put("lotNo", lotNo != null ? lotNo : "01 of 05");
+                item.put("productCode", productCode != null ? productCode : "");
+                item.put("productName", productName);
+                item.put("equipmentCode", equipmentCode);
+                item.put("equipmentType", equipmentType);
+                item.put("workflowStage", "Stage " + sequence + " (" + equipmentType + ")");
+                item.put("stageSequence", sequence);
+                item.put("rawStatus", rawStatus);
+                item.put("displayStatus", displayStatus);
+                item.put("pendingSince", pendingSince);
+                item.put("assignedTo", assignedTo);
+                item.put("allowedActions", Collections.emptyList());
+                item.put("summaryRef", summary);
+
+                result.add(item);
+            }
+        }
+        return result;
+    }
+
+    // ============================================
+    // MY ACTIONS (PERSONAL ASSIGNED QUEUE)
+    // ============================================
+
+    public List<Map<String, Object>> getMyActions(
+            String userId, String userRole, String tenantId, String plantId, Map<String, Object> filters) {
+
+        if (userId == null || userId.isBlank() || "SYSTEM".equalsIgnoreCase(userId)) {
+            return Collections.emptyList();
+        }
+
+        Query query = new Query();
+        List<Criteria> andCriteria = new ArrayList<>();
+        if (tenantId != null && !tenantId.isBlank()) {
+            andCriteria.add(new Criteria().orOperator(
+                    Criteria.where("tenantId").is(tenantId),
+                    Criteria.where("tenantId").exists(false),
+                    Criteria.where("tenantId").is(null)
+            ));
+        }
+        if (plantId != null && !plantId.isBlank()) {
+            andCriteria.add(new Criteria().orOperator(
+                    Criteria.where("plantId").is(plantId),
+                    Criteria.where("plantId").exists(false),
+                    Criteria.where("plantId").is(null)
+            ));
+        }
+        if (!andCriteria.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(andCriteria.toArray(new Criteria[0])));
+        }
+
+        List<Document> summaries = mongoTemplate.find(query, Document.class, BATCH_SUMMARY_COLLECTION);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        String filterStatus = filters != null ? (String) filters.get("status") : null;
+        String filterEqType = filters != null ? (String) filters.get("equipmentType") : null;
+        String filterSearch = filters != null ? (String) filters.get("search") : null;
+
+        // Query workflow instances assigned to this user to cross-reference
+        Query instanceQuery = new Query(Criteria.where("assignedTo").regex("^" + userId.trim() + "$", "i"));
+        List<WorkflowInstance> userInstances = mongoTemplate.find(instanceQuery, WorkflowInstance.class, INSTANCE_COLLECTION);
+        Set<String> assignedEntityKeys = new HashSet<>();
+        for (WorkflowInstance wi : userInstances) {
+            String bNo = wi.getBatchNo();
+            String lNo = wi.getLotNo();
+            String eqC = wi.getEquipmentCode();
+            if (bNo != null && eqC != null) {
+                assignedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
+                if (lNo != null) {
+                    assignedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + lNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
+                }
+            }
+        }
+
+        for (Document summary : summaries) {
+            String batchNo = summary.getString("batchNo");
+            String lotNo = summary.getString("lotNo");
+            String productCode = summary.getString("productCode");
+            String productName = summary.getString("productName");
+            if (productName == null) productName = "Finasteride USP 5 mg";
+            String summaryId = summary.get("_id") != null ? summary.get("_id").toString() : batchNo;
+
+            @SuppressWarnings("unchecked")
+            List<Document> stages = (List<Document>) summary.get("stages");
+            if (stages == null) continue;
+
+            for (Document stage : stages) {
+                String equipmentCode = stage.getString("equipmentCode");
+                if (equipmentCode == null) equipmentCode = stage.getString("equipmentId");
+                if (equipmentCode == null) equipmentCode = "";
+
+                String equipmentType = stage.getString("equipmentType");
+                if (equipmentType == null && equipmentCode.length() >= 3) {
+                    equipmentType = equipmentCode.substring(equipmentCode.length() - 3);
+                }
+                if (equipmentType == null) equipmentType = "RMG";
+                equipmentType = equipmentType.toUpperCase(Locale.ROOT);
+
+                if (filterEqType != null && !filterEqType.isBlank() && !"ALL".equalsIgnoreCase(filterEqType)
+                        && !filterEqType.equalsIgnoreCase(equipmentType)) {
+                    continue;
+                }
+
+                Document approval = stage.get("approval", Document.class);
+                String rawStatus = approval != null && approval.getString("status") != null
+                        ? approval.getString("status").toUpperCase(Locale.ROOT) : "PENDING";
+
+                // Exclude terminal stages
+                if ("APPROVED".equals(rawStatus) || "COMPLETED".equals(rawStatus) || "DEFERRED".equals(rawStatus) || "REJECTED".equals(rawStatus)) {
+                    continue;
+                }
+
+                // Check if assigned to this user
+                String assignedTo = approval != null ? approval.getString("assignedTo") : null;
+                boolean isAssignedToUser = assignedTo != null && assignedTo.equalsIgnoreCase(userId);
+
+                if (!isAssignedToUser && batchNo != null && !equipmentCode.isBlank()) {
+                    String key1 = batchNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT);
+                    String key2 = lotNo != null ? batchNo.toUpperCase(Locale.ROOT) + ":" + lotNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT) : null;
+                    if (assignedEntityKeys.contains(key1) || (key2 != null && assignedEntityKeys.contains(key2))) {
+                        isAssignedToUser = true;
+                    }
+                }
+
+                if (!isAssignedToUser) {
+                    continue;
+                }
+
+                if (filterStatus != null && !filterStatus.isBlank() && !"ALL".equalsIgnoreCase(filterStatus)
+                        && !filterStatus.equalsIgnoreCase(rawStatus)) {
+                    continue;
+                }
+
+                if (filterSearch != null && !filterSearch.isBlank()) {
+                    String term = filterSearch.toLowerCase(Locale.ROOT);
+                    boolean match = (batchNo != null && batchNo.toLowerCase(Locale.ROOT).contains(term))
+                            || (lotNo != null && lotNo.toLowerCase(Locale.ROOT).contains(term))
+                            || productName.toLowerCase(Locale.ROOT).contains(term)
+                            || (productCode != null && productCode.toLowerCase(Locale.ROOT).contains(term))
+                            || equipmentCode.toLowerCase(Locale.ROOT).contains(term);
+                    if (!match) continue;
+                }
+
+                int sequence = 1;
+                Object seqObj = stage.get("sequenceOrder");
+                if (seqObj instanceof Number) {
+                    sequence = ((Number) seqObj).intValue();
+                } else if (stage.get("stageOrder") instanceof Number) {
+                    sequence = ((Number) stage.get("stageOrder")).intValue();
+                }
+
+                String displayStatus = rawStatus.replace('_', ' ');
+                if ("REVIEWER_REVIEWED".equals(rawStatus) || "PENDING_APPROVAL".equals(rawStatus)) {
+                    displayStatus = "Pending Approval";
+                } else if ("UNDER_REVIEW".equals(rawStatus) || "IN_REVIEW".equals(rawStatus)) {
+                    displayStatus = "Under Review";
+                } else if ("RETURNED_TO_OPERATOR".equals(rawStatus) || "RETURNED".equals(rawStatus) || "REJECTED".equals(rawStatus) || "SENT_BACK".equals(rawStatus)) {
+                    displayStatus = "Returned / Rejected";
+                } else if ("PENDING".equals(rawStatus) || "NOT_STARTED".equals(rawStatus)) {
+                    displayStatus = "Pending Submission";
+                }
+
+                String lastAction = approval != null && approval.getString("transitionedBy") != null
+                        ? approval.getString("transitionedBy")
+                        : (stage.getString("operatorName") != null ? stage.getString("operatorName") : "-");
+                String lastActionAt = "";
+                if (approval != null && approval.get("transitionedAt") != null) {
+                    lastActionAt = approval.get("transitionedAt").toString();
+                } else if (stage.get("stageEndAt") != null) {
+                    lastActionAt = stage.get("stageEndAt").toString();
+                } else if (summary.get("updatedAt") != null) {
+                    lastActionAt = summary.get("updatedAt").toString();
+                }
+
+                String id = summaryId + ":" + batchNo + ":" + (lotNo != null ? lotNo : "") + ":" + equipmentCode + ":" + sequence;
+
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("id", id);
+                item.put("batchNo", batchNo);
+                item.put("lotNo", lotNo != null ? lotNo : "01 of 05");
+                item.put("productCode", productCode != null ? productCode : "");
+                item.put("productName", productName);
+                item.put("equipmentCode", equipmentCode);
+                item.put("equipmentType", equipmentType);
+                item.put("workflowStage", "Stage " + sequence + " (" + equipmentType + ")");
+                item.put("stageSequence", sequence);
+                item.put("rawStatus", rawStatus);
+                item.put("displayStatus", displayStatus);
+                item.put("lastAction", lastAction);
+                item.put("lastActionAt", lastActionAt);
+                item.put("assignedTo", userId);
+                item.put("allowedActions", Collections.emptyList());
+                item.put("summaryRef", summary);
+
+                result.add(item);
+            }
+        }
+        return result;
     }
 
     // ============================================
@@ -1613,6 +1968,14 @@ public class DynamicWorkflowEngine {
                                                  String userId, String userRole, String tenantId, String plantId) {
         WorkflowInstance instance = getOrCreateWorkflowInstance(batchNo, lotNo, equipmentCode, tenantId, plantId, null, userId);
 
+        // Concurrency Check: Prevent inconsistent dual ownership if already claimed by another user
+        String previousAssignedTo = instance.getAssignedTo();
+        if (previousAssignedTo != null && !previousAssignedTo.isBlank() && !previousAssignedTo.equalsIgnoreCase(userId)) {
+            throw new BusinessException(
+                    "This batch is already assigned to " + previousAssignedTo + ". Simultaneous duplicate assignment is not permitted.",
+                    "DUPLICATE_ASSIGNMENT_CONFLICT");
+        }
+
         Instant now = Instant.now();
         instance.setAssignedTo(userId);
         instance.setUpdatedAt(now);
@@ -1649,11 +2012,34 @@ public class DynamicWorkflowEngine {
                             break;
                         }
                     }
+                    summary.put("assignedTo", userId);
                     mongoTemplate.save(summary, BATCH_SUMMARY_COLLECTION);
                 }
             }
         } catch (Exception ex) {
             log.warn("Could not update batch summary for task claim: {}", ex.getMessage());
+        }
+
+        // Immutable Audit Trail for Controlled Workflow Action: Assign to Me
+        Document auditEvent = new Document();
+        auditEvent.put("tenantId", tenantId != null && !tenantId.isBlank() ? tenantId : instance.getTenantId());
+        auditEvent.put("plantId", plantId != null && !plantId.isBlank() ? plantId : instance.getPlantId());
+        auditEvent.put("batchNo", batchNo);
+        auditEvent.put("lotNo", lotNo);
+        auditEvent.put("equipmentCode", equipmentCode);
+        auditEvent.put("action", "ASSIGN_TO_ME");
+        auditEvent.put("actionCode", "CLAIM_TASK");
+        auditEvent.put("userId", userId);
+        auditEvent.put("previousAssignment", previousAssignedTo);
+        auditEvent.put("newAssignment", userId);
+        Date ts = Date.from(now);
+        auditEvent.put("timestamp", ts);
+        auditEvent.put("createdAt", ts);
+        auditEvent.put("comments", "Batch stage assigned to " + userId);
+        try {
+            mongoTemplate.insert(auditEvent, AUDIT_COLLECTION);
+        } catch (Exception e) {
+            log.error("Failed to persist assignment audit event for batch={} stage={}: {}", batchNo, equipmentCode, e.getMessage());
         }
 
         Map<String, Object> res = new LinkedHashMap<>();
@@ -1670,6 +2056,7 @@ public class DynamicWorkflowEngine {
                                                    String userId, String tenantId) {
         WorkflowInstance instance = getOrCreateWorkflowInstance(batchNo, lotNo, equipmentCode, tenantId, null, null, userId);
 
+        String previousAssignedTo = instance.getAssignedTo();
         Instant now = Instant.now();
         instance.setAssignedTo(null);
         instance.setUpdatedAt(now);
@@ -1709,6 +2096,28 @@ public class DynamicWorkflowEngine {
             }
         } catch (Exception ex) {
             log.warn("Could not update batch summary for task unclaim: {}", ex.getMessage());
+        }
+
+        // Immutable Audit Trail for Controlled Workflow Action: Release Assignment
+        Document auditEvent = new Document();
+        auditEvent.put("tenantId", tenantId != null && !tenantId.isBlank() ? tenantId : instance.getTenantId());
+        auditEvent.put("plantId", instance.getPlantId());
+        auditEvent.put("batchNo", batchNo);
+        auditEvent.put("lotNo", lotNo);
+        auditEvent.put("equipmentCode", equipmentCode);
+        auditEvent.put("action", "RELEASE_ASSIGNMENT");
+        auditEvent.put("actionCode", "UNCLAIM_TASK");
+        auditEvent.put("userId", userId);
+        auditEvent.put("previousAssignment", previousAssignedTo);
+        auditEvent.put("newAssignment", null);
+        Date ts = Date.from(now);
+        auditEvent.put("timestamp", ts);
+        auditEvent.put("createdAt", ts);
+        auditEvent.put("comments", "Batch stage assignment released by " + userId);
+        try {
+            mongoTemplate.insert(auditEvent, AUDIT_COLLECTION);
+        } catch (Exception e) {
+            log.error("Failed to persist release assignment audit event: {}", e.getMessage());
         }
 
         Map<String, Object> res = new LinkedHashMap<>();

@@ -19,9 +19,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.adavis.common.exception.BusinessException;
 import com.adavis.security.JwtTokenProvider;
 
 @RestController
@@ -494,35 +496,108 @@ public class IiotOperationsController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PostMapping("/workflow/claim-task")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> claimWorkflowTask(
-            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
-            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
-            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> request) {
-
+    private String resolveUserId(String headerUserId, String authHeader) {
         String userId = headerUserId;
         if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
             try {
                 userId = jwtTokenProvider.getUserIdFromToken(authHeader.substring(7).trim());
             } catch (Exception ignored) {}
         }
-        if (userId == null || userId.isBlank()) {
-            userId = request.getOrDefault("userId", "SYSTEM");
+        return (userId != null && !userId.isBlank()) ? userId.trim() : "SYSTEM";
+    }
+
+    @GetMapping("/workflow/pending-batches")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPendingBatches(
+            @RequestParam(required = false) String productCode,
+            @RequestParam(required = false) String batchNo,
+            @RequestParam(required = false) String equipmentType,
+            @RequestParam(required = false) String lotNo,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        String userId = resolveUserId(headerUserId, authHeader);
+        String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
+
+        Map<String, Object> filters = new HashMap<>();
+        if (productCode != null) filters.put("productCode", productCode);
+        if (batchNo != null) filters.put("batchNo", batchNo);
+        if (equipmentType != null) filters.put("equipmentType", equipmentType);
+        if (lotNo != null) filters.put("lotNo", lotNo);
+        if (status != null) filters.put("status", status);
+        if (search != null) filters.put("search", search);
+
+        List<Map<String, Object>> result = dynamicWorkflowEngine.getPendingBatches(
+                userId, headerUserRole, effectiveTenant, plantId, filters);
+
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @GetMapping("/workflow/my-actions")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMyActions(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String equipmentType,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        // User identity is derived strictly from verified security context; query parameter userId is ignored to prevent spoofing
+        String userId = resolveUserId(headerUserId, authHeader);
+        String effectiveTenant = (tenantId != null && !tenantId.isBlank()) ? tenantId : headerTenantId;
+
+        Map<String, Object> filters = new HashMap<>();
+        if (status != null) filters.put("status", status);
+        if (equipmentType != null) filters.put("equipmentType", equipmentType);
+        if (search != null) filters.put("search", search);
+
+        List<Map<String, Object>> result = dynamicWorkflowEngine.getMyActions(
+                userId, headerUserRole, effectiveTenant, plantId, filters);
+
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @PostMapping({"/workflow/claim-task", "/batches/{batchId}/assign-to-me"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> claimWorkflowTask(
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable(required = false) String batchId,
+            @RequestBody(required = false) Map<String, String> request) {
+
+        String userId = resolveUserId(headerUserId, authHeader);
+        if (userId.equals("SYSTEM") && request != null && request.containsKey("userId")) {
+            userId = request.get("userId");
         }
 
-        String userRole = headerUserRole != null ? headerUserRole : request.getOrDefault("userRole", "");
-        String tenantId = request.getOrDefault("tenantId", headerTenantId != null ? headerTenantId : "TNT-0001");
-        String plantId = request.getOrDefault("plantId", "PLNT-0001");
-        String batchNo = request.getOrDefault("batchNo", "");
-        String lotNo = request.getOrDefault("lotNo", "");
-        String equipmentCode = request.getOrDefault("equipmentCode", "");
+        Map<String, String> body = request != null ? request : Map.of();
+        String userRole = headerUserRole != null ? headerUserRole : body.getOrDefault("userRole", "");
+        String tenantId = body.getOrDefault("tenantId", headerTenantId != null ? headerTenantId : "TNT-0001");
+        String plantId = body.getOrDefault("plantId", "PLNT-0001");
+        String batchNo = body.getOrDefault("batchNo", batchId != null ? batchId : "");
+        String lotNo = body.getOrDefault("lotNo", "");
+        String equipmentCode = body.getOrDefault("equipmentCode", "");
 
-        Map<String, Object> result = dynamicWorkflowEngine.claimWorkflowTask(
-                batchNo, lotNo, equipmentCode, userId, userRole, tenantId, plantId);
-
-        return ResponseEntity.ok(ApiResponse.success("Task claimed successfully", result));
+        try {
+            Map<String, Object> result = dynamicWorkflowEngine.claimWorkflowTask(
+                    batchNo, lotNo, equipmentCode, userId, userRole, tenantId, plantId);
+            return ResponseEntity.ok(ApiResponse.success("Task claimed successfully", result));
+        } catch (BusinessException ex) {
+            if ("DUPLICATE_ASSIGNMENT_CONFLICT".equals(ex.getErrorCode())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.error(ex.getMessage(), "DUPLICATE_ASSIGNMENT_CONFLICT"));
+            }
+            throw ex;
+        }
     }
 
     @PostMapping("/workflow/unclaim-task")
@@ -530,22 +605,18 @@ public class IiotOperationsController {
             @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
             @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> request) {
+            @RequestBody(required = false) Map<String, String> request) {
 
-        String userId = headerUserId;
-        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
-            try {
-                userId = jwtTokenProvider.getUserIdFromToken(authHeader.substring(7).trim());
-            } catch (Exception ignored) {}
-        }
-        if (userId == null || userId.isBlank()) {
-            userId = request.getOrDefault("userId", "SYSTEM");
+        String userId = resolveUserId(headerUserId, authHeader);
+        if (userId.equals("SYSTEM") && request != null && request.containsKey("userId")) {
+            userId = request.get("userId");
         }
 
-        String tenantId = request.getOrDefault("tenantId", headerTenantId != null ? headerTenantId : "TNT-0001");
-        String batchNo = request.getOrDefault("batchNo", "");
-        String lotNo = request.getOrDefault("lotNo", "");
-        String equipmentCode = request.getOrDefault("equipmentCode", "");
+        Map<String, String> body = request != null ? request : Map.of();
+        String tenantId = body.getOrDefault("tenantId", headerTenantId != null ? headerTenantId : "TNT-0001");
+        String batchNo = body.getOrDefault("batchNo", "");
+        String lotNo = body.getOrDefault("lotNo", "");
+        String equipmentCode = body.getOrDefault("equipmentCode", "");
 
         Map<String, Object> result = dynamicWorkflowEngine.unclaimWorkflowTask(
                 batchNo, lotNo, equipmentCode, userId, tenantId);
