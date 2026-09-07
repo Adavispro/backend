@@ -27,8 +27,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class DynamicWorkflowEngine {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DynamicWorkflowEngine.class);
-
     private final MongoTemplate mongoTemplate;
     private final NotificationService notificationService;
     private final BatchPdfGeneratorService batchPdfGeneratorService;
@@ -945,26 +943,6 @@ public class DynamicWorkflowEngine {
         if ("APPROVED".equalsIgnoreCase(targetStatus)) {
             approval.put("approvedBy", userId);
             approval.put("approvedAt", now);
-            try {
-                BatchPdfGeneratorService.PdfGenerationResult pdfRes = batchPdfGeneratorService.generateAndStoreBatchPdf(
-                        batchNo, lotNo, equipmentCode, tenantId, plantId, userId, userRole);
-                approval.put("pdfDocumentId", pdfRes.getDocumentId());
-                approval.put("pdfStoragePath", pdfRes.getStoragePath());
-                approval.put("pdfSha256Checksum", pdfRes.getSha256Checksum());
-                approval.put("pdfGeneratedAt", now);
-                approval.put("pdfStatus", "READY");
-
-                summary.put("pdfDocumentId", pdfRes.getDocumentId());
-                summary.put("pdfStoragePath", pdfRes.getStoragePath());
-                summary.put("pdfSha256Checksum", pdfRes.getSha256Checksum());
-                summary.put("pdfStatus", "READY");
-                summary.put("pdfGeneratedAt", now);
-            } catch (Exception ex) {
-                log.error("Failed to automatically generate PDF on approval for batch={}, lot={}, equipment={}, tenant={}, plant={}, user={}: {}",
-                        batchNo, lotNo, equipmentCode, tenantId, plantId, userId, ex.getMessage(), ex);
-                approval.put("pdfStatus", "FAILED");
-                summary.put("pdfStatus", "FAILED");
-            }
         } else if ("DEFERRED".equalsIgnoreCase(targetStatus)) {
             approval.put("deferredBy", userId);
             approval.put("deferredAt", now);
@@ -1080,6 +1058,35 @@ public class DynamicWorkflowEngine {
                 .build();
 
         mongoTemplate.save(history, HISTORY_COLLECTION);
+
+        // On final approval, generate authoritative GxP PDF with up-to-date status and metadata
+        if ("APPROVED".equalsIgnoreCase(targetStatus)) {
+            try {
+                BatchPdfGeneratorService.PdfGenerationResult pdfRes = batchPdfGeneratorService.generateAndStoreBatchPdf(
+                        batchNo, lotNo, equipmentCode, tenantId, plantId, userId, userRole);
+                approval.put("pdfDocumentId", pdfRes.getDocumentId());
+                approval.put("pdfStoragePath", pdfRes.getStoragePath());
+                approval.put("pdfSha256Checksum", pdfRes.getSha256Checksum());
+                approval.put("pdfGeneratedAt", now);
+                approval.put("pdfStatus", "READY");
+
+                summary.put("pdfDocumentId", pdfRes.getDocumentId());
+                summary.put("pdfStoragePath", pdfRes.getStoragePath());
+                summary.put("pdfSha256Checksum", pdfRes.getSha256Checksum());
+                summary.put("pdfStatus", "READY");
+                summary.put("pdfGeneratedAt", now);
+
+                targetStage.put("approval", approval);
+                mongoTemplate.save(summary, BATCH_SUMMARY_COLLECTION);
+            } catch (Exception ex) {
+                log.error("Failed to automatically generate PDF on approval for batch={}, lot={}, equipment={}, tenant={}, plant={}, user={}: {}",
+                        batchNo, lotNo, equipmentCode, tenantId, plantId, userId, ex.getMessage(), ex);
+                approval.put("pdfStatus", "FAILED");
+                summary.put("pdfStatus", "FAILED");
+                targetStage.put("approval", approval);
+                mongoTemplate.save(summary, BATCH_SUMMARY_COLLECTION);
+            }
+        }
 
         // Emit Immutable 21 CFR Part 11 Audit Trail Event
         emitWorkflowAuditEvent(tenantId, batchNo, lotNo, equipmentCode,

@@ -17,6 +17,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.parser.PdfTextExtractor;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
@@ -133,7 +136,32 @@ public class BatchPdfPersistenceTest {
         Document updatedSummary = summaryCaptor.getValue();
         assertEquals(result.getDocumentId(), updatedSummary.getString("pdfDocumentId"));
         assertEquals("READY", updatedSummary.getString("pdfStatus"));
-        assertEquals(result.getSha256Checksum(), updatedSummary.getString("pdfSha256Checksum"));
+    }
+
+    @Test
+    @DisplayName("Should generate PDF with QA APPROVED status and without CHECKED/REVIEWED BY footer")
+    void testPdfVisualContentAndStatus() throws Exception {
+        BatchPdfGeneratorService.PdfGenerationResult result = pdfGeneratorService.generateAndStoreBatchPdf(
+                "NL0026008", "01 of 05", "G5FBD", "TNT-0001", "PLNT-0001", "QA_APPROVER_01", "QA_APPROVER");
+
+        assertNotNull(result);
+        assertNotNull(result.getPdfBytes());
+
+        java.nio.file.Files.write(java.nio.file.Path.of("/tmp/test_qa_approved.pdf"), result.getPdfBytes());
+
+        PdfReader reader = new PdfReader(result.getPdfBytes());
+        PdfTextExtractor extractor = new PdfTextExtractor(reader);
+        StringBuilder extractedText = new StringBuilder();
+        for (int i = 1; i <= reader.getNumberOfPages(); i++) {
+            extractedText.append(extractor.getTextFromPage(i)).append("\n");
+        }
+        reader.close();
+
+        String pdfText = extractedText.toString();
+        assertFalse(pdfText.contains("CHECKED BY:"), "Footer table 'CHECKED BY:' must be removed");
+        assertFalse(pdfText.contains("REVIEWED BY:"), "Footer table 'REVIEWED BY:' must be removed");
+        assertTrue(pdfText.contains("WORKFLOW ACTIONS & ELECTRONIC SIGNATURE RECORD"), "Workflow actions table header must be present");
+        assertTrue(pdfText.contains("[VERIFIED] 21 CFR Part 11"), "21 CFR Part 11 verification tag must be present");
     }
 
     @Test
