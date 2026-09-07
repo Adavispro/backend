@@ -1671,68 +1671,596 @@
     ],
     "auditTrail": [
       {
-        "dateTime": "12/02/2026 08:30:00",
+        "dateTime": "23/02/2026 11:36:50",
         "description": "BATCH START",
         "oldValue": null,
         "newValue": null,
         "reason": null,
-        "userName": "91525 (PB3 COATC0223 Supervisor)"
+        "userName": "98204 (PB3 COTC0226 Supervisor)"
       },
       {
-        "dateTime": "12/02/2026 08:35:00",
-        "description": "PRE-HEATING START",
+        "dateTime": "23/02/2026 11:37:49",
+        "description": "RETRACTABLE ARM OUT",
         "oldValue": null,
         "newValue": null,
         "reason": null,
-        "userName": "8961 (PB3 COATC0223 Operator)"
+        "userName": "24159 (PB3 COTC0226 Operator)"
       },
       {
-        "dateTime": "12/02/2026 08:55:00",
-        "description": "SPRAYING START",
+        "dateTime": "23/02/2026 11:38:09",
+        "description": "TABLET LOADING START",
         "oldValue": null,
         "newValue": null,
         "reason": null,
-        "userName": "8961 (PB3 COATC0223 Operator)"
+        "userName": "24159 (PB3 COTC0226 Operator)"
       },
       {
-        "dateTime": "12/02/2026 10:14:20",
-        "description": "AUTO PAUSE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "SPRAY GUN CLEANING",
-        "userName": "8961 (PB3 COATC0223 Operator)"
+        "dateTime": "23/02/2026 11:39:17",
+        "description": "EXHAUST DAMPER OPENING",
+        "oldValue": "60.0",
+        "newValue": "40.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
       },
       {
-        "dateTime": "12/02/2026 10:18:45",
-        "description": "ACKNOWLEDGE",
+        "dateTime": "23/02/2026 11:53:24",
+        "description": "CONTROL PANEL CONDENSATE SET",
+        "oldValue": "80",
+        "newValue": "319",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 11:53:32",
+        "description": "TABLET LOADING END",
         "oldValue": null,
         "newValue": null,
         "reason": null,
-        "userName": "8961 (PB3 COATC0223 Operator)"
+        "userName": "24159 (PB3 COTC0226 Operator)"
       },
       {
-        "dateTime": "12/02/2026 10:19:00",
-        "description": "AUTO START",
+        "dateTime": "23/02/2026 11:55:34",
+        "description": "DE DUSTING START",
         "oldValue": null,
         "newValue": null,
         "reason": null,
-        "userName": "8961 (PB3 COATC0223 Operator)"
+        "userName": "24159 (PB3 COTC0226 Operator)"
       },
       {
-        "dateTime": "12/02/2026 12:00:00",
-        "description": "POST DRYING START",
+        "dateTime": "23/02/2026 11:56:34",
+        "description": "DE DUSTING OVER",
         "oldValue": null,
         "newValue": null,
         "reason": null,
-        "userName": "8961 (PB3 COATC0223 Operator)"
+        "userName": "24159 (PB3 COTC0226 Operator)"
       },
       {
-        "dateTime": "12/02/2026 12:45:30",
+        "dateTime": "23/02/2026 11:56:44",
+        "description": "DOSING",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 11:56:58",
+        "description": "MANUAL MODE DOSING PUMP RPM",
+        "oldValue": "25.0",
+        "newValue": "16.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 11:57:11",
+        "description": "GUN VALIDATION",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 11:58:11",
+        "description": "GUN VALIDATION",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:01:04",
+        "description": "GUN VALIDATION",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:02:04",
+        "description": "GUN VALIDATION",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:08:43",
+        "description": "GUN VALIDATION",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:09:43",
+        "description": "GUN VALIDATION",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:12:09",
+        "description": "DOSING PUMP START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:12:12",
+        "description": "DOSING PUMP STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:12:16",
+        "description": "DOSING PUMP STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:12:33",
+        "description": "RETRACTABLE ARM IN",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:13:14",
+        "description": "MACHNE MODE AUTO",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:13:20",
+        "description": "DOSING",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:13:23",
+        "description": "COATING START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:14:53",
+        "description": "EXHAUST DAMPER OPENING",
+        "oldValue": "40.0",
+        "newValue": "100.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:14:57",
+        "description": "INLET DAMPER OPENING",
+        "oldValue": "95.0",
+        "newValue": "70.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:19:23",
+        "description": "PRE JOG STARTED",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:29:23",
+        "description": "PRE JOG OVER",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:35:07",
+        "description": "CONDENSATE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:43:08",
+        "description": "CONDENSATE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:46:24",
+        "description": "AGITATOR SOLUTION",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:50:44",
+        "description": "CONTROL PANEL CONDENSATE SET",
+        "oldValue": "319",
+        "newValue": "60",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:55:39",
+        "description": "CONTROL PANEL CONDENSATE SET",
+        "oldValue": "60",
+        "newValue": "100",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:56:41",
+        "description": "CONTROL PANEL CONDENSATE SET",
+        "oldValue": "100",
+        "newValue": "10",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:56:46",
+        "description": "DOSING",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 12:58:01",
+        "description": "DOSING PUMP SET SPEED",
+        "oldValue": "18.0",
+        "newValue": "17.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 13:37:13",
+        "description": "PAN SPEED",
+        "oldValue": "2.5",
+        "newValue": "3.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 13:55:17",
+        "description": "PAN SPEED",
+        "oldValue": "3.0",
+        "newValue": "3.5",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 14:40:28",
+        "description": "PAN SPEED",
+        "oldValue": "3.5",
+        "newValue": "4.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 15:30:37",
+        "description": "DOSING PUMP SET SPEED",
+        "oldValue": "17.0",
+        "newValue": "15.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 15:30:46",
+        "description": "INLET DAMPER OPENING",
+        "oldValue": "70.0",
+        "newValue": "60.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:01:42",
+        "description": "PAN SPEED",
+        "oldValue": "4.0",
+        "newValue": "5.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:01:50",
+        "description": "DOSING PUMP SET SPEED",
+        "oldValue": "15.0",
+        "newValue": "14.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:01:56",
+        "description": "CONTROL PANEL CONDENSATE SET",
+        "oldValue": "10",
+        "newValue": "1",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:02:08",
+        "description": "CONTROL PANEL CONDENSATE SET",
+        "oldValue": "1",
+        "newValue": "60",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:53:13",
+        "description": "CONTROL PANEL CONDENSATE SET",
+        "oldValue": "60",
+        "newValue": "10",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:53:23",
+        "description": "PAN SPEED",
+        "oldValue": "5.0",
+        "newValue": "4.5",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:53:28",
+        "description": "DOSING PUMP SET SPEED",
+        "oldValue": "14.0",
+        "newValue": "12.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:53:30",
+        "description": "PAN SPEED",
+        "oldValue": "4.5",
+        "newValue": "4.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:53:37",
+        "description": "DOSING PUMP SET SPEED",
+        "oldValue": "12.0",
+        "newValue": "11.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:54:13",
+        "description": "DOSING PUMP SET SPEED",
+        "oldValue": "11.0",
+        "newValue": "10.5",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:54:26",
+        "description": "INLET DAMPER OPENING",
+        "oldValue": "60.0",
+        "newValue": "50.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 16:55:00",
+        "description": "PAN SPEED",
+        "oldValue": "4.0",
+        "newValue": "3.5",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:26:04",
+        "description": "DOSING",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:26:08",
+        "description": "AUTO STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": "TABLET BUILD UP WEIGHT REACHED",
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:26:27",
+        "description": "AGITATOR SOLUTION",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:28:03",
+        "description": "POST JOG ON/OFF",
+        "oldValue": "OFF",
+        "newValue": "ON",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:28:23",
+        "description": "POST JOG STARTED",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:38:23",
+        "description": "POST JOG OVER",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:38:45",
+        "description": "POST JOG ON/OFF",
+        "oldValue": "ON",
+        "newValue": "OFF",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:41:46",
+        "description": "RETRACTABLE ARM OUT",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:42:03",
+        "description": "MACHNE MODE MANUAL",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:42:12",
+        "description": "EXHAUST DAMPER OPENING",
+        "oldValue": "100.0",
+        "newValue": "50.0",
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 17:42:18",
+        "description": "EXHAUST BLOWER START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "24159 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 18:10:49",
+        "description": "PAN MOTOR START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 18:10:55",
+        "description": "PAN MOTOR STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 18:46:08",
+        "description": "EXHAUST BLOWER STOP",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 18:46:19",
+        "description": "UNLOADING START",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 18:46:33",
+        "description": "EXHAUST DAMPER OPENING",
+        "oldValue": "50.0",
+        "newValue": "40.0",
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 18:46:41",
+        "description": "MANUAL MODE PAN MOTOR RPM",
+        "oldValue": "1.0",
+        "newValue": "2.0",
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 19:02:47",
+        "description": "PAN PAUSE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 19:04:57",
+        "description": "PAN CONTINUE",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 19:15:56",
+        "description": "UNLOADING END",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 19:19:31",
+        "description": "RETRACTABLE ARM IN",
+        "oldValue": null,
+        "newValue": null,
+        "reason": null,
+        "userName": "28780 (PB3 COTC0226 Operator)"
+      },
+      {
+        "dateTime": "23/02/2026 19:53:08",
         "description": "BATCH END",
         "oldValue": null,
         "newValue": null,
         "reason": null,
-        "userName": "91525 (PB3 COATC0223 Supervisor)"
+        "userName": "99728 (PB3 COTC0226 Supervisor)"
       }
     ]
   },

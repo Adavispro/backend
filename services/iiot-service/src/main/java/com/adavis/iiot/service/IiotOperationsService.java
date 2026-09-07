@@ -981,6 +981,7 @@ public class IiotOperationsService {
         boolean isRmg = equipmentId != null && (equipmentId.toUpperCase().contains("RMG") || equipmentId.equalsIgnoreCase("G5RMG") || equipmentId.equalsIgnoreCase("RMGC0219"));
         boolean isFbd = equipmentId != null && (equipmentId.toUpperCase().contains("FBD") || equipmentId.equalsIgnoreCase("G5FBD") || equipmentId.equalsIgnoreCase("FBDC0220"));
         boolean isBle = equipmentId != null && (equipmentId.toUpperCase().contains("BLE") || equipmentId.toUpperCase().contains("OGB") || equipmentId.toUpperCase().contains("OCB") || equipmentId.equalsIgnoreCase("G5BLE") || equipmentId.equalsIgnoreCase("OCBC0222"));
+        boolean isCoat = equipmentId != null && (equipmentId.toUpperCase().contains("COAT") || equipmentId.toUpperCase().contains("COTC") || equipmentId.equalsIgnoreCase("G5COT") || equipmentId.equalsIgnoreCase("G5COAT") || equipmentId.equalsIgnoreCase("COATC0223") || equipmentId.equalsIgnoreCase("COTC0226"));
 
         if (isRmg && "ALARM".equalsIgnoreCase(category)) {
             return getRmgCanonicalAlarms();
@@ -996,6 +997,9 @@ public class IiotOperationsService {
         }
         if (isBle && "EVENT".equalsIgnoreCase(category)) {
             return getBleCanonicalAudits();
+        }
+        if (isCoat && "EVENT".equalsIgnoreCase(category)) {
+            return getCoatCanonicalAudits();
         }
 
         if (category == null || category.isBlank()) {
@@ -1017,6 +1021,8 @@ public class IiotOperationsService {
                 combined.addAll(getFbdCanonicalAudits());
             } else if (isBle) {
                 combined.addAll(getBleCanonicalAudits());
+            } else if (isCoat) {
+                combined.addAll(getCoatCanonicalAudits());
             } else {
                 combined.addAll(queryAlarmEventCollection(
                         resolveTimeSeriesReadCollection(AUDIT_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId),
@@ -1360,6 +1366,112 @@ public class IiotOperationsService {
         list.add(createBleAuditEntry(8, "11/02/2026 10:54:12", "BLEND START", "-", "-", "-", op));
         list.add(createBleAuditEntry(9, "11/02/2026 10:55:01", "BLEND START", "-", "-", "-", op));
         list.add(createBleAuditEntry(10, "11/02/2026 11:02:36", "BATCH END", "-", "-", "-", sup));
+        return list;
+    }
+
+    private Map<String, Object> createCoatAuditEntry(int idx, String dt, String desc, String oldV, String newV, String reason, String user) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        String num = String.format("%02d", idx);
+        m.put("record_id", "AUD-COAT-" + num);
+        m.put("recordId", "AUD-COAT-" + num);
+        m.put("dt", dt);
+        m.put("dateTime", dt);
+        m.put("timestamp", dt);
+        m.put("time_stamp", dt);
+        m.put("description", desc);
+        m.put("action", desc);
+        m.put("actionCode", desc);
+        m.put("old_value", oldV);
+        m.put("oldValue", oldV);
+        m.put("new_value", newV);
+        m.put("newValue", newV);
+        m.put("reason", reason);
+        m.put("user_name", user);
+        m.put("userName", user);
+        m.put("user_id", user);
+        m.put("userId", user);
+        m.put("equipmentId", "COTC0226");
+        m.put("batchNo", "NL0026008");
+        m.put("eventCategory", "EVENT");
+        return m;
+    }
+
+    private List<Map<String, Object>> getCoatCanonicalAudits() {
+        List<Map<String, Object>> list = new ArrayList<>(74);
+        list.add(createCoatAuditEntry(1, "23/02/2026 11:36:50", "BATCH START", "-", "-", "-", "98204 (PB3 COTC0226 Supervisor)"));
+        list.add(createCoatAuditEntry(2, "23/02/2026 11:37:49", "RETRACTABLE ARM OUT", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(3, "23/02/2026 11:38:09", "TABLET LOADING START", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(4, "23/02/2026 11:39:17", "EXHAUST DAMPER OPENING", "60.0", "40.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(5, "23/02/2026 11:53:24", "CONTROL PANEL CONDENSATE SET", "80", "319", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(6, "23/02/2026 11:53:32", "TABLET LOADING END", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(7, "23/02/2026 11:55:34", "DE DUSTING START", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(8, "23/02/2026 11:56:34", "DE DUSTING OVER", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(9, "23/02/2026 11:56:44", "DOSING", "OFF", "ON", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(10, "23/02/2026 11:56:58", "MANUAL MODE DOSING PUMP RPM", "25.0", "16.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(11, "23/02/2026 11:57:11", "GUN VALIDATION", "OFF", "ON", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(12, "23/02/2026 11:58:11", "GUN VALIDATION", "ON", "OFF", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(13, "23/02/2026 12:01:04", "GUN VALIDATION", "OFF", "ON", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(14, "23/02/2026 12:02:04", "GUN VALIDATION", "ON", "OFF", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(15, "23/02/2026 12:08:43", "GUN VALIDATION", "OFF", "ON", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(16, "23/02/2026 12:09:43", "GUN VALIDATION", "ON", "OFF", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(17, "23/02/2026 12:12:09", "DOSING PUMP START", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(18, "23/02/2026 12:12:12", "DOSING PUMP STOP", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(19, "23/02/2026 12:12:16", "DOSING PUMP STOP", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(20, "23/02/2026 12:12:33", "RETRACTABLE ARM IN", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(21, "23/02/2026 12:13:14", "MACHNE MODE AUTO", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(22, "23/02/2026 12:13:20", "DOSING", "ON", "OFF", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(23, "23/02/2026 12:13:23", "COATING START", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(24, "23/02/2026 12:14:53", "EXHAUST DAMPER OPENING", "40.0", "100.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(25, "23/02/2026 12:14:57", "INLET DAMPER OPENING", "95.0", "70.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(26, "23/02/2026 12:19:23", "PRE JOG STARTED", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(27, "23/02/2026 12:29:23", "PRE JOG OVER", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(28, "23/02/2026 12:35:07", "CONDENSATE", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(29, "23/02/2026 12:43:08", "CONDENSATE", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(30, "23/02/2026 12:46:24", "AGITATOR SOLUTION", "OFF", "ON", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(31, "23/02/2026 12:50:44", "CONTROL PANEL CONDENSATE SET", "319", "60", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(32, "23/02/2026 12:55:39", "CONTROL PANEL CONDENSATE SET", "60", "100", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(33, "23/02/2026 12:56:41", "CONTROL PANEL CONDENSATE SET", "100", "10", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(34, "23/02/2026 12:56:46", "DOSING", "OFF", "ON", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(35, "23/02/2026 12:58:01", "DOSING PUMP SET SPEED", "18.0", "17.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(36, "23/02/2026 13:37:13", "PAN SPEED", "2.5", "3.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(37, "23/02/2026 13:55:17", "PAN SPEED", "3.0", "3.5", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(38, "23/02/2026 14:40:28", "PAN SPEED", "3.5", "4.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(39, "23/02/2026 15:30:37", "DOSING PUMP SET SPEED", "17.0", "15.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(40, "23/02/2026 15:30:46", "INLET DAMPER OPENING", "70.0", "60.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(41, "23/02/2026 16:01:42", "PAN SPEED", "4.0", "5.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(42, "23/02/2026 16:01:50", "DOSING PUMP SET SPEED", "15.0", "14.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(43, "23/02/2026 16:01:56", "CONTROL PANEL CONDENSATE SET", "10", "1", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(44, "23/02/2026 16:02:08", "CONTROL PANEL CONDENSATE SET", "1", "60", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(45, "23/02/2026 16:53:13", "CONTROL PANEL CONDENSATE SET", "60", "10", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(46, "23/02/2026 16:53:23", "PAN SPEED", "5.0", "4.5", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(47, "23/02/2026 16:53:28", "DOSING PUMP SET SPEED", "14.0", "12.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(48, "23/02/2026 16:53:30", "PAN SPEED", "4.5", "4.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(49, "23/02/2026 16:53:37", "DOSING PUMP SET SPEED", "12.0", "11.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(50, "23/02/2026 16:54:13", "DOSING PUMP SET SPEED", "11.0", "10.5", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(51, "23/02/2026 16:54:26", "INLET DAMPER OPENING", "60.0", "50.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(52, "23/02/2026 16:55:00", "PAN SPEED", "4.0", "3.5", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(53, "23/02/2026 17:26:04", "DOSING", "ON", "OFF", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(54, "23/02/2026 17:26:08", "AUTO STOP", "-", "-", "TABLET BUILD UP WEIGHT REACHED", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(55, "23/02/2026 17:26:27", "AGITATOR SOLUTION", "ON", "OFF", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(56, "23/02/2026 17:28:03", "POST JOG ON/OFF", "OFF", "ON", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(57, "23/02/2026 17:28:23", "POST JOG STARTED", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(58, "23/02/2026 17:38:23", "POST JOG OVER", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(59, "23/02/2026 17:38:45", "POST JOG ON/OFF", "ON", "OFF", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(60, "23/02/2026 17:41:46", "RETRACTABLE ARM OUT", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(61, "23/02/2026 17:42:03", "MACHNE MODE MANUAL", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(62, "23/02/2026 17:42:12", "EXHAUST DAMPER OPENING", "100.0", "50.0", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(63, "23/02/2026 17:42:18", "EXHAUST BLOWER START", "-", "-", "-", "24159 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(64, "23/02/2026 18:10:49", "PAN MOTOR START", "-", "-", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(65, "23/02/2026 18:10:55", "PAN MOTOR STOP", "-", "-", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(66, "23/02/2026 18:46:08", "EXHAUST BLOWER STOP", "-", "-", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(67, "23/02/2026 18:46:19", "UNLOADING START", "-", "-", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(68, "23/02/2026 18:46:33", "EXHAUST DAMPER OPENING", "50.0", "40.0", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(69, "23/02/2026 18:46:41", "MANUAL MODE PAN MOTOR RPM", "1.0", "2.0", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(70, "23/02/2026 19:02:47", "PAN PAUSE", "-", "-", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(71, "23/02/2026 19:04:57", "PAN CONTINUE", "-", "-", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(72, "23/02/2026 19:15:56", "UNLOADING END", "-", "-", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(73, "23/02/2026 19:19:31", "RETRACTABLE ARM IN", "-", "-", "-", "28780 (PB3 COTC0226 Operator)"));
+        list.add(createCoatAuditEntry(74, "23/02/2026 19:53:08", "BATCH END", "-", "-", "-", "99728 (PB3 COTC0226 Supervisor)"));
         return list;
     }
 

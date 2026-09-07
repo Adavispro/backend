@@ -50,6 +50,7 @@ def dataset_family(dataset_id: str) -> str:
         .replace("C0220", "FBD")
         .replace("C0222", "BLE")
         .replace("C0223", "COAT")
+        .replace("C0226", "COAT")
         .replace("C0224", "CIP")
     )
     if "RMG" in cleaned:
@@ -58,7 +59,7 @@ def dataset_family(dataset_id: str) -> str:
         return "FBD"
     if "BLE" in cleaned or "OCB" in cleaned or "OGB" in cleaned:
         return "BLE"
-    if "COAT" in cleaned:
+    if "COAT" in cleaned or "COT" in cleaned:
         return "COAT"
     if "CIP" in cleaned:
         return "CIP"
@@ -602,14 +603,80 @@ def build_audit_data(dataset_id: str, from_time: str, to_time: str):
 
     if family == "COAT":
         coat_audits = [
-            ("12/02/2026 08:30:00", "BATCH START", None, None, None, supervisor_user),
-            ("12/02/2026 08:35:00", "PRE-HEATING START", None, None, None, audit_user),
-            ("12/02/2026 08:55:00", "SPRAYING START", None, None, None, audit_user),
-            ("12/02/2026 10:14:20", "AUTO PAUSE", None, None, "SPRAY GUN CLEANING", audit_user),
-            ("12/02/2026 10:18:45", "ACKNOWLEDGE", None, None, None, audit_user),
-            ("12/02/2026 10:19:00", "AUTO START", None, None, None, audit_user),
-            ("12/02/2026 12:00:00", "POST DRYING START", None, None, None, audit_user),
-            ("12/02/2026 12:45:30", "BATCH END", None, None, None, supervisor_user),
+            ('23/02/2026 11:36:50', 'BATCH START', None, None, None, '98204 (PB3 COTC0226 Supervisor)'),
+            ('23/02/2026 11:37:49', 'RETRACTABLE ARM OUT', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:38:09', 'TABLET LOADING START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:39:17', 'EXHAUST DAMPER OPENING', '60.0', '40.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:53:24', 'CONTROL PANEL CONDENSATE SET', '80', '319', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:53:32', 'TABLET LOADING END', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:55:34', 'DE DUSTING START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:56:34', 'DE DUSTING OVER', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:56:44', 'DOSING', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:56:58', 'MANUAL MODE DOSING PUMP RPM', '25.0', '16.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:57:11', 'GUN VALIDATION', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 11:58:11', 'GUN VALIDATION', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:01:04', 'GUN VALIDATION', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:02:04', 'GUN VALIDATION', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:08:43', 'GUN VALIDATION', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:09:43', 'GUN VALIDATION', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:12:09', 'DOSING PUMP START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:12:12', 'DOSING PUMP STOP', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:12:16', 'DOSING PUMP STOP', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:12:33', 'RETRACTABLE ARM IN', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:13:14', 'MACHNE MODE AUTO', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:13:20', 'DOSING', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:13:23', 'COATING START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:14:53', 'EXHAUST DAMPER OPENING', '40.0', '100.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:14:57', 'INLET DAMPER OPENING', '95.0', '70.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:19:23', 'PRE JOG STARTED', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:29:23', 'PRE JOG OVER', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:35:07', 'CONDENSATE', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:43:08', 'CONDENSATE', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:46:24', 'AGITATOR SOLUTION', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:50:44', 'CONTROL PANEL CONDENSATE SET', '319', '60', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:55:39', 'CONTROL PANEL CONDENSATE SET', '60', '100', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:56:41', 'CONTROL PANEL CONDENSATE SET', '100', '10', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:56:46', 'DOSING', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 12:58:01', 'DOSING PUMP SET SPEED', '18.0', '17.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 13:37:13', 'PAN SPEED', '2.5', '3.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 13:55:17', 'PAN SPEED', '3.0', '3.5', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 14:40:28', 'PAN SPEED', '3.5', '4.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 15:30:37', 'DOSING PUMP SET SPEED', '17.0', '15.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 15:30:46', 'INLET DAMPER OPENING', '70.0', '60.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:01:42', 'PAN SPEED', '4.0', '5.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:01:50', 'DOSING PUMP SET SPEED', '15.0', '14.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:01:56', 'CONTROL PANEL CONDENSATE SET', '10', '1', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:02:08', 'CONTROL PANEL CONDENSATE SET', '1', '60', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:53:13', 'CONTROL PANEL CONDENSATE SET', '60', '10', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:53:23', 'PAN SPEED', '5.0', '4.5', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:53:28', 'DOSING PUMP SET SPEED', '14.0', '12.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:53:30', 'PAN SPEED', '4.5', '4.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:53:37', 'DOSING PUMP SET SPEED', '12.0', '11.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:54:13', 'DOSING PUMP SET SPEED', '11.0', '10.5', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:54:26', 'INLET DAMPER OPENING', '60.0', '50.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 16:55:00', 'PAN SPEED', '4.0', '3.5', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:26:04', 'DOSING', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:26:08', 'AUTO STOP', None, None, 'TABLET BUILD UP WEIGHT REACHED', '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:26:27', 'AGITATOR SOLUTION', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:28:03', 'POST JOG ON/OFF', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:28:23', 'POST JOG STARTED', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:38:23', 'POST JOG OVER', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:38:45', 'POST JOG ON/OFF', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:41:46', 'RETRACTABLE ARM OUT', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:42:03', 'MACHNE MODE MANUAL', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:42:12', 'EXHAUST DAMPER OPENING', '100.0', '50.0', None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 17:42:18', 'EXHAUST BLOWER START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 18:10:49', 'PAN MOTOR START', None, None, None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 18:10:55', 'PAN MOTOR STOP', None, None, None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 18:46:08', 'EXHAUST BLOWER STOP', None, None, None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 18:46:19', 'UNLOADING START', None, None, None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 18:46:33', 'EXHAUST DAMPER OPENING', '50.0', '40.0', None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 18:46:41', 'MANUAL MODE PAN MOTOR RPM', '1.0', '2.0', None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 19:02:47', 'PAN PAUSE', None, None, None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 19:04:57', 'PAN CONTINUE', None, None, None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 19:15:56', 'UNLOADING END', None, None, None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 19:19:31', 'RETRACTABLE ARM IN', None, None, None, '28780 (PB3 COTC0226 Operator)'),
+            ('23/02/2026 19:53:08', 'BATCH END', None, None, None, '99728 (PB3 COTC0226 Supervisor)'),
         ]
         return [
             {
