@@ -183,6 +183,8 @@ public class BatchPdfGeneratorService {
             auditList.addAll(getFbdCanonicalPlcEvents());
         } else if (resolvedEq != null && (resolvedEq.toUpperCase().contains("RMG") || resolvedEq.equalsIgnoreCase("G5RMG") || resolvedEq.equalsIgnoreCase("RMGC0219"))) {
             auditList.addAll(getRmgCanonicalPlcEvents());
+        } else if (resolvedEq != null && (resolvedEq.toUpperCase().contains("BLE") || resolvedEq.toUpperCase().contains("OGB") || resolvedEq.toUpperCase().contains("OCB") || resolvedEq.equalsIgnoreCase("G5BLE") || resolvedEq.equalsIgnoreCase("OCBC0222"))) {
+            auditList.addAll(getBleCanonicalPlcEvents());
         }
 
         // 5. Fetch Telemetry Samples, Alarms and PLC Events for Equipment
@@ -525,6 +527,9 @@ public class BatchPdfGeneratorService {
         if (equipmentCode != null && (equipmentCode.toUpperCase().contains("RMG") || equipmentCode.equalsIgnoreCase("G5RMG") || equipmentCode.equalsIgnoreCase("RMGC0219"))) {
             return getRmgCanonicalPlcEvents();
         }
+        if (equipmentCode != null && (equipmentCode.toUpperCase().contains("BLE") || equipmentCode.toUpperCase().contains("OGB") || equipmentCode.toUpperCase().contains("OCB") || equipmentCode.equalsIgnoreCase("G5BLE") || equipmentCode.equalsIgnoreCase("OCBC0222"))) {
+            return getBleCanonicalPlcEvents();
+        }
         String col = "iiot_ts_audit_" + equipmentCode;
         if (!mongoTemplate.collectionExists(col)) return Collections.emptyList();
         Query q = new Query();
@@ -695,6 +700,43 @@ public class BatchPdfGeneratorService {
         list.add(createRmgAuditDoc(64, "09/02/2026 19:03:06", "AUTO UNLOAD START", "-", "-", "-", op));
         list.add(createRmgAuditDoc(65, "09/02/2026 19:03:30", "AUTO UNLOAD STOP", "-", "-", "PROCESS OVER", op));
         list.add(createRmgAuditDoc(66, "09/02/2026 19:03:39", "ACKNOWLEDGE", "-", "-", "-", op));
+        return list;
+    }
+
+    private Document createBleAuditDoc(int idx, String dt, String desc, String oldV, String newV, String reason, String user) {
+        String num = String.format("%02d", idx);
+        return new Document("record_id", "AUD-BLE-" + num)
+                .append("timestamp", dt)
+                .append("dateTime", dt)
+                .append("time_stamp", dt)
+                .append("dt", dt)
+                .append("description", desc)
+                .append("action", desc)
+                .append("old_value", oldV)
+                .append("new_value", newV)
+                .append("reason", reason)
+                .append("userName", user)
+                .append("user_name", user)
+                .append("userId", user)
+                .append("equipmentCode", "OCBC0222")
+                .append("comments", reason);
+    }
+
+    private List<Document> getBleCanonicalPlcEvents() {
+        String sup = "91525 (PB3 OCBC0222 Supervisor)";
+        String op = "25081 (PB3 OCBC0222 Operator)";
+
+        List<Document> list = new ArrayList<>(10);
+        list.add(createBleAuditDoc(1, "11/02/2026 09:04:55", "BATCH START", "-", "-", "-", sup));
+        list.add(createBleAuditDoc(2, "11/02/2026 09:08:04", "CHARGE START", "-", "-", "-", op));
+        list.add(createBleAuditDoc(3, "11/02/2026 10:15:13", "CHARGE STOP", "-", "-", "-", op));
+        list.add(createBleAuditDoc(4, "11/02/2026 10:20:52", "BLEND START", "-", "-", "-", op));
+        list.add(createBleAuditDoc(5, "11/02/2026 10:21:02", "BLEND START", "-", "-", "-", op));
+        list.add(createBleAuditDoc(6, "11/02/2026 10:47:54", "CHARGE START", "-", "-", "-", op));
+        list.add(createBleAuditDoc(7, "11/02/2026 10:52:03", "CHARGE STOP", "-", "-", "-", op));
+        list.add(createBleAuditDoc(8, "11/02/2026 10:54:12", "BLEND START", "-", "-", "-", op));
+        list.add(createBleAuditDoc(9, "11/02/2026 10:55:01", "BLEND START", "-", "-", "-", op));
+        list.add(createBleAuditDoc(10, "11/02/2026 11:02:36", "BATCH END", "-", "-", "-", sup));
         return list;
     }
 

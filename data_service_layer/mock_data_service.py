@@ -569,17 +569,19 @@ def build_audit_data(dataset_id: str, from_time: str, to_time: str):
         ]
 
     if family == "BLE":
+        ble_sup = "91525 (PB3 OCBC0222 Supervisor)"
+        ble_op = "25081 (PB3 OCBC0222 Operator)"
         ble_audits = [
-            ("11/02/2026 09:04:55", "BATCH START", None, None, None, supervisor_user),
-            ("11/02/2026 09:08:04", "CHARGE START", None, None, None, audit_user),
-            ("11/02/2026 10:15:13", "CHARGE STOP", None, None, None, audit_user),
-            ("11/02/2026 10:20:52", "BLEND START", None, None, None, audit_user),
-            ("11/02/2026 10:21:02", "BLEND START", None, None, None, audit_user),
-            ("11/02/2026 10:47:54", "CHARGE START", None, None, None, audit_user),
-            ("11/02/2026 10:52:03", "CHARGE STOP", None, None, None, audit_user),
-            ("11/02/2026 10:54:12", "BLEND START", None, None, None, audit_user),
-            ("11/02/2026 10:55:01", "BLEND START", None, None, None, audit_user),
-            ("11/02/2026 11:02:36", "BATCH END", None, None, None, supervisor_user),
+            ("11/02/2026 09:04:55", "BATCH START", None, None, None, ble_sup),
+            ("11/02/2026 09:08:04", "CHARGE START", None, None, None, ble_op),
+            ("11/02/2026 10:15:13", "CHARGE STOP", None, None, None, ble_op),
+            ("11/02/2026 10:20:52", "BLEND START", None, None, None, ble_op),
+            ("11/02/2026 10:21:02", "BLEND START", None, None, None, ble_op),
+            ("11/02/2026 10:47:54", "CHARGE START", None, None, None, ble_op),
+            ("11/02/2026 10:52:03", "CHARGE STOP", None, None, None, ble_op),
+            ("11/02/2026 10:54:12", "BLEND START", None, None, None, ble_op),
+            ("11/02/2026 10:55:01", "BLEND START", None, None, None, ble_op),
+            ("11/02/2026 11:02:36", "BATCH END", None, None, None, ble_sup),
         ]
         return [
             {

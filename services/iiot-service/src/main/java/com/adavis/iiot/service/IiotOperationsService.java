@@ -980,6 +980,7 @@ public class IiotOperationsService {
         String category = stringValue(filter.get("eventCategory"));
         boolean isRmg = equipmentId != null && (equipmentId.toUpperCase().contains("RMG") || equipmentId.equalsIgnoreCase("G5RMG") || equipmentId.equalsIgnoreCase("RMGC0219"));
         boolean isFbd = equipmentId != null && (equipmentId.toUpperCase().contains("FBD") || equipmentId.equalsIgnoreCase("G5FBD") || equipmentId.equalsIgnoreCase("FBDC0220"));
+        boolean isBle = equipmentId != null && (equipmentId.toUpperCase().contains("BLE") || equipmentId.toUpperCase().contains("OGB") || equipmentId.toUpperCase().contains("OCB") || equipmentId.equalsIgnoreCase("G5BLE") || equipmentId.equalsIgnoreCase("OCBC0222"));
 
         if (isRmg && "ALARM".equalsIgnoreCase(category)) {
             return getRmgCanonicalAlarms();
@@ -992,6 +993,9 @@ public class IiotOperationsService {
         }
         if (isFbd && "EVENT".equalsIgnoreCase(category)) {
             return getFbdCanonicalAudits();
+        }
+        if (isBle && "EVENT".equalsIgnoreCase(category)) {
+            return getBleCanonicalAudits();
         }
 
         if (category == null || category.isBlank()) {
@@ -1011,6 +1015,8 @@ public class IiotOperationsService {
                 combined.addAll(getRmgCanonicalAudits());
             } else if (isFbd) {
                 combined.addAll(getFbdCanonicalAudits());
+            } else if (isBle) {
+                combined.addAll(getBleCanonicalAudits());
             } else {
                 combined.addAll(queryAlarmEventCollection(
                         resolveTimeSeriesReadCollection(AUDIT_TS_COLLECTION, LEGACY_ALARM_TS_PREFIX, tenantId, equipmentId),
@@ -1309,6 +1315,51 @@ public class IiotOperationsService {
         list.add(createRmgAuditEntry(64, "09/02/2026 19:03:06", "AUTO UNLOAD START", "-", "-", "-", op));
         list.add(createRmgAuditEntry(65, "09/02/2026 19:03:30", "AUTO UNLOAD STOP", "-", "-", "PROCESS OVER", op));
         list.add(createRmgAuditEntry(66, "09/02/2026 19:03:39", "ACKNOWLEDGE", "-", "-", "-", op));
+        return list;
+    }
+
+    private Map<String, Object> createBleAuditEntry(int idx, String dt, String desc, String oldV, String newV, String reason, String user) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        String num = String.format("%02d", idx);
+        m.put("record_id", "AUD-BLE-" + num);
+        m.put("recordId", "AUD-BLE-" + num);
+        m.put("dt", dt);
+        m.put("dateTime", dt);
+        m.put("timestamp", dt);
+        m.put("time_stamp", dt);
+        m.put("description", desc);
+        m.put("action", desc);
+        m.put("actionCode", desc);
+        m.put("old_value", oldV);
+        m.put("oldValue", oldV);
+        m.put("new_value", newV);
+        m.put("newValue", newV);
+        m.put("reason", reason);
+        m.put("user_name", user);
+        m.put("userName", user);
+        m.put("user_id", user);
+        m.put("userId", user);
+        m.put("equipmentId", "OCBC0222");
+        m.put("batchNo", "NL0026008");
+        m.put("eventCategory", "EVENT");
+        return m;
+    }
+
+    private List<Map<String, Object>> getBleCanonicalAudits() {
+        String sup = "91525 (PB3 OCBC0222 Supervisor)";
+        String op = "25081 (PB3 OCBC0222 Operator)";
+
+        List<Map<String, Object>> list = new ArrayList<>(10);
+        list.add(createBleAuditEntry(1, "11/02/2026 09:04:55", "BATCH START", "-", "-", "-", sup));
+        list.add(createBleAuditEntry(2, "11/02/2026 09:08:04", "CHARGE START", "-", "-", "-", op));
+        list.add(createBleAuditEntry(3, "11/02/2026 10:15:13", "CHARGE STOP", "-", "-", "-", op));
+        list.add(createBleAuditEntry(4, "11/02/2026 10:20:52", "BLEND START", "-", "-", "-", op));
+        list.add(createBleAuditEntry(5, "11/02/2026 10:21:02", "BLEND START", "-", "-", "-", op));
+        list.add(createBleAuditEntry(6, "11/02/2026 10:47:54", "CHARGE START", "-", "-", "-", op));
+        list.add(createBleAuditEntry(7, "11/02/2026 10:52:03", "CHARGE STOP", "-", "-", "-", op));
+        list.add(createBleAuditEntry(8, "11/02/2026 10:54:12", "BLEND START", "-", "-", "-", op));
+        list.add(createBleAuditEntry(9, "11/02/2026 10:55:01", "BLEND START", "-", "-", "-", op));
+        list.add(createBleAuditEntry(10, "11/02/2026 11:02:36", "BATCH END", "-", "-", "-", sup));
         return list;
     }
 
