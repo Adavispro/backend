@@ -13,9 +13,16 @@ mkdir -p "$LOG_DIR" "$STATE_DIR"
 
 export JAVA_HOME="${JAVA_HOME:-$HOME/.local/share/jvm/jdk-21}"
 export PATH="$JAVA_HOME/bin:$HOME/.local/bin:$PATH"
-export DOCKER_HOST="${DOCKER_HOST:-unix:///run/user/1000/podman/podman.sock}"
 
 BUILD_FIRST="${BUILD_FIRST:-0}"
+
+if [[ -f "$REPO_ROOT/.env.dev" ]]; then
+  echo "Loading local environment from .env.dev..."
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO_ROOT/.env.dev"
+  set +a
+fi
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -61,12 +68,17 @@ require_cmd java
 require_cmd curl
 
 echo "Ensuring infrastructure containers are running..."
-if command -v docker-compose >/dev/null 2>&1; then
+if docker compose version >/dev/null 2>&1; then
+  docker compose -f "$COMPOSE_FILE" up -d
+elif command -v docker-compose >/dev/null 2>&1; then
   docker-compose -f "$COMPOSE_FILE" up -d
+elif podman compose version >/dev/null 2>&1; then
+  podman compose -f "$COMPOSE_FILE" up -d
 elif command -v podman-compose >/dev/null 2>&1; then
   podman-compose -f "$COMPOSE_FILE" up -d
 else
-  podman compose -f "$COMPOSE_FILE" up -d
+  echo "Missing a working Docker Compose or Podman Compose runtime." >&2
+  exit 1
 fi
 
 if [[ "$BUILD_FIRST" == "1" ]]; then

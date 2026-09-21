@@ -27,11 +27,17 @@ echo "Spring Boot services stopped."
 
 if [[ "${1:-}" == "--all" || "${1:-}" == "-a" ]]; then
   echo "Stopping Docker/Podman infrastructure containers..."
-  export DOCKER_HOST="${DOCKER_HOST:-unix:///run/user/1000/podman/podman.sock}"
-  if command -v docker-compose >/dev/null 2>&1; then
+  if docker compose version >/dev/null 2>&1; then
+    docker compose -f "$COMPOSE_FILE" down
+  elif command -v docker-compose >/dev/null 2>&1; then
     docker-compose -f "$COMPOSE_FILE" down
-  else
+  elif podman compose version >/dev/null 2>&1; then
     podman compose -f "$COMPOSE_FILE" down
+  elif command -v podman-compose >/dev/null 2>&1; then
+    podman-compose -f "$COMPOSE_FILE" down
+  else
+    echo "Missing a working Docker Compose or Podman Compose runtime." >&2
+    exit 1
   fi
   echo "Containers stopped."
 fi

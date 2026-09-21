@@ -280,6 +280,68 @@ public class IiotOperationsController {
         return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 
+    @PostMapping("/batch-reports/{batchNo}/print")
+    public ResponseEntity<byte[]> printBatchPdf(
+            @PathVariable String batchNo,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String headerTenantId,
+            @RequestHeader(value = "X-Plant-Id", required = false) String headerPlantId,
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestHeader(value = "X-User-Role", required = false) String headerUserRole,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, Object> request) {
+
+        String lotNo = (String) request.get("lotNo");
+        String equipmentCode = (String) request.get("equipmentCode");
+        String reason = (String) request.get("reason");
+        String password = (String) request.get("password");
+
+        String tenantId = (String) request.get("tenantId");
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = headerTenantId;
+        }
+        String plantId = (String) request.get("plantId");
+        if (plantId == null || plantId.isBlank()) {
+            plantId = headerPlantId;
+        }
+
+        String userId = headerUserId;
+        if ((userId == null || userId.isBlank()) && authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                userId = jwtTokenProvider.getUserIdFromToken(authHeader.substring(7).trim());
+            } catch (Exception ignored) {}
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = (String) request.get("userId");
+        }
+        if (userId == null || userId.isBlank()) {
+            userId = "SYSTEM";
+        }
+
+        String userRole = headerUserRole;
+        if (userRole == null || userRole.isBlank()) {
+            userRole = (String) request.get("userRole");
+        }
+
+        IiotOperationsService.ControlledPrintResult result = iiotOperationsService.controlledPrintBatchPdf(
+                batchNo, lotNo, equipmentCode, reason, password, tenantId, plantId, userId, userRole);
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+        String cleanBatch = batchNo != null ? batchNo.replaceAll("[^a-zA-Z0-9.-]", "_") : "Report";
+        String cleanLot = lotNo != null && !lotNo.isBlank() ? "_" + lotNo.replaceAll("[^a-zA-Z0-9.-]", "_") : "";
+        String filename = String.format("Batch_Dossier_%s%s.pdf", cleanBatch, cleanLot);
+        headers.setContentDisposition(org.springframework.http.ContentDisposition.inline().filename(filename).build());
+        headers.setContentLength(result.getPdfBytes().length);
+        headers.add("X-Print-Count", String.valueOf(result.getPrintCount()));
+        headers.add("X-Batch-Id", batchNo);
+        headers.add("X-Batch-No", batchNo);
+        headers.add("X-Printed-By", result.getPrintedBy());
+        headers.add("X-Printed-At", result.getPrintedAt().toInstant().toString());
+        headers.add("Access-Control-Expose-Headers", "X-Print-Count, X-Batch-Id, X-Batch-No, X-Printed-By, X-Printed-At");
+
+        return new ResponseEntity<>(result.getPdfBytes(), headers, HttpStatus.OK);
+    }
+
     @PostMapping("/reports/batch-summary/approval")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateBatchSummaryApproval(
             @RequestHeader(value = "X-User-Id", required = false) String userId,

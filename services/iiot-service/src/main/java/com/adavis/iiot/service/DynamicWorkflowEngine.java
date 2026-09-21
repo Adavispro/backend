@@ -1715,11 +1715,32 @@ public class DynamicWorkflowEngine {
         if (equipmentCode != null && !equipmentCode.isBlank()) {
             query.addCriteria(Criteria.where("equipmentCode").is(equipmentCode));
         }
+        // Exclude print-related actions from audit trails
+        query.addCriteria(Criteria.where("action").nin("PRINT", "PRINT_BATCH_DOSSIER_PDF"));
         query.with(Sort.by(Sort.Direction.DESC, "timestamp"));
-        query.limit(100);
+        query.limit(200);
 
         List<Document> docs = mongoTemplate.find(query, Document.class, AUDIT_COLLECTION);
-        return docs.stream().map(this::toMap).toList();
+        return docs.stream()
+                .filter(doc -> !isPrintRelatedAudit(doc))
+                .limit(100)
+                .map(this::toMap)
+                .toList();
+    }
+
+    private boolean isPrintRelatedAudit(Document doc) {
+        if (doc == null) return false;
+        String action = doc.getString("action");
+        String actionCode = doc.getString("actionCode");
+        String desc = doc.getString("description");
+        String comments = doc.getString("comments");
+        String reason = doc.getString("reason");
+        return containsPrint(action) || containsPrint(actionCode) || containsPrint(desc)
+                || containsPrint(comments) || containsPrint(reason);
+    }
+
+    private boolean containsPrint(String s) {
+        return s != null && s.toUpperCase(Locale.ROOT).contains("PRINT");
     }
 
     public List<WorkflowActionHistory> getWorkflowActionHistory(String batchNo, String lotNo, String equipmentCode) {

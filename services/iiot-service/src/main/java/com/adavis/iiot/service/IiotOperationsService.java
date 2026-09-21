@@ -1,21 +1,27 @@
 package com.adavis.iiot.service;
 
 import com.adavis.common.exception.BusinessException;
+import com.adavis.common.exception.UnauthorizedException;
 import com.mongodb.MongoWriteException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -38,7 +44,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-@RequiredArgsConstructor
 public class IiotOperationsService {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(IiotOperationsService.class);
@@ -80,6 +85,29 @@ public class IiotOperationsService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
     private final BatchPdfGeneratorService batchPdfGeneratorService;
+    private final DynamicWorkflowEngine dynamicWorkflowEngine;
+
+    @Autowired
+    public IiotOperationsService(
+            MongoTemplate mongoTemplate,
+            StringRedisTemplate stringRedisTemplate,
+            ObjectMapper objectMapper,
+            BatchPdfGeneratorService batchPdfGeneratorService,
+            @Lazy DynamicWorkflowEngine dynamicWorkflowEngine) {
+        this.mongoTemplate = mongoTemplate;
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.objectMapper = objectMapper;
+        this.batchPdfGeneratorService = batchPdfGeneratorService;
+        this.dynamicWorkflowEngine = dynamicWorkflowEngine;
+    }
+
+    public IiotOperationsService(
+            MongoTemplate mongoTemplate,
+            StringRedisTemplate stringRedisTemplate,
+            ObjectMapper objectMapper,
+            BatchPdfGeneratorService batchPdfGeneratorService) {
+        this(mongoTemplate, stringRedisTemplate, objectMapper, batchPdfGeneratorService, null);
+    }
 
     @Value("${iiot.ingestion.source-db.url:}")
     private String sourceDbUrl;
@@ -794,11 +822,124 @@ public class IiotOperationsService {
         query.with(Sort.by(Sort.Direction.DESC, "batchStartAt", "updatedAt"));
         int limit = toInteger(filter.get("limit"), 500, 5000);
         int offset = toNonNegativeInteger(filter.get("offset"));
-        if (offset > 0) {
-            query.skip(offset);
+        List<Document> summaries = mongoTemplate.find(query, Document.class, BATCH_SUMMARY_COLLECTION);
+        for (Document summaryDoc : summaries) {
+            enrichPrintHistoryIfMissing(summaryDoc);
         }
-        query.limit(limit);
-        return mongoTemplate.find(query, Document.class, BATCH_SUMMARY_COLLECTION).stream().map(this::toMap).toList();
+        return summaries.stream().map(this::toMap).toList();
+    }
+
+    private void enrichPrintHistoryIfMissing(Document summary) {
+        if (summary == null) return;
+        String batchNo = summary.getString("batchNo");
+        if (batchNo == null || batchNo.isBlank()) return;
+
+        if (summary.get("stages") instanceof List<?> stagesList && !stagesList.isEmpty()) {
+            for (Object obj : stagesList) {
+                if (obj instanceof Document st) {
+                    String eqCode = st.getString("equipmentCode");
+                    if (eqCode == null || eqCode.isBlank()) {
+                        eqCode = st.getString("equipmentId");
+                    }
+                    enrichStagePrintHistory(batchNo, st, eqCode);
+                }
+            }
+            // If stages exist, purge misleading root printCount to guarantee stage isolation
+            summary.remove("printCount");
+            summary.remove("printHistory");
+            summary.remove("lastPrintedBy");
+            summary.remove("lastPrintedUserId");
+            summary.remove("lastPrintedAt");
+            summary.remove("lastPrintReason");
+        } else {
+            enrichRootPrintHistory(summary, batchNo);
+        }
+    }
+
+    private void enrichStagePrintHistory(String batchNo, Document stageDoc, String eqCode) {
+        if (stageDoc == null) return;
+        List<?> history = stageDoc.getList("printHistory", Object.class);
+        Number printCountNum = stageDoc.get("printCount", Number.class);
+        int printCount = printCountNum != null ? printCountNum.intValue() : 0;
+
+        if ((history == null || history.isEmpty()) || printCount == 0) {
+            Criteria criteria = Criteria.where("batchNo").is(batchNo).and("action").is("PRINT");
+            if (eqCode != null && !eqCode.isBlank()) {
+                criteria = criteria.and("equipmentCode").regex("^" + java.util.regex.Pattern.quote(eqCode.trim()) + "$", "i");
+            }
+            Query auditQ = new Query(criteria).with(Sort.by(Sort.Direction.ASC, "timestamp", "createdAt"));
+            List<Document> auditEvents = mongoTemplate.find(auditQ, Document.class, "iiot_workflow_audit_trail");
+
+            if (!auditEvents.isEmpty()) {
+                List<Document> printHistory = new ArrayList<>();
+                int copy = 1;
+                Document latest = auditEvents.get(auditEvents.size() - 1);
+                for (Document a : auditEvents) {
+                    Document p = new Document();
+                    p.put("copyNo", a.get("printCount") instanceof Number n ? n.intValue() : copy++);
+                    p.put("batchNo", batchNo);
+                    p.put("equipmentCode", eqCode);
+                    p.put("printedBy", a.getString("performedBy") != null ? a.getString("performedBy") : a.getString("userName"));
+                    p.put("printedUserId", a.getString("userId"));
+                    p.put("userRole", a.getString("userRole") != null ? a.getString("userRole") : "QA Reviewer");
+                    p.put("printedAt", a.get("timestamp") != null ? a.get("timestamp") : a.get("createdAt"));
+                    p.put("reason", a.getString("reason") != null ? a.getString("reason") : a.getString("comments"));
+                    p.put("regulatoryStatement", a.getString("regulatoryStatement") != null ? a.getString("regulatoryStatement") : "21 CFR Part 11 / EU Annex 11 compliant print authorization.");
+                    printHistory.add(p);
+                }
+                stageDoc.put("printCount", auditEvents.size());
+                stageDoc.put("printHistory", printHistory);
+                stageDoc.put("lastPrintedBy", latest.getString("performedBy") != null ? latest.getString("performedBy") : latest.getString("userName"));
+                stageDoc.put("lastPrintedUserId", latest.getString("userId"));
+                stageDoc.put("lastPrintedAt", latest.get("timestamp") != null ? latest.get("timestamp") : latest.get("createdAt"));
+                stageDoc.put("lastPrintReason", latest.getString("reason") != null ? latest.getString("reason") : latest.getString("comments"));
+            } else {
+                stageDoc.put("printCount", 0);
+                stageDoc.put("printHistory", new ArrayList<>());
+                stageDoc.put("lastPrintedBy", null);
+                stageDoc.put("lastPrintedUserId", null);
+                stageDoc.put("lastPrintedAt", null);
+                stageDoc.put("lastPrintReason", null);
+            }
+        }
+    }
+
+    private void enrichRootPrintHistory(Document summary, String batchNo) {
+        List<?> history = summary.getList("printHistory", Object.class);
+        Number printCountNum = summary.get("printCount", Number.class);
+        int printCount = printCountNum != null ? printCountNum.intValue() : 0;
+        if ((history == null || history.isEmpty()) && printCount > 0) {
+            Query auditQ = new Query(Criteria.where("batchNo").is(batchNo).and("action").is("PRINT"))
+                    .with(Sort.by(Sort.Direction.ASC, "timestamp", "createdAt"));
+            List<Document> auditEvents = mongoTemplate.find(auditQ, Document.class, "iiot_workflow_audit_trail");
+            List<Document> printHistory = new ArrayList<>();
+            int copy = 1;
+            for (Document a : auditEvents) {
+                Document p = new Document();
+                p.put("copyNo", a.get("printCount") instanceof Number n ? n.intValue() : copy++);
+                p.put("batchNo", batchNo);
+                p.put("printedBy", a.getString("performedBy") != null ? a.getString("performedBy") : a.getString("userName"));
+                p.put("printedUserId", a.getString("userId"));
+                p.put("userRole", a.getString("userRole") != null ? a.getString("userRole") : "QA Reviewer");
+                p.put("printedAt", a.get("timestamp") != null ? a.get("timestamp") : a.get("createdAt"));
+                p.put("reason", a.getString("reason") != null ? a.getString("reason") : a.getString("comments"));
+                p.put("regulatoryStatement", a.getString("regulatoryStatement") != null ? a.getString("regulatoryStatement") : "21 CFR Part 11 / EU Annex 11 compliant print authorization.");
+                printHistory.add(p);
+            }
+            if (printHistory.isEmpty() && summary.getString("lastPrintedBy") != null) {
+                Document fallback = new Document();
+                fallback.put("copyNo", printCount);
+                fallback.put("batchNo", batchNo);
+                fallback.put("printedBy", summary.getString("lastPrintedBy"));
+                fallback.put("printedUserId", summary.getString("lastPrintedUserId"));
+                fallback.put("userRole", "QA Reviewer");
+                fallback.put("printedAt", summary.get("lastPrintedAt"));
+                fallback.put("reason", summary.getString("lastPrintReason"));
+                fallback.put("regulatoryStatement", "21 CFR Part 11 / EU Annex 11 compliant print authorization.");
+                printHistory.add(fallback);
+            }
+            summary.put("printHistory", printHistory);
+        }
     }
 
     public byte[] getBatchPdfBytes(String batchNo, String lotNo, String equipmentCode, String tenantId, String userId, String userRole) {
@@ -827,14 +968,73 @@ public class IiotOperationsService {
         BatchPdfGeneratorService.PdfGenerationResult existing = batchPdfGeneratorService.findStoredBatchPdf(
                 batchNo, effectiveLot, effectiveEq, effectiveTenantId, effectivePlantId);
 
-        byte[] pdfBytes;
-        if (existing != null && existing.getPdfBytes() != null && existing.getPdfBytes().length > 0) {
+        byte[] pdfBytes = null;
+        boolean hasExistingValidPdf = existing != null && existing.getPdfBytes() != null && existing.getPdfBytes().length > 0;
+
+        // Verify that the stored PDF actually contains the Controlled Print Summary for this particular batch
+        if (hasExistingValidPdf && !batchPdfGeneratorService.pdfContainsPrintSummary(existing.getPdfBytes())) {
+            log.info("Stored GxP PDF documentId={} does not contain Controlled Print Summary. Regenerating PDF...", existing.getDocumentId());
+            hasExistingValidPdf = false;
+        }
+
+        // Verify that the stored PDF actually contains the company logo
+        if (hasExistingValidPdf && !batchPdfGeneratorService.pdfContainsLogo(existing.getPdfBytes())) {
+            log.info("Stored GxP PDF documentId={} does not contain company logo. Regenerating PDF...", existing.getDocumentId());
+            hasExistingValidPdf = false;
+        }
+
+        // Verify that the stored PDF does not contain the retired Compliance column in Controlled Print Summary
+        if (hasExistingValidPdf && batchPdfGeneratorService.pdfContainsPrintSummaryComplianceColumn(existing.getPdfBytes())) {
+            log.info("Stored GxP PDF documentId={} contains retired Compliance column in print summary. Regenerating PDF...", existing.getDocumentId());
+            hasExistingValidPdf = false;
+        }
+
+        // Verify that the stored PDF has the updated footer ("Batch Print" instead of "Compliant Batch Dossier")
+        if (hasExistingValidPdf && !batchPdfGeneratorService.pdfContainsUpdatedFooter(existing.getPdfBytes())) {
+            log.info("Stored GxP PDF documentId={} does not contain updated 'Batch Print' footer. Regenerating PDF...", existing.getDocumentId());
+            hasExistingValidPdf = false;
+        }
+
+        // Verify that the stored PDF has the centered header banner
+        if (hasExistingValidPdf && !batchPdfGeneratorService.pdfHeaderIsCentered(existing.getPdfBytes())) {
+            log.info("Stored GxP PDF documentId={} does not contain centered header banner. Regenerating PDF...", existing.getDocumentId());
+            hasExistingValidPdf = false;
+        }
+
+        int expectedPrintCount = 0;
+        if (summary != null) {
+            if (summary.get("stages") instanceof List<?> stList) {
+                for (Object stObj : stList) {
+                    if (stObj instanceof Document stDoc) {
+                        String stEq = stDoc.getString("equipmentCode");
+                        String stId = stDoc.getString("equipmentId");
+                        if (effectiveEq != null && (effectiveEq.equalsIgnoreCase(stEq) || effectiveEq.equalsIgnoreCase(stId) || effectiveEq.contains(stEq != null ? stEq : ""))) {
+                            if (stDoc.get("printCount") instanceof Number sc) {
+                                expectedPrintCount = Math.max(expectedPrintCount, sc.intValue());
+                            }
+                        }
+                    }
+                }
+            }
+            if (expectedPrintCount == 0 && summary.get("printCount") instanceof Number pn) {
+                expectedPrintCount = pn.intValue();
+            }
+        }
+
+        if (hasExistingValidPdf && expectedPrintCount > 0) {
+            if (!batchPdfGeneratorService.pdfContainsCopy(existing.getPdfBytes(), expectedPrintCount)) {
+                log.info("Stored GxP PDF documentId={} is missing latest print Copy #{}. Regenerating PDF...", existing.getDocumentId(), expectedPrintCount);
+                hasExistingValidPdf = false;
+            }
+        }
+
+        if (hasExistingValidPdf) {
             log.info("Serving stored GxP PDF documentId={} for batch={}, lot={}, equipment={}",
                     existing.getDocumentId(), batchNo, effectiveLot, effectiveEq);
             pdfBytes = existing.getPdfBytes();
         } else {
             // 2. Controlled Idempotent Generation / Backfill
-            log.info("No stored PDF found for batch={}, lot={}, equipment={}. Performing controlled GxP generation.",
+            log.info("No stored PDF with Controlled Print Summary found for batch={}, lot={}, equipment={}. Performing controlled GxP generation.",
                     batchNo, effectiveLot, effectiveEq);
             BatchPdfGeneratorService.PdfGenerationResult res = batchPdfGeneratorService.generateAndStoreBatchPdf(
                     batchNo, effectiveLot, effectiveEq, effectiveTenantId, effectivePlantId, userId, userRole);
@@ -863,6 +1063,284 @@ public class IiotOperationsService {
         }
 
         return pdfBytes;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class ControlledPrintResult {
+        private final byte[] pdfBytes;
+        private final int printCount;
+        private final String printedBy;
+        private final Date printedAt;
+        private final String printReason;
+    }
+
+    public ControlledPrintResult controlledPrintBatchPdf(
+            String batchNo,
+            String lotNo,
+            String equipmentCode,
+            String reason,
+            String password,
+            String tenantId,
+            String plantId,
+            String userId,
+            String userRole) {
+
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new IllegalArgumentException("Reason for printing is required.");
+        }
+        String trimmedReason = reason.trim();
+
+        if (password == null || password.trim().isEmpty()) {
+            throw new UnauthorizedException("Electronic signature password is required.");
+        }
+
+        String effectiveTenantId = (tenantId != null && !tenantId.isBlank()) ? tenantId : DEFAULT_TENANT_ID;
+        String effectiveUserId = (userId != null && !userId.isBlank()) ? userId.trim() : "SYSTEM";
+
+        if (dynamicWorkflowEngine != null) {
+            dynamicWorkflowEngine.verifyEsignature(effectiveUserId, password, "PRINT_BATCH_DOSSIER_PDF", effectiveTenantId);
+        }
+
+        // Resolve authoritative display name
+        String displayName = effectiveUserId;
+        try {
+            Query uQuery = new Query(new Criteria().orOperator(
+                    Criteria.where("userId").regex("^" + effectiveUserId + "$", "i"),
+                    Criteria.where("username").regex("^" + effectiveUserId + "$", "i"),
+                    Criteria.where("email").regex("^" + effectiveUserId + "$", "i")
+            ));
+            Document userDoc = mongoTemplate.findOne(uQuery, Document.class, "auth_users");
+            if (userDoc != null) {
+                String fn = userDoc.getString("fullName");
+                String un = userDoc.getString("username");
+                if (fn != null && !fn.isBlank()) {
+                    displayName = fn;
+                } else if (un != null && !un.isBlank()) {
+                    displayName = un;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Resolve batch summary context
+        Query query = new Query();
+        if (effectiveTenantId != null && !effectiveTenantId.isBlank()) {
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("tenantId").is(effectiveTenantId),
+                    Criteria.where("tenantId").exists(false),
+                    Criteria.where("tenantId").is(null)
+            ));
+        }
+        query.addCriteria(Criteria.where("batchNo").regex("^" + java.util.regex.Pattern.quote(batchNo.trim()) + "$", "i"));
+        if (lotNo != null && !lotNo.isBlank()) {
+            query.addCriteria(Criteria.where("lotNo").is(lotNo.trim()));
+        }
+        Document summary = mongoTemplate.findOne(query, Document.class, BATCH_SUMMARY_COLLECTION);
+        if (summary == null && lotNo != null && !lotNo.isBlank()) {
+            Query fallbackQuery = new Query();
+            if (effectiveTenantId != null && !effectiveTenantId.isBlank()) {
+                fallbackQuery.addCriteria(new Criteria().orOperator(
+                        Criteria.where("tenantId").is(effectiveTenantId),
+                        Criteria.where("tenantId").exists(false),
+                        Criteria.where("tenantId").is(null)
+                ));
+            }
+            fallbackQuery.addCriteria(Criteria.where("batchNo").regex("^" + java.util.regex.Pattern.quote(batchNo.trim()) + "$", "i"));
+            summary = mongoTemplate.findOne(fallbackQuery, Document.class, BATCH_SUMMARY_COLLECTION);
+        }
+
+        String effectiveLot = lotNo != null && !lotNo.isBlank() ? lotNo : (summary != null ? summary.getString("lotNo") : "01 of 05");
+        String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : (summary != null ? summary.getString("equipmentId") : "G5RMG");
+        if (effectiveEq == null || effectiveEq.isBlank() || effectiveEq.equals("-")) {
+            effectiveEq = "G5RMG";
+        }
+        String effectivePlantId = (plantId != null && !plantId.isBlank()) ? plantId : (summary != null ? summary.getString("plantId") : "PLNT-0001");
+        if (effectivePlantId == null || effectivePlantId.isBlank()) {
+            effectivePlantId = "PLNT-0001";
+        }
+
+        // 1. Increment persistent Print Count and record Controlled Print History
+        Date serverNow = Date.from(Instant.now());
+        Query batchQuery = new Query();
+        if (summary != null && summary.get("_id") != null) {
+            batchQuery.addCriteria(Criteria.where("_id").is(summary.get("_id")));
+        } else {
+            if (effectiveTenantId != null && !effectiveTenantId.isBlank()) {
+                batchQuery.addCriteria(new Criteria().orOperator(
+                        Criteria.where("tenantId").is(effectiveTenantId),
+                        Criteria.where("tenantId").exists(false),
+                        Criteria.where("tenantId").is(null)
+                ));
+            }
+            batchQuery.addCriteria(Criteria.where("batchNo").regex("^" + java.util.regex.Pattern.quote(batchNo.trim()) + "$", "i"));
+            if (effectiveLot != null && !effectiveLot.isBlank()) {
+                batchQuery.addCriteria(Criteria.where("lotNo").is(effectiveLot));
+            }
+        }
+
+        String canonicalBatchNo = summary != null && summary.getString("batchNo") != null
+                ? summary.getString("batchNo")
+                : batchNo.trim();
+
+        boolean hasMatchingStage = false;
+        if (summary != null && summary.get("stages") instanceof List<?> stagesList) {
+            for (Object obj : stagesList) {
+                if (obj instanceof Document st) {
+                    String eq = st.getString("equipmentCode");
+                    String eqId = st.getString("equipmentId");
+                    if ((eq != null && eq.equalsIgnoreCase(effectiveEq)) || (eqId != null && eqId.equalsIgnoreCase(effectiveEq))) {
+                        hasMatchingStage = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        int updatedPrintCount = 1;
+        if (hasMatchingStage && summary != null && summary.get("_id") != null) {
+            Query stageQuery = new Query(Criteria.where("_id").is(summary.get("_id"))
+                    .and("stages").elemMatch(new Criteria().orOperator(
+                            Criteria.where("equipmentCode").regex("^" + java.util.regex.Pattern.quote(effectiveEq) + "$", "i"),
+                            Criteria.where("equipmentId").regex("^" + java.util.regex.Pattern.quote(effectiveEq) + "$", "i")
+                    )));
+
+            int currentStageCount = 0;
+            if (summary.get("stages") instanceof List<?> list) {
+                for (Object o : list) {
+                    if (o instanceof Document d) {
+                        String eq = d.getString("equipmentCode");
+                        String eqId = d.getString("equipmentId");
+                        if ((eq != null && eq.equalsIgnoreCase(effectiveEq)) || (eqId != null && eqId.equalsIgnoreCase(effectiveEq))) {
+                            if (d.get("printCount") instanceof Number n) {
+                                currentStageCount = n.intValue();
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            updatedPrintCount = currentStageCount + 1;
+
+            Document historyEntry = new Document();
+            historyEntry.put("copyNo", updatedPrintCount);
+            historyEntry.put("batchNo", canonicalBatchNo);
+            historyEntry.put("equipmentCode", effectiveEq);
+            historyEntry.put("printedBy", displayName);
+            historyEntry.put("printedUserId", effectiveUserId);
+            historyEntry.put("userRole", userRole != null && !userRole.isBlank() ? userRole : "QA Reviewer");
+            historyEntry.put("printedAt", serverNow);
+            historyEntry.put("reason", trimmedReason);
+            historyEntry.put("regulatoryStatement", "Legally binding print authorization.");
+
+            Update stageUpdate = new Update()
+                    .inc("stages.$.printCount", 1)
+                    .set("stages.$.lastPrintedBy", displayName)
+                    .set("stages.$.lastPrintedUserId", effectiveUserId)
+                    .set("stages.$.lastPrintedAt", serverNow)
+                    .set("stages.$.lastPrintReason", trimmedReason)
+                    .push("stages.$.printHistory", historyEntry);
+
+            mongoTemplate.updateFirst(stageQuery, stageUpdate, BATCH_SUMMARY_COLLECTION);
+        } else {
+            Update updateDef = new Update()
+                    .inc("printCount", 1)
+                    .set("batchNo", canonicalBatchNo)
+                    .set("lotNo", effectiveLot)
+                    .set("plantId", effectivePlantId)
+                    .set("tenantId", effectiveTenantId)
+                    .set("lastPrintedBy", displayName)
+                    .set("lastPrintedUserId", effectiveUserId)
+                    .set("lastPrintedAt", serverNow)
+                    .set("lastPrintReason", trimmedReason);
+
+            Document updatedSummary = mongoTemplate.findAndModify(
+                    batchQuery,
+                    updateDef,
+                    FindAndModifyOptions.options().returnNew(true).upsert(true),
+                    Document.class,
+                    BATCH_SUMMARY_COLLECTION
+            );
+
+            if (updatedSummary != null && updatedSummary.get("printCount") instanceof Number num) {
+                updatedPrintCount = num.intValue();
+            }
+
+            Document historyEntry = new Document();
+            historyEntry.put("copyNo", updatedPrintCount);
+            historyEntry.put("batchNo", canonicalBatchNo);
+            historyEntry.put("equipmentCode", effectiveEq);
+            historyEntry.put("printedBy", displayName);
+            historyEntry.put("printedUserId", effectiveUserId);
+            historyEntry.put("userRole", userRole != null && !userRole.isBlank() ? userRole : "QA Reviewer");
+            historyEntry.put("printedAt", serverNow);
+            historyEntry.put("reason", trimmedReason);
+            historyEntry.put("regulatoryStatement", "Legally binding print authorization.");
+
+            try {
+                Query pushQuery = new Query();
+                if (updatedSummary != null && updatedSummary.get("_id") != null) {
+                    pushQuery.addCriteria(Criteria.where("_id").is(updatedSummary.get("_id")));
+                } else {
+                    pushQuery = batchQuery;
+                }
+                mongoTemplate.updateFirst(pushQuery, new Update().push("printHistory", historyEntry), BATCH_SUMMARY_COLLECTION);
+            } catch (Exception ex) {
+                log.warn("Failed to push print history entry for batch={}: {}", canonicalBatchNo, ex.getMessage());
+            }
+        }
+
+        // 2. Emit immutable Audit Trail Event (never stores password or secret)
+        Document auditEvent = new Document();
+        auditEvent.put("tenantId", effectiveTenantId);
+        auditEvent.put("plantId", effectivePlantId);
+        auditEvent.put("batchNo", canonicalBatchNo);
+        auditEvent.put("lotNo", effectiveLot);
+        auditEvent.put("equipmentCode", effectiveEq);
+        auditEvent.put("action", "PRINT");
+        auditEvent.put("actionCode", "PRINT_BATCH_DOSSIER_PDF");
+        auditEvent.put("userId", effectiveUserId);
+        auditEvent.put("userName", displayName);
+        auditEvent.put("performedBy", displayName);
+        auditEvent.put("userRole", userRole != null && !userRole.isBlank() ? userRole : "USER");
+        auditEvent.put("reason", trimmedReason);
+        auditEvent.put("comments", "Controlled GxP PDF Printed: " + trimmedReason);
+        auditEvent.put("timestamp", serverNow);
+        auditEvent.put("createdAt", serverNow);
+        auditEvent.put("printCount", updatedPrintCount);
+        auditEvent.put("esignatureVerified", true);
+        auditEvent.put("regulatoryStatement", "Legally binding print authorization.");
+
+        try {
+            mongoTemplate.insert(auditEvent, "iiot_workflow_audit_trail");
+        } catch (Exception ex) {
+            log.error("Failed to write audit trail for print event of batch={}: {}", canonicalBatchNo, ex.getMessage());
+        }
+
+        // 3. Generate / Update PDF dossier in DMS with the latest Controlled Print Summary
+        byte[] pdfBytes = null;
+        try {
+            BatchPdfGeneratorService.PdfGenerationResult res = batchPdfGeneratorService.generateAndStoreBatchPdf(
+                    canonicalBatchNo, effectiveLot, effectiveEq, effectiveTenantId, effectivePlantId, effectiveUserId, userRole);
+            if (res != null && res.getPdfBytes() != null && res.getPdfBytes().length > 0) {
+                pdfBytes = res.getPdfBytes();
+            }
+        } catch (Exception ex) {
+            log.warn("Direct PDF generation on print failed: {}. Falling back to stored document.", ex.getMessage());
+        }
+
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            BatchPdfGeneratorService.PdfGenerationResult existing = batchPdfGeneratorService.findStoredBatchPdf(
+                    canonicalBatchNo, effectiveLot, effectiveEq, effectiveTenantId, effectivePlantId);
+            if (existing != null && existing.getPdfBytes() != null && existing.getPdfBytes().length > 0) {
+                pdfBytes = existing.getPdfBytes();
+            }
+        }
+
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            throw new IllegalStateException("Failed to generate or retrieve batch dossier PDF for printing.");
+        }
+
+        return new ControlledPrintResult(pdfBytes, updatedPrintCount, displayName, serverNow, trimmedReason);
     }
 
     public Map<String, Object> updateBatchSummaryApproval(Map<String, Object> request) {
