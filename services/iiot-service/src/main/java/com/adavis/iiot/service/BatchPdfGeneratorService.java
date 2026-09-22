@@ -1138,7 +1138,12 @@ public class BatchPdfGeneratorService {
         String prodCode = safeString(summary, "productCode");
         if (prodCode.equals("-") || prodCode.isBlank()) prodCode = equipmentCode.contains("COAT") ? "STAPU1000" : "STFS7000";
         String prodName = safeString(summary, "productName");
-        if (prodName.equals("-") || prodName.isBlank()) prodName = equipmentCode.contains("COAT") ? "Allopurinol USP 100 mg" : "Finasteride USP 5 mg";
+        if (prodName.equals("-") || prodName.isBlank()
+                || prodName.equalsIgnoreCase("Mirtazapine Tablets")
+                || prodName.toLowerCase(Locale.ROOT).contains("finasteride")
+                || prodName.toLowerCase(Locale.ROOT).contains("finestroid")) {
+            prodName = equipmentCode.contains("COAT") ? "Allopurinol USP 100 mg" : "Mirtazapine Tablets USP 5 mg";
+        }
         String recipe = safeString(summary, "recipeName");
         if (recipe.equals("-") || recipe.isBlank()) recipe = prodCode;
 
@@ -2053,6 +2058,32 @@ public class BatchPdfGeneratorService {
                 Map<String, String> info = (Map<String, String>) reader.getInfo();
                 if (info != null && "Centered Header v2".equals(info.get("Subject"))) {
                     return true;
+                }
+            } finally {
+                reader.close();
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    public boolean pdfContainsFinasteride(byte[] pdfBytes) {
+        if (pdfBytes == null || pdfBytes.length == 0) return false;
+        try {
+            PdfReader reader = new PdfReader(pdfBytes);
+            try {
+                com.lowagie.text.pdf.parser.PdfTextExtractor extractor = new com.lowagie.text.pdf.parser.PdfTextExtractor(reader);
+                for (int i = 1; i <= reader.getNumberOfPages(); i++) {
+                    String text = extractor.getTextFromPage(i);
+                    if (text != null) {
+                        String lower = text.toLowerCase(Locale.ROOT);
+                        if (lower.contains("finasteride") || lower.contains("finestroid")) {
+                            return true;
+                        }
+                        if (text.contains("Mirtazapine Tablets") && !text.contains("Mirtazapine Tablets USP 5 mg")) {
+                            return true;
+                        }
+                    }
                 }
             } finally {
                 reader.close();

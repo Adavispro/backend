@@ -47,7 +47,7 @@ var DATASET_TYPE_MAP = {
 var MOCK_PRODUCTS = [
     {
         productCode: "STFS7000",
-        productName: "Finasteride USP 5 mg",
+        productName: "Mirtazapine Tablets USP 5 mg",
         productCategory: "Tablets"
     },
     {

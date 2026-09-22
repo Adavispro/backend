@@ -114,7 +114,7 @@ def build_batch_details(dataset_id: str):
     # RMG, FBD, BLE, COAT: 1 batch and 1 lot matching reference document
     return [
         {
-            "PRODUCT_NAME": "Finasteride USP 5 mg",
+            "PRODUCT_NAME": "Mirtazapine Tablets USP 5 mg",
             "PRODUCT_CODE": "STFS7000",
             "RECIPE_NAME": "STFS7000",
             "BATCH_NO": "NL0026008",

@@ -59,7 +59,7 @@ public class BatchPdfPersistenceTest {
         testSummary = new Document("batchNo", "NL0026008")
                 .append("lotNo", "01 of 05")
                 .append("productCode", "STFS7000")
-                .append("productName", "Finasteride USP 5 mg")
+                .append("productName", "Mirtazapine Tablets USP 5 mg")
                 .append("equipmentId", "G5FBD")
                 .append("overallStatus", "APPROVED")
                 .append("tenantId", "TNT-0001")

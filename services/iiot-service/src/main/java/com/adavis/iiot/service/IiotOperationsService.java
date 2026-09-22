@@ -1001,6 +1001,12 @@ public class IiotOperationsService {
             hasExistingValidPdf = false;
         }
 
+        // Verify that the stored PDF does not contain obsolete product name "Finasteride"
+        if (hasExistingValidPdf && batchPdfGeneratorService.pdfContainsFinasteride(existing.getPdfBytes())) {
+            log.info("Stored GxP PDF documentId={} contains obsolete product name Finasteride. Regenerating PDF...", existing.getDocumentId());
+            hasExistingValidPdf = false;
+        }
+
         int expectedPrintCount = 0;
         if (summary != null) {
             if (summary.get("stages") instanceof List<?> stList) {

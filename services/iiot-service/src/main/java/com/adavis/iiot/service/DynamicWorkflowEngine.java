@@ -1322,7 +1322,12 @@ public class DynamicWorkflowEngine {
                 continue;
             }
             String productName = summary.getString("productName");
-            if (productName == null) productName = "Finasteride USP 5 mg";
+            if (productName == null || productName.isBlank()
+                    || productName.equalsIgnoreCase("Mirtazapine Tablets")
+                    || productName.toLowerCase(Locale.ROOT).contains("finasteride")
+                    || productName.toLowerCase(Locale.ROOT).contains("finestroid")) {
+                productName = "Mirtazapine Tablets USP 5 mg";
+            }
 
             String summaryId = summary.get("_id") != null ? summary.get("_id").toString() : batchNo;
 
@@ -1518,7 +1523,12 @@ public class DynamicWorkflowEngine {
             String lotNo = summary.getString("lotNo");
             String productCode = summary.getString("productCode");
             String productName = summary.getString("productName");
-            if (productName == null) productName = "Finasteride USP 5 mg";
+            if (productName == null || productName.isBlank()
+                    || productName.equalsIgnoreCase("Mirtazapine Tablets")
+                    || productName.toLowerCase(Locale.ROOT).contains("finasteride")
+                    || productName.toLowerCase(Locale.ROOT).contains("finestroid")) {
+                productName = "Mirtazapine Tablets USP 5 mg";
+            }
             String summaryId = summary.get("_id") != null ? summary.get("_id").toString() : batchNo;
 
             @SuppressWarnings("unchecked")

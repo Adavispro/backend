@@ -57,7 +57,7 @@ public class DynamicBatchAssignmentWorkflowTest {
         unassignedSummary = new Document("batchNo", "B-PEND-001")
                 .append("lotNo", "01 of 05")
                 .append("productCode", "STFS7000")
-                .append("productName", "Finasteride USP 5 mg")
+                .append("productName", "Mirtazapine Tablets USP 5 mg")
                 .append("tenantId", "TNT-0001")
                 .append("plantId", "PLNT-0001")
                 .append("stages", List.of(stage1));
@@ -73,7 +73,7 @@ public class DynamicBatchAssignmentWorkflowTest {
         assignedSummary = new Document("batchNo", "B-ASSIGNED-001")
                 .append("lotNo", "01 of 05")
                 .append("productCode", "STFS7000")
-                .append("productName", "Finasteride USP 5 mg")
+                .append("productName", "Mirtazapine Tablets USP 5 mg")
                 .append("tenantId", "TNT-0001")
                 .append("plantId", "PLNT-0001")
                 .append("assignedTo", "operator_1")
@@ -89,7 +89,7 @@ public class DynamicBatchAssignmentWorkflowTest {
         approvedSummary = new Document("batchNo", "B-APPR-001")
                 .append("lotNo", "01 of 05")
                 .append("productCode", "STFS7000")
-                .append("productName", "Finasteride USP 5 mg")
+                .append("productName", "Mirtazapine Tablets USP 5 mg")
                 .append("tenantId", "TNT-0001")
                 .append("plantId", "PLNT-0001")
                 .append("stages", List.of(stageApproved));
