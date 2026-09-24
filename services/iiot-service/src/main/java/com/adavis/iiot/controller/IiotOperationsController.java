@@ -172,6 +172,139 @@ public class IiotOperationsController {
         return ResponseEntity.ok(ApiResponse.success("Product master activated", iiotOperationsService.activateProductMaster(productId)));
     }
 
+    // ============================================
+    // RECIPE MASTER ENDPOINTS
+    // ============================================
+
+    @PostMapping("/recipe-master")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createRecipeMaster(@RequestBody Map<String, Object> request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Recipe master created", iiotOperationsService.createRecipeMaster(request)));
+    }
+
+    @GetMapping("/recipe-master")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRecipeMasters(
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestParam(required = false) String productId) {
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getRecipeMasters(isActive, tenantId, plantId, productId)));
+    }
+
+    @GetMapping("/recipe-master/{recipeId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRecipeMaster(@PathVariable String recipeId) {
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getRecipeMaster(recipeId)));
+    }
+
+    @PutMapping("/recipe-master/{recipeId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateRecipeMaster(
+            @PathVariable String recipeId,
+            @RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(ApiResponse.success("Recipe master updated", iiotOperationsService.updateRecipeMaster(recipeId, request)));
+    }
+
+    @GetMapping("/recipe-master/{recipeId}/batch-sizes")
+    public ResponseEntity<ApiResponse<List<String>>> getRecipeBatchSizes(@PathVariable String recipeId) {
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getRecipeBatchSizes(recipeId)));
+    }
+
+    @PostMapping("/recipe-master/{recipeId}/batch-sizes")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> addRecipeBatchSize(
+            @PathVariable String recipeId,
+            @RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(ApiResponse.success("Batch size associated", iiotOperationsService.addRecipeBatchSize(recipeId, request)));
+    }
+
+    @DeleteMapping("/recipe-master/{recipeId}/batch-sizes")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> removeRecipeBatchSize(
+            @PathVariable String recipeId,
+            @RequestParam String batchSize) {
+        return ResponseEntity.ok(ApiResponse.success("Batch size disassociated", iiotOperationsService.removeRecipeBatchSize(recipeId, batchSize)));
+    }
+
+    @DeleteMapping("/recipe-master/{recipeId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deactivateRecipeMaster(@PathVariable String recipeId) {
+        return ResponseEntity.ok(ApiResponse.success("Recipe master deactivated", iiotOperationsService.deactivateRecipeMaster(recipeId)));
+    }
+
+    @PostMapping("/recipe-master/{recipeId}/activate")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> activateRecipeMaster(@PathVariable String recipeId) {
+        return ResponseEntity.ok(ApiResponse.success("Recipe master activated", iiotOperationsService.activateRecipeMaster(recipeId)));
+    }
+
+    // ============================================
+    // RECIPE MANAGEMENT ENDPOINTS
+    // ============================================
+
+    @PostMapping("/recipe-management")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createRecipeManagement(@RequestBody Map<String, Object> request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Recipe management configuration created", iiotOperationsService.createRecipeManagement(request)));
+    }
+
+    @PostMapping("/recipe-management/batch")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> saveRecipeManagementBatch(@RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(ApiResponse.success("Recipe management configurations saved", iiotOperationsService.saveRecipeManagementBatch(request)));
+    }
+
+    @GetMapping("/recipe-management")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRecipeManagements(
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestParam(required = false) String productId,
+            @RequestParam(required = false) String recipeId,
+            @RequestParam(required = false) String batchSize,
+            @RequestParam(required = false) String equipmentId,
+            @RequestParam(required = false) Boolean isActive) {
+        Map<String, Object> filters = new HashMap<>();
+        if (tenantId != null) filters.put("tenantId", tenantId);
+        if (plantId != null) filters.put("plantId", plantId);
+        if (productId != null) filters.put("productId", productId);
+        if (recipeId != null) filters.put("recipeId", recipeId);
+        if (batchSize != null) filters.put("batchSize", batchSize);
+        if (equipmentId != null) filters.put("equipmentId", equipmentId);
+        if (isActive != null) filters.put("isActive", isActive);
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getRecipeManagements(filters)));
+    }
+
+    @GetMapping("/recipe-management/{recipeManagementId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRecipeManagement(@PathVariable String recipeManagementId) {
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getRecipeManagement(recipeManagementId)));
+    }
+
+    @PutMapping("/recipe-management/{recipeManagementId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateRecipeManagement(
+            @PathVariable String recipeManagementId,
+            @RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(ApiResponse.success("Recipe management configuration updated", iiotOperationsService.updateRecipeManagement(recipeManagementId, request)));
+    }
+
+    @DeleteMapping("/recipe-management/{recipeManagementId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deactivateRecipeManagement(@PathVariable String recipeManagementId) {
+        return ResponseEntity.ok(ApiResponse.success("Recipe management configuration deactivated", iiotOperationsService.deactivateRecipeManagement(recipeManagementId)));
+    }
+
+    @PostMapping("/recipe-management/{recipeManagementId}/activate")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> activateRecipeManagement(@PathVariable String recipeManagementId) {
+        return ResponseEntity.ok(ApiResponse.success("Recipe management configuration activated", iiotOperationsService.activateRecipeManagement(recipeManagementId)));
+    }
+
+    @GetMapping("/recipe-management/effective-limits")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEffectiveLimits(
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String plantId,
+            @RequestParam(required = false) String productId,
+            @RequestParam(required = false) String recipeId,
+            @RequestParam(required = false) String batchSize,
+            @RequestParam(required = false) String equipmentId) {
+        return ResponseEntity.ok(ApiResponse.success(iiotOperationsService.getEffectiveLimits(tenantId, plantId, productId, recipeId, batchSize, equipmentId)));
+    }
+
+    @PostMapping("/recipe-management/upload-to-hmi")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadRecipeToHmi(@RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(ApiResponse.success("Recipe configuration uploaded to HMI successfully", iiotOperationsService.uploadRecipeToHmi(request)));
+    }
+
     @PostMapping("/ingestion/{equipmentId}/trigger")
     public ResponseEntity<ApiResponse<Map<String, Object>>> triggerBatchIngestion(@PathVariable String equipmentId) {
         return ResponseEntity.ok(ApiResponse.success("Batch ingestion triggered", iiotOperationsService.triggerBatchIngestion(equipmentId)));

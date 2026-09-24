@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -58,6 +59,9 @@ public class IiotOperationsService {
     private static final String CRITICAL_PARAMETERS_COLLECTION = "iiot_equipment_critical_parameters";
     private static final String CRITICAL_PARAMETER_LIMITS_COLLECTION = "iiot_equipment_critical_parameters_limit";
     private static final String PRODUCT_MASTER_COLLECTION = "iiot_product_master";
+    private static final String RECIPE_MASTER_COLLECTION = "iiot_recipe_master";
+    private static final String RECIPE_MANAGEMENT_COLLECTION = "iiot_recipe_management";
+    private static final String HMI_DISPATCH_AUDIT_COLLECTION = "iiot_workflow_audit_trail";
     private static final String MDM_PLANTS_COLLECTION = "mdm_plants";
     private static final String MDM_BLOCKS_COLLECTION = "mdm_blocks";
     private static final String MDM_AREAS_COLLECTION = "mdm_areas";
@@ -310,16 +314,20 @@ public class IiotOperationsService {
             Query blockExists = new Query(Criteria.where("blockId").is(blockId));
             boolean existsInMdm = mongoTemplate.exists(blockExists, MDM_BLOCKS_COLLECTION);
             if (existsInMdm) {
-                Query blockQuery = new Query(Criteria.where("blockId").is(blockId));
-                if (plantId != null && !plantId.isBlank()) {
-                    blockQuery.addCriteria(Criteria.where("plantId").is(plantId));
-                }
-                if (tenantId != null && !tenantId.isBlank()) {
-                    blockQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
-                }
-                Document block = mongoTemplate.findOne(blockQuery, Document.class, MDM_BLOCKS_COLLECTION);
-                if (block == null) {
-                    throw new BusinessException("Block not found or does not belong to plant/tenant: " + blockId);
+                if (!isCreation && legacyBlockId != null && blockId.equals(legacyBlockId)) {
+                    // Block unchanged for existing equipment edit: allow even if legacy topology is inconsistent
+                } else {
+                    Query blockQuery = new Query(Criteria.where("blockId").is(blockId));
+                    if (plantId != null && !plantId.isBlank()) {
+                        blockQuery.addCriteria(Criteria.where("plantId").is(plantId));
+                    }
+                    if (tenantId != null && !tenantId.isBlank()) {
+                        blockQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
+                    }
+                    Document block = mongoTemplate.findOne(blockQuery, Document.class, MDM_BLOCKS_COLLECTION);
+                    if (block == null) {
+                        throw new BusinessException("Block not found or does not belong to plant/tenant: " + blockId);
+                    }
                 }
             } else if (isCreation || !blockId.equals(legacyBlockId)) {
                 throw new BusinessException("Block not found: " + blockId);
@@ -330,19 +338,23 @@ public class IiotOperationsService {
             Query areaExists = new Query(Criteria.where("areaId").is(areaId));
             boolean existsInMdm = mongoTemplate.exists(areaExists, MDM_AREAS_COLLECTION);
             if (existsInMdm) {
-                Query areaQuery = new Query(Criteria.where("areaId").is(areaId));
-                if (blockId != null && !blockId.isBlank()) {
-                    areaQuery.addCriteria(Criteria.where("blockId").is(blockId));
-                }
-                if (plantId != null && !plantId.isBlank()) {
-                    areaQuery.addCriteria(Criteria.where("plantId").is(plantId));
-                }
-                if (tenantId != null && !tenantId.isBlank()) {
-                    areaQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
-                }
-                Document area = mongoTemplate.findOne(areaQuery, Document.class, MDM_AREAS_COLLECTION);
-                if (area == null) {
-                    throw new BusinessException("Area not found or does not belong to block/plant: " + areaId);
+                if (!isCreation && legacyAreaId != null && areaId.equals(legacyAreaId)) {
+                    // Area unchanged for existing equipment edit: allow even if legacy topology is inconsistent
+                } else {
+                    Query areaQuery = new Query(Criteria.where("areaId").is(areaId));
+                    if (blockId != null && !blockId.isBlank()) {
+                        areaQuery.addCriteria(Criteria.where("blockId").is(blockId));
+                    }
+                    if (plantId != null && !plantId.isBlank()) {
+                        areaQuery.addCriteria(Criteria.where("plantId").is(plantId));
+                    }
+                    if (tenantId != null && !tenantId.isBlank()) {
+                        areaQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
+                    }
+                    Document area = mongoTemplate.findOne(areaQuery, Document.class, MDM_AREAS_COLLECTION);
+                    if (area == null) {
+                        throw new BusinessException("Area not found or does not belong to block/plant: " + areaId);
+                    }
                 }
             } else if (isCreation || !areaId.equals(legacyAreaId)) {
                 throw new BusinessException("Area not found: " + areaId);
@@ -353,19 +365,23 @@ public class IiotOperationsService {
             Query roomExists = new Query(Criteria.where("roomId").is(roomId));
             boolean existsInMdm = mongoTemplate.exists(roomExists, MDM_ROOMS_COLLECTION);
             if (existsInMdm) {
-                Query roomQuery = new Query(Criteria.where("roomId").is(roomId));
-                if (areaId != null && !areaId.isBlank()) {
-                    roomQuery.addCriteria(Criteria.where("areaId").is(areaId));
-                }
-                if (plantId != null && !plantId.isBlank()) {
-                    roomQuery.addCriteria(Criteria.where("plantId").is(plantId));
-                }
-                if (tenantId != null && !tenantId.isBlank()) {
-                    roomQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
-                }
-                Document room = mongoTemplate.findOne(roomQuery, Document.class, MDM_ROOMS_COLLECTION);
-                if (room == null) {
-                    throw new BusinessException("Room not found or does not belong to area/plant: " + roomId);
+                if (!isCreation && legacyRoomId != null && roomId.equals(legacyRoomId)) {
+                    // Room unchanged for existing equipment edit: do not reject solely because of legacy topology mismatch
+                } else {
+                    Query roomQuery = new Query(Criteria.where("roomId").is(roomId));
+                    if (areaId != null && !areaId.isBlank()) {
+                        roomQuery.addCriteria(Criteria.where("areaId").is(areaId));
+                    }
+                    if (plantId != null && !plantId.isBlank()) {
+                        roomQuery.addCriteria(Criteria.where("plantId").is(plantId));
+                    }
+                    if (tenantId != null && !tenantId.isBlank()) {
+                        roomQuery.addCriteria(Criteria.where("tenantId").is(tenantId));
+                    }
+                    Document room = mongoTemplate.findOne(roomQuery, Document.class, MDM_ROOMS_COLLECTION);
+                    if (room == null) {
+                        throw new BusinessException("Room not found or does not belong to area/plant: " + roomId);
+                    }
                 }
             } else if (isCreation || !roomId.equals(legacyRoomId)) {
                 throw new BusinessException("Room not found: " + roomId);
@@ -443,23 +459,58 @@ public class IiotOperationsService {
             throw new BusinessException("Resource not found: " + equipmentId);
         }
 
-        String tenantId = firstNonBlank(stringValue(request.get("tenantId")),
-                firstNonBlank(existing.getString("tenantId"), DEFAULT_TENANT_ID));
-        String plantId = firstNonBlank(stringValue(request.get("plantId")), existing.getString("plantId"));
-        String blockId = request.containsKey("blockId") ? stringValue(request.get("blockId")) : existing.getString("blockId");
-        String areaId = request.containsKey("areaId") ? stringValue(request.get("areaId")) : existing.getString("areaId");
-        String roomId = request.containsKey("roomId") ? stringValue(request.get("roomId")) : existing.getString("roomId");
+        String existingTenantId = existing.getString("tenantId");
+        String existingPlantId = existing.getString("plantId");
+        String existingBlockId = existing.getString("blockId");
+        String existingAreaId = existing.getString("areaId");
+        String existingRoomId = existing.getString("roomId");
+
+        // Fall back to existing equipment values if omitted or blank in PUT request
+        String tenantId = firstNonBlank(stringValue(request.get("tenantId")), existingTenantId, DEFAULT_TENANT_ID);
+        String plantId = firstNonBlank(stringValue(request.get("plantId")), existingPlantId, DEFAULT_PLANT_ID);
+        String blockId = firstNonBlank(stringValue(request.get("blockId")), existingBlockId);
+        String areaId = firstNonBlank(stringValue(request.get("areaId")), existingAreaId);
+        String roomId = firstNonBlank(stringValue(request.get("roomId")), existingRoomId);
+
+        // If roomId changed from existingRoomId, look up in mdm_rooms and derive topology
+        if (roomId != null && !roomId.isBlank() && !roomId.equals(existingRoomId)) {
+            Query roomQuery = new Query(Criteria.where("roomId").is(roomId));
+            Document roomDoc = mongoTemplate.findOne(roomQuery, Document.class, MDM_ROOMS_COLLECTION);
+            if (roomDoc == null) {
+                throw new BusinessException("Room not found: " + roomId);
+            }
+            if (roomDoc.containsKey("tenantId") && roomDoc.getString("tenantId") != null && !roomDoc.getString("tenantId").isBlank()) {
+                tenantId = roomDoc.getString("tenantId");
+            }
+            if (roomDoc.containsKey("plantId") && roomDoc.getString("plantId") != null && !roomDoc.getString("plantId").isBlank()) {
+                plantId = roomDoc.getString("plantId");
+            }
+            if (roomDoc.containsKey("blockId") && roomDoc.getString("blockId") != null && !roomDoc.getString("blockId").isBlank()) {
+                blockId = roomDoc.getString("blockId");
+            }
+            if (roomDoc.containsKey("areaId") && roomDoc.getString("areaId") != null && !roomDoc.getString("areaId").isBlank()) {
+                areaId = roomDoc.getString("areaId");
+            }
+        }
 
         validateHierarchy(false, tenantId, plantId, blockId, areaId, roomId,
-                existing.getString("blockId"), existing.getString("areaId"), existing.getString("roomId"));
+                existingBlockId, existingAreaId, existingRoomId);
 
         request.forEach((k, v) -> {
             if (!"_id".equals(k) && !"equipmentId".equals(k) && !"createdAt".equals(k)) {
                 existing.put(k, v);
             }
         });
+        existing.put("tenantId", tenantId);
+        existing.put("plantId", plantId);
         if (blockId != null && !blockId.isBlank()) {
             existing.put("blockId", blockId);
+        }
+        if (areaId != null && !areaId.isBlank()) {
+            existing.put("areaId", areaId);
+        }
+        if (roomId != null && !roomId.isBlank()) {
+            existing.put("roomId", roomId);
         }
         if (request.containsKey("isActive")) {
             existing.put("isActive", Boolean.valueOf(String.valueOf(request.get("isActive"))));
@@ -684,6 +735,809 @@ public class IiotOperationsService {
 
     public Map<String, Object> activateProductMaster(String productId) {
         return reactivateDocumentByBusinessKey(PRODUCT_MASTER_COLLECTION, "productId", productId);
+    }
+
+    // ============================================
+    // RECIPE MASTER
+    // ============================================
+
+    public Map<String, Object> createRecipeMaster(Map<String, Object> request) {
+        String recipeCode = requireText(request, "recipeCode");
+        String recipeName = requireText(request, "recipeName");
+        String recipeId = firstNonBlank(stringValue(request.get("recipeId")), recipeCode);
+        String tenantId = firstNonBlank(stringValue(request.get("tenantId")), DEFAULT_TENANT_ID);
+        String plantId = firstNonBlank(stringValue(request.get("plantId")), DEFAULT_PLANT_ID);
+        String productId = stringValue(request.get("productId"));
+        String productCode = stringValue(request.get("productCode"));
+
+        if ((productId == null || productId.isBlank()) && (productCode == null || productCode.isBlank())) {
+            throw new BusinessException("Product is required for Recipe Master");
+        }
+
+        // Resolve product metadata
+        Query productQuery = new Query(new Criteria().orOperator(
+                Criteria.where("productId").is(firstNonBlank(productId, productCode)),
+                Criteria.where("productCode").is(firstNonBlank(productCode, productId))));
+        Document productDoc = mongoTemplate.findOne(productQuery, Document.class, PRODUCT_MASTER_COLLECTION);
+        String productName = stringValue(request.get("productName"));
+        if (productDoc != null) {
+            productId = productDoc.getString("productId");
+            productCode = productDoc.getString("productCode");
+            if (productName == null || productName.isBlank()) {
+                productName = productDoc.getString("productName");
+            }
+        } else {
+            if (productId == null || productId.isBlank()) productId = productCode;
+            if (productCode == null || productCode.isBlank()) productCode = productId;
+        }
+
+        Query duplicateQuery = new Query(new Criteria().orOperator(
+                Criteria.where("recipeId").is(recipeId),
+                Criteria.where("tenantId").is(tenantId)
+                        .and("plantId").is(plantId)
+                        .and("recipeCode").is(recipeCode)));
+        if (mongoTemplate.findOne(duplicateQuery, Document.class, RECIPE_MASTER_COLLECTION) != null) {
+            throw new BusinessException("Recipe master already exists: " + recipeCode);
+        }
+
+        Document doc = new Document(request);
+        doc.put("recipeId", recipeId);
+        doc.put("recipeCode", recipeCode);
+        doc.put("recipeName", recipeName);
+        doc.put("productId", productId);
+        doc.put("productCode", productCode);
+        doc.put("productName", productName != null ? productName : "");
+        doc.put("description", request.getOrDefault("description", ""));
+        doc.put("version", request.getOrDefault("version", "1.0"));
+        doc.put("tenantId", tenantId);
+        doc.put("plantId", plantId);
+
+        // Associated batch sizes (Voice recording WA0002)
+        List<String> normalizedBatches = new ArrayList<>();
+        Object batchesObj = request.get("associatedBatchSizes");
+        if (batchesObj instanceof List<?> list) {
+            for (Object item : list) {
+                String norm = normalizeBatchSize(item);
+                if (!norm.isBlank() && !normalizedBatches.contains(norm)) {
+                    normalizedBatches.add(norm);
+                }
+            }
+        } else if (batchesObj instanceof String str && !str.isBlank()) {
+            for (String part : str.split(",")) {
+                String norm = normalizeBatchSize(part);
+                if (!norm.isBlank() && !normalizedBatches.contains(norm)) {
+                    normalizedBatches.add(norm);
+                }
+            }
+        }
+        if (normalizedBatches.isEmpty()) {
+            normalizedBatches = List.of("1000 KG", "2000 KG", "5000 KG");
+        }
+        doc.put("associatedBatchSizes", normalizedBatches);
+
+        doc.put("isActive", request.getOrDefault("isActive", true));
+        doc.put("createdAt", Date.from(Instant.now()));
+        doc.put("updatedAt", Date.from(Instant.now()));
+        return insertDocument(doc, RECIPE_MASTER_COLLECTION, "Recipe master already exists: " + recipeCode);
+    }
+
+    public synchronized void ensureDefaultRecipeSeedData() {
+        try {
+            if (mongoTemplate.count(new Query(), RECIPE_MASTER_COLLECTION) > 0) {
+                return;
+            }
+            Date ts = Date.from(Instant.now());
+            Document r1 = new Document()
+                    .append("recipeId", "RCP-0001")
+                    .append("recipeCode", "RCP-MIRT-01")
+                    .append("recipeName", "Mirtazapine 5mg Granulation & Blending Recipe")
+                    .append("productId", "STFS7000")
+                    .append("productCode", "STFS7000")
+                    .append("productName", "Mirtazapine Tablets USP 5 mg")
+                    .append("description", "Granulation and blending process for Mirtazapine 5mg tablets")
+                    .append("version", "1.0")
+                    .append("associatedBatchSizes", List.of("1000 KG", "2000 KG", "5000 KG"))
+                    .append("tenantId", DEFAULT_TENANT_ID)
+                    .append("plantId", DEFAULT_PLANT_ID)
+                    .append("isActive", true)
+                    .append("createdAt", ts)
+                    .append("updatedAt", ts);
+
+            Document r2 = new Document()
+                    .append("recipeId", "RCP-0002")
+                    .append("recipeCode", "RCP-ALLO-01")
+                    .append("recipeName", "Allopurinol 100mg Direct Compression Recipe")
+                    .append("productId", "STAPU1000")
+                    .append("productCode", "STAPU1000")
+                    .append("productName", "Allopurinol tablets")
+                    .append("description", "Compression process for Allopurinol 100mg")
+                    .append("version", "1.0")
+                    .append("associatedBatchSizes", List.of("1000 KG", "2500 KG"))
+                    .append("tenantId", DEFAULT_TENANT_ID)
+                    .append("plantId", DEFAULT_PLANT_ID)
+                    .append("isActive", true)
+                    .append("createdAt", ts)
+                    .append("updatedAt", ts);
+
+            Document r3 = new Document()
+                    .append("recipeId", "RCP-0003")
+                    .append("recipeCode", "RCP-LEVE-01")
+                    .append("recipeName", "Levetiracetam 500mg Coating Recipe")
+                    .append("productId", "STLEV5000")
+                    .append("productCode", "STLEV5000")
+                    .append("productName", "Levetiracetam tablets")
+                    .append("description", "Film coating recipe for Levetiracetam 500mg")
+                    .append("version", "1.0")
+                    .append("associatedBatchSizes", List.of("1500 KG", "3000 KG"))
+                    .append("tenantId", DEFAULT_TENANT_ID)
+                    .append("plantId", DEFAULT_PLANT_ID)
+                    .append("isActive", true)
+                    .append("createdAt", ts)
+                    .append("updatedAt", ts);
+
+            mongoTemplate.insert(List.of(r1, r2, r3), RECIPE_MASTER_COLLECTION);
+            log.info("Initialized default recipe master seed data (3 recipes)");
+
+            if (mongoTemplate.count(new Query(), RECIPE_MANAGEMENT_COLLECTION) == 0) {
+                Document m1 = new Document()
+                        .append("recipeManagementId", "RCM-0001")
+                        .append("tenantId", DEFAULT_TENANT_ID)
+                        .append("plantId", DEFAULT_PLANT_ID)
+                        .append("productId", "STFS7000")
+                        .append("productCode", "STFS7000")
+                        .append("productName", "Mirtazapine Tablets USP 5 mg")
+                        .append("recipeId", "RCP-0001")
+                        .append("recipeCode", "RCP-MIRT-01")
+                        .append("recipeName", "Mirtazapine 5mg Granulation & Blending Recipe")
+                        .append("batchSize", "1000 KG")
+                        .append("equipmentId", "RMG-01")
+                        .append("equipmentCode", "RMG-01")
+                        .append("equipmentName", "Rapid Mixer Granulator 01")
+                        .append("parameterCode", "agSpeed")
+                        .append("parameterName", "Agitator Speed")
+                        .append("unitOfMeasure", "RPM")
+                        .append("uom", "RPM")
+                        .append("targetSetpoint", 140.0)
+                        .append("lowLimit", 100.0)
+                        .append("highLimit", 160.0)
+                        .append("isActive", true)
+                        .append("createdAt", ts)
+                        .append("updatedAt", ts);
+
+                Document m2 = new Document()
+                        .append("recipeManagementId", "RCM-0002")
+                        .append("tenantId", DEFAULT_TENANT_ID)
+                        .append("plantId", DEFAULT_PLANT_ID)
+                        .append("productId", "STFS7000")
+                        .append("productCode", "STFS7000")
+                        .append("productName", "Mirtazapine Tablets USP 5 mg")
+                        .append("recipeId", "RCP-0001")
+                        .append("recipeCode", "RCP-MIRT-01")
+                        .append("recipeName", "Mirtazapine 5mg Granulation & Blending Recipe")
+                        .append("batchSize", "1000 KG")
+                        .append("equipmentId", "RMG-01")
+                        .append("equipmentCode", "RMG-01")
+                        .append("equipmentName", "Rapid Mixer Granulator 01")
+                        .append("parameterCode", "agAmps")
+                        .append("parameterName", "Agitator Current")
+                        .append("unitOfMeasure", "A")
+                        .append("uom", "A")
+                        .append("targetSetpoint", 28.0)
+                        .append("lowLimit", 20.0)
+                        .append("highLimit", 35.0)
+                        .append("isActive", true)
+                        .append("createdAt", ts)
+                        .append("updatedAt", ts);
+
+                Document m3 = new Document()
+                        .append("recipeManagementId", "RCM-0003")
+                        .append("tenantId", DEFAULT_TENANT_ID)
+                        .append("plantId", DEFAULT_PLANT_ID)
+                        .append("productId", "STFS7000")
+                        .append("productCode", "STFS7000")
+                        .append("productName", "Mirtazapine Tablets USP 5 mg")
+                        .append("recipeId", "RCP-0001")
+                        .append("recipeCode", "RCP-MIRT-01")
+                        .append("recipeName", "Mirtazapine 5mg Granulation & Blending Recipe")
+                        .append("batchSize", "1000 KG")
+                        .append("equipmentId", "RMG-01")
+                        .append("equipmentCode", "RMG-01")
+                        .append("equipmentName", "Rapid Mixer Granulator 01")
+                        .append("parameterCode", "chpSpeed")
+                        .append("parameterName", "Granulator Speed")
+                        .append("unitOfMeasure", "RPM")
+                        .append("uom", "RPM")
+                        .append("targetSetpoint", 1420.0)
+                        .append("lowLimit", 1000.0)
+                        .append("highLimit", 1500.0)
+                        .append("isActive", true)
+                        .append("createdAt", ts)
+                        .append("updatedAt", ts);
+
+                Document m4 = new Document()
+                        .append("recipeManagementId", "RCM-0004")
+                        .append("tenantId", DEFAULT_TENANT_ID)
+                        .append("plantId", DEFAULT_PLANT_ID)
+                        .append("productId", "STFS7000")
+                        .append("productCode", "STFS7000")
+                        .append("productName", "Mirtazapine Tablets USP 5 mg")
+                        .append("recipeId", "RCP-0001")
+                        .append("recipeCode", "RCP-MIRT-01")
+                        .append("recipeName", "Mirtazapine 5mg Granulation & Blending Recipe")
+                        .append("batchSize", "1000 KG")
+                        .append("equipmentId", "RMG-01")
+                        .append("equipmentCode", "RMG-01")
+                        .append("equipmentName", "Rapid Mixer Granulator 01")
+                        .append("parameterCode", "heaterTemp")
+                        .append("parameterName", "Granulation Temperature")
+                        .append("unitOfMeasure", "°C")
+                        .append("uom", "°C")
+                        .append("targetSetpoint", 55.0)
+                        .append("lowLimit", 45.0)
+                        .append("highLimit", 65.0)
+                        .append("isActive", true)
+                        .append("createdAt", ts)
+                        .append("updatedAt", ts);
+
+                mongoTemplate.insert(List.of(m1, m2, m3, m4), RECIPE_MANAGEMENT_COLLECTION);
+                log.info("Initialized default recipe management seed data (4 configurations)");
+            }
+        } catch (Exception e) {
+            log.debug("Auto-seed recipes check skipped: {}", e.getMessage());
+        }
+    }
+
+    public static String normalizeBatchSize(Object raw) {
+        if (raw == null) return "";
+        if (raw instanceof Map<?, ?> map) {
+            Object val = map.get("value");
+            Object unit = map.get("unit");
+            if (val != null) {
+                String u = unit != null ? unit.toString().trim().toUpperCase() : "KG";
+                return formatBatchValue(val) + " " + u;
+            }
+        }
+        String str = raw.toString().trim();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^([0-9]+(?:\\.[0-9]+)?)\\s*([a-zA-Z]+)?$").matcher(str);
+        if (m.matches()) {
+            String numStr = m.group(1);
+            String unitStr = m.group(2) != null ? m.group(2).trim().toUpperCase() : "KG";
+            try {
+                double d = Double.parseDouble(numStr);
+                return formatBatchValue(d) + " " + unitStr;
+            } catch (Exception e) {
+                return str.toUpperCase();
+            }
+        }
+        return str.toUpperCase();
+    }
+
+    private static String formatBatchValue(Object val) {
+        try {
+            double d = Double.parseDouble(val.toString());
+            if (d == Math.floor(d)) {
+                return String.format(Locale.ROOT, "%.0f", d);
+            } else {
+                return String.format(Locale.ROOT, "%.3f", d).replaceAll("0+$", "").replaceAll("\\.$", "");
+            }
+        } catch (Exception e) {
+            return val.toString();
+        }
+    }
+
+    public List<Map<String, Object>> getRecipeMasters() {
+        return getRecipeMasters(null, null, null, null);
+    }
+
+    public List<Map<String, Object>> getRecipeMasters(Boolean isActive, String tenantId, String plantId, String productId) {
+        ensureDefaultRecipeSeedData();
+        List<Criteria> criteriaList = new ArrayList<>();
+        if (isActive != null) {
+            if (isActive) {
+                criteriaList.add(new Criteria().orOperator(
+                        Criteria.where("isActive").exists(false),
+                        Criteria.where("isActive").is(true)));
+            } else {
+                criteriaList.add(Criteria.where("isActive").is(false));
+            }
+        }
+        if (tenantId != null && !tenantId.isBlank()) {
+            criteriaList.add(Criteria.where("tenantId").is(tenantId));
+        }
+        if (plantId != null && !plantId.isBlank()) {
+            criteriaList.add(Criteria.where("plantId").is(plantId));
+        }
+        if (productId != null && !productId.isBlank()) {
+            criteriaList.add(new Criteria().orOperator(
+                    Criteria.where("productId").is(productId),
+                    Criteria.where("productCode").is(productId)));
+        }
+        Query query = criteriaList.isEmpty() ? new Query() : new Query(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
+        query.with(Sort.by(Sort.Direction.ASC, "recipeId", "recipeCode"));
+        return mongoTemplate.find(query, Document.class, RECIPE_MASTER_COLLECTION).stream().map(this::toMap).toList();
+    }
+
+    public Map<String, Object> getRecipeMaster(String recipeId) {
+        return toMap(requireActiveDocumentByBusinessKey(RECIPE_MASTER_COLLECTION, "recipeId", recipeId));
+    }
+
+    public List<String> getRecipeBatchSizes(String recipeId) {
+        Document doc = requireActiveDocumentByBusinessKey(RECIPE_MASTER_COLLECTION, "recipeId", recipeId);
+        List<?> rawList = doc.getList("associatedBatchSizes", Object.class);
+        if (rawList == null) return List.of();
+        List<String> result = new ArrayList<>();
+        for (Object item : rawList) {
+            String norm = normalizeBatchSize(item);
+            if (!norm.isBlank() && !result.contains(norm)) {
+                result.add(norm);
+            }
+        }
+        return result;
+    }
+
+    public Map<String, Object> addRecipeBatchSize(String recipeId, Map<String, Object> request) {
+        Document existing = requireActiveDocumentByBusinessKey(RECIPE_MASTER_COLLECTION, "recipeId", recipeId);
+        Object raw = request.containsKey("batchSize") ? request.get("batchSize") : request;
+        String normalized = normalizeBatchSize(raw);
+        if (normalized.isBlank()) {
+            throw new BusinessException("Valid batch size is required");
+        }
+
+        List<String> list = new ArrayList<>();
+        List<?> existingList = existing.getList("associatedBatchSizes", Object.class);
+        if (existingList != null) {
+            for (Object item : existingList) {
+                String norm = normalizeBatchSize(item);
+                if (!norm.isBlank() && !list.contains(norm)) {
+                    list.add(norm);
+                }
+            }
+        }
+
+        if (list.contains(normalized)) {
+            throw new BusinessException("Batch size " + normalized + " is already associated with recipe " + existing.getString("recipeCode"));
+        }
+
+        list.add(normalized);
+        existing.put("associatedBatchSizes", list);
+        existing.put("updatedAt", Date.from(Instant.now()));
+        Document saved = mongoTemplate.save(existing, RECIPE_MASTER_COLLECTION);
+        recordAudit("BATCH_SIZE_ASSOCIATED", "Associated batch size " + normalized + " to recipe " + recipeId, existing.getString("tenantId"), existing.getString("plantId"));
+        return toMap(saved);
+    }
+
+    public Map<String, Object> removeRecipeBatchSize(String recipeId, String batchSize) {
+        Document existing = requireActiveDocumentByBusinessKey(RECIPE_MASTER_COLLECTION, "recipeId", recipeId);
+        String normalized = normalizeBatchSize(batchSize);
+        List<String> list = new ArrayList<>();
+        List<?> existingList = existing.getList("associatedBatchSizes", Object.class);
+        if (existingList != null) {
+            for (Object item : existingList) {
+                String norm = normalizeBatchSize(item);
+                if (!norm.equalsIgnoreCase(normalized) && !list.contains(norm)) {
+                    list.add(norm);
+                }
+            }
+        }
+        existing.put("associatedBatchSizes", list);
+        existing.put("updatedAt", Date.from(Instant.now()));
+        Document saved = mongoTemplate.save(existing, RECIPE_MASTER_COLLECTION);
+        recordAudit("BATCH_SIZE_DISASSOCIATED", "Removed batch size " + normalized + " from recipe " + recipeId, existing.getString("tenantId"), existing.getString("plantId"));
+        return toMap(saved);
+    }
+
+    private void recordAudit(String action, String details, String tenantId, String plantId) {
+        try {
+            Document auditEvent = new Document();
+            auditEvent.put("auditId", "AUD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+            auditEvent.put("tenantId", tenantId != null ? tenantId : DEFAULT_TENANT_ID);
+            auditEvent.put("plantId", plantId != null ? plantId : DEFAULT_PLANT_ID);
+            auditEvent.put("action", action);
+            auditEvent.put("actionCode", action);
+            auditEvent.put("details", details);
+            auditEvent.put("userId", "SYSTEM");
+            auditEvent.put("status", "SUCCESS");
+            auditEvent.put("timestamp", Date.from(Instant.now()));
+            auditEvent.put("createdAt", Date.from(Instant.now()));
+            mongoTemplate.insert(auditEvent, HMI_DISPATCH_AUDIT_COLLECTION);
+        } catch (Exception e) {
+            log.debug("Audit write skipped or failed: {}", e.getMessage());
+        }
+    }
+
+    public Map<String, Object> updateRecipeMaster(String recipeId, Map<String, Object> request) {
+        Document existing = requireActiveDocumentByBusinessKey(RECIPE_MASTER_COLLECTION, "recipeId", recipeId);
+        request.forEach((k, v) -> {
+            if (!"_id".equals(k) && !"recipeId".equals(k) && !"createdAt".equals(k)) {
+                existing.put(k, v);
+            }
+        });
+        if (request.containsKey("associatedBatchSizes")) {
+            List<String> normalizedBatches = new ArrayList<>();
+            Object batchesObj = request.get("associatedBatchSizes");
+            if (batchesObj instanceof List<?> list) {
+                for (Object item : list) {
+                    String norm = normalizeBatchSize(item);
+                    if (!norm.isBlank() && !normalizedBatches.contains(norm)) {
+                        normalizedBatches.add(norm);
+                    }
+                }
+            } else if (batchesObj instanceof String str && !str.isBlank()) {
+                for (String part : str.split(",")) {
+                    String norm = normalizeBatchSize(part);
+                    if (!norm.isBlank() && !normalizedBatches.contains(norm)) {
+                        normalizedBatches.add(norm);
+                    }
+                }
+            }
+            existing.put("associatedBatchSizes", normalizedBatches);
+        }
+        if (request.containsKey("isActive")) {
+            existing.put("isActive", Boolean.valueOf(String.valueOf(request.get("isActive"))));
+        }
+        existing.put("updatedAt", Date.from(Instant.now()));
+        return toMap(mongoTemplate.save(existing, RECIPE_MASTER_COLLECTION));
+    }
+
+    public Map<String, Object> deactivateRecipeMaster(String recipeId) {
+        Document existing = requireActiveDocumentByBusinessKey(RECIPE_MASTER_COLLECTION, "recipeId", recipeId);
+        existing.put("isActive", false);
+        existing.put("updatedAt", Date.from(Instant.now()));
+        return toMap(mongoTemplate.save(existing, RECIPE_MASTER_COLLECTION));
+    }
+
+    public Map<String, Object> activateRecipeMaster(String recipeId) {
+        return reactivateDocumentByBusinessKey(RECIPE_MASTER_COLLECTION, "recipeId", recipeId);
+    }
+
+    // ============================================
+    // RECIPE MANAGEMENT (Contextual CPP Configuration)
+    // ============================================
+
+    public Map<String, Object> createRecipeManagement(Map<String, Object> request) {
+        String productId = requireText(request, "productId");
+        String recipeId = requireText(request, "recipeId");
+        String batchSize = normalizeBatchSize(requireText(request, "batchSize"));
+        String equipmentId = requireText(request, "equipmentId");
+        String parameterCode = requireText(request, "parameterCode");
+        String tenantId = firstNonBlank(stringValue(request.get("tenantId")), DEFAULT_TENANT_ID);
+        String plantId = firstNonBlank(stringValue(request.get("plantId")), DEFAULT_PLANT_ID);
+
+        // Resolve Product metadata
+        Query prdQuery = new Query(new Criteria().orOperator(
+                Criteria.where("productId").is(productId),
+                Criteria.where("productCode").is(productId)));
+        Document prdDoc = mongoTemplate.findOne(prdQuery, Document.class, PRODUCT_MASTER_COLLECTION);
+        String productCode = prdDoc != null ? prdDoc.getString("productCode") : productId;
+        String productName = prdDoc != null ? prdDoc.getString("productName") : stringValue(request.get("productName"));
+
+        // Resolve Recipe metadata
+        Query rcpQuery = new Query(new Criteria().orOperator(
+                Criteria.where("recipeId").is(recipeId),
+                Criteria.where("recipeCode").is(recipeId)));
+        Document rcpDoc = mongoTemplate.findOne(rcpQuery, Document.class, RECIPE_MASTER_COLLECTION);
+        String recipeCode = rcpDoc != null ? rcpDoc.getString("recipeCode") : recipeId;
+        String recipeName = rcpDoc != null ? rcpDoc.getString("recipeName") : stringValue(request.get("recipeName"));
+
+        // Resolve Equipment metadata
+        Query eqQuery = new Query(new Criteria().orOperator(
+                Criteria.where("equipmentId").is(equipmentId),
+                Criteria.where("equipmentCode").is(equipmentId)));
+        Document eqDoc = mongoTemplate.findOne(eqQuery, Document.class, EQUIPMENT_MASTER_COLLECTION);
+        String equipmentCode = eqDoc != null ? eqDoc.getString("equipmentCode") : equipmentId;
+        String equipmentName = eqDoc != null ? eqDoc.getString("equipmentName") : stringValue(request.get("equipmentName"));
+
+        // Resolve Parameter metadata
+        Query paramQuery = new Query(new Criteria().orOperator(
+                Criteria.where("parameterCode").is(parameterCode),
+                Criteria.where("parameterId").is(parameterCode)));
+        Document paramDoc = mongoTemplate.findOne(paramQuery, Document.class, CRITICAL_PARAMETERS_COLLECTION);
+        String parameterName = paramDoc != null ? paramDoc.getString("parameterName") : stringValue(request.get("parameterName"));
+        String uom = paramDoc != null ? paramDoc.getString("unitOfMeasure") : firstNonBlank(stringValue(request.get("unitOfMeasure")), stringValue(request.get("uom")));
+
+        Double targetSetpoint = parseNullableDouble(request.get("targetSetpoint"));
+        Double lowLimit = parseNullableDouble(request.get("lowLimit"));
+        Double highLimit = parseNullableDouble(request.get("highLimit"));
+
+        // Limit validation: lowLimit <= targetSetpoint <= highLimit
+        validateLimits(lowLimit, targetSetpoint, highLimit);
+
+        // Logical unique constraint: tenant + plant + product + recipe + batchSize + equipment + parameter
+        Query uniqueQuery = new Query(Criteria.where("tenantId").is(tenantId)
+                .and("plantId").is(plantId)
+                .and("productId").is(productId)
+                .and("recipeId").is(recipeId)
+                .and("batchSize").is(batchSize)
+                .and("equipmentId").is(equipmentId)
+                .and("parameterCode").is(parameterCode)
+                .and("isActive").is(true));
+        Document existingConfig = mongoTemplate.findOne(uniqueQuery, Document.class, RECIPE_MANAGEMENT_COLLECTION);
+        if (existingConfig != null) {
+            existingConfig.put("targetSetpoint", targetSetpoint);
+            existingConfig.put("lowLimit", lowLimit);
+            existingConfig.put("highLimit", highLimit);
+            existingConfig.put("unitOfMeasure", uom != null ? uom : "");
+            existingConfig.put("uom", uom != null ? uom : "");
+            existingConfig.put("parameterName", parameterName != null ? parameterName : parameterCode);
+            existingConfig.put("isActive", request.getOrDefault("isActive", true));
+            existingConfig.put("updatedAt", Date.from(Instant.now()));
+            return toMap(mongoTemplate.save(existingConfig, RECIPE_MANAGEMENT_COLLECTION));
+        }
+
+        String recipeManagementId = firstNonBlank(stringValue(request.get("recipeManagementId")),
+                "RCM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+
+        Document doc = new Document(request);
+        doc.put("recipeManagementId", recipeManagementId);
+        doc.put("tenantId", tenantId);
+        doc.put("plantId", plantId);
+        doc.put("productId", productId);
+        doc.put("productCode", productCode);
+        doc.put("productName", productName != null ? productName : "");
+        doc.put("recipeId", recipeId);
+        doc.put("recipeCode", recipeCode);
+        doc.put("recipeName", recipeName != null ? recipeName : "");
+        doc.put("batchSize", batchSize);
+        doc.put("equipmentId", equipmentId);
+        doc.put("equipmentCode", equipmentCode);
+        doc.put("equipmentName", equipmentName != null ? equipmentName : "");
+        doc.put("parameterCode", parameterCode);
+        doc.put("parameterName", parameterName != null ? parameterName : parameterCode);
+        doc.put("unitOfMeasure", uom != null ? uom : "");
+        doc.put("uom", uom != null ? uom : "");
+        doc.put("targetSetpoint", targetSetpoint);
+        doc.put("lowLimit", lowLimit);
+        doc.put("highLimit", highLimit);
+        doc.put("isActive", request.getOrDefault("isActive", true));
+        doc.put("createdAt", Date.from(Instant.now()));
+        doc.put("updatedAt", Date.from(Instant.now()));
+
+        return insertDocument(doc, RECIPE_MANAGEMENT_COLLECTION, "Recipe management configuration already exists");
+    }
+
+    public List<Map<String, Object>> saveRecipeManagementBatch(Map<String, Object> request) {
+        String productId = requireText(request, "productId");
+        String recipeId = requireText(request, "recipeId");
+        String batchSize = normalizeBatchSize(requireText(request, "batchSize"));
+        String equipmentId = requireText(request, "equipmentId");
+        String tenantId = firstNonBlank(stringValue(request.get("tenantId")), DEFAULT_TENANT_ID);
+        String plantId = firstNonBlank(stringValue(request.get("plantId")), DEFAULT_PLANT_ID);
+
+        Object paramsObj = request.get("parameters");
+        if (!(paramsObj instanceof List<?> paramList) || paramList.isEmpty()) {
+            throw new BusinessException("At least one parameter configuration is required");
+        }
+
+        List<Map<String, Object>> savedResults = new ArrayList<>();
+        for (Object pObj : paramList) {
+            if (pObj instanceof Map<?, ?> pMap) {
+                Map<String, Object> singleReq = new HashMap<>();
+                pMap.forEach((k, v) -> singleReq.put(String.valueOf(k), v));
+                singleReq.put("tenantId", tenantId);
+                singleReq.put("plantId", plantId);
+                singleReq.put("productId", productId);
+                singleReq.put("recipeId", recipeId);
+                singleReq.put("batchSize", batchSize);
+                singleReq.put("equipmentId", equipmentId);
+                savedResults.add(createRecipeManagement(singleReq));
+            }
+        }
+        return savedResults;
+    }
+
+    public List<Map<String, Object>> getRecipeManagements(Map<String, Object> filters) {
+        List<Criteria> criteriaList = new ArrayList<>();
+        if (filters != null) {
+            if (filters.containsKey("isActive")) {
+                Boolean isActive = (Boolean) filters.get("isActive");
+                if (isActive != null && isActive) {
+                    criteriaList.add(new Criteria().orOperator(
+                            Criteria.where("isActive").exists(false),
+                            Criteria.where("isActive").is(true)));
+                } else if (isActive != null) {
+                    criteriaList.add(Criteria.where("isActive").is(false));
+                }
+            }
+            if (filters.get("tenantId") != null && !String.valueOf(filters.get("tenantId")).isBlank()) {
+                criteriaList.add(Criteria.where("tenantId").is(filters.get("tenantId")));
+            }
+            if (filters.get("plantId") != null && !String.valueOf(filters.get("plantId")).isBlank()) {
+                criteriaList.add(Criteria.where("plantId").is(filters.get("plantId")));
+            }
+            if (filters.get("productId") != null && !String.valueOf(filters.get("productId")).isBlank()) {
+                String pid = String.valueOf(filters.get("productId"));
+                criteriaList.add(new Criteria().orOperator(
+                        Criteria.where("productId").is(pid),
+                        Criteria.where("productCode").is(pid)));
+            }
+            if (filters.get("recipeId") != null && !String.valueOf(filters.get("recipeId")).isBlank()) {
+                String rid = String.valueOf(filters.get("recipeId"));
+                criteriaList.add(new Criteria().orOperator(
+                        Criteria.where("recipeId").is(rid),
+                        Criteria.where("recipeCode").is(rid)));
+            }
+            if (filters.get("batchSize") != null && !String.valueOf(filters.get("batchSize")).isBlank()) {
+                criteriaList.add(Criteria.where("batchSize").is(filters.get("batchSize")));
+            }
+            if (filters.get("equipmentId") != null && !String.valueOf(filters.get("equipmentId")).isBlank()) {
+                String eq = String.valueOf(filters.get("equipmentId"));
+                criteriaList.add(new Criteria().orOperator(
+                        Criteria.where("equipmentId").is(eq),
+                        Criteria.where("equipmentCode").is(eq)));
+            }
+        }
+        Query query = criteriaList.isEmpty() ? new Query() : new Query(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
+        query.with(Sort.by(Sort.Direction.ASC, "productCode", "recipeCode", "batchSize", "equipmentCode", "parameterCode"));
+        return mongoTemplate.find(query, Document.class, RECIPE_MANAGEMENT_COLLECTION).stream().map(this::toMap).toList();
+    }
+
+    public Map<String, Object> getRecipeManagement(String recipeManagementId) {
+        return toMap(requireActiveDocumentByBusinessKey(RECIPE_MANAGEMENT_COLLECTION, "recipeManagementId", recipeManagementId));
+    }
+
+    public Map<String, Object> updateRecipeManagement(String recipeManagementId, Map<String, Object> request) {
+        Document existing = requireActiveDocumentByBusinessKey(RECIPE_MANAGEMENT_COLLECTION, "recipeManagementId", recipeManagementId);
+
+        Double targetSetpoint = request.containsKey("targetSetpoint") ? parseNullableDouble(request.get("targetSetpoint")) : existing.getDouble("targetSetpoint");
+        Double lowLimit = request.containsKey("lowLimit") ? parseNullableDouble(request.get("lowLimit")) : existing.getDouble("lowLimit");
+        Double highLimit = request.containsKey("highLimit") ? parseNullableDouble(request.get("highLimit")) : existing.getDouble("highLimit");
+
+        validateLimits(lowLimit, targetSetpoint, highLimit);
+
+        request.forEach((k, v) -> {
+            if (!"_id".equals(k) && !"recipeManagementId".equals(k) && !"createdAt".equals(k)) {
+                existing.put(k, v);
+            }
+        });
+        existing.put("targetSetpoint", targetSetpoint);
+        existing.put("lowLimit", lowLimit);
+        existing.put("highLimit", highLimit);
+        if (request.containsKey("isActive")) {
+            existing.put("isActive", Boolean.valueOf(String.valueOf(request.get("isActive"))));
+        }
+        existing.put("updatedAt", Date.from(Instant.now()));
+        return toMap(mongoTemplate.save(existing, RECIPE_MANAGEMENT_COLLECTION));
+    }
+
+    public Map<String, Object> deactivateRecipeManagement(String recipeManagementId) {
+        Document existing = requireActiveDocumentByBusinessKey(RECIPE_MANAGEMENT_COLLECTION, "recipeManagementId", recipeManagementId);
+        existing.put("isActive", false);
+        existing.put("updatedAt", Date.from(Instant.now()));
+        return toMap(mongoTemplate.save(existing, RECIPE_MANAGEMENT_COLLECTION));
+    }
+
+    public Map<String, Object> activateRecipeManagement(String recipeManagementId) {
+        return reactivateDocumentByBusinessKey(RECIPE_MANAGEMENT_COLLECTION, "recipeManagementId", recipeManagementId);
+    }
+
+    public List<Map<String, Object>> getEffectiveLimits(String tenantId, String plantId, String productId,
+                                                        String recipeId, String batchSize, String equipmentId) {
+        List<Criteria> criteriaList = new ArrayList<>();
+        criteriaList.add(new Criteria().orOperator(
+                Criteria.where("isActive").exists(false),
+                Criteria.where("isActive").is(true)));
+
+        if (tenantId != null && !tenantId.isBlank()) criteriaList.add(Criteria.where("tenantId").is(tenantId));
+        if (plantId != null && !plantId.isBlank()) criteriaList.add(Criteria.where("plantId").is(plantId));
+        if (productId != null && !productId.isBlank()) {
+            criteriaList.add(new Criteria().orOperator(
+                    Criteria.where("productId").is(productId),
+                    Criteria.where("productCode").is(productId)));
+        }
+        if (recipeId != null && !recipeId.isBlank()) {
+            criteriaList.add(new Criteria().orOperator(
+                    Criteria.where("recipeId").is(recipeId),
+                    Criteria.where("recipeCode").is(recipeId)));
+        }
+        if (batchSize != null && !batchSize.isBlank()) criteriaList.add(Criteria.where("batchSize").is(batchSize));
+        if (equipmentId != null && !equipmentId.isBlank()) {
+            criteriaList.add(new Criteria().orOperator(
+                    Criteria.where("equipmentId").is(equipmentId),
+                    Criteria.where("equipmentCode").is(equipmentId)));
+        }
+
+        Query query = new Query(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
+        List<Document> list = mongoTemplate.find(query, Document.class, RECIPE_MANAGEMENT_COLLECTION);
+        if (!list.isEmpty()) {
+            return list.stream().map(this::toMap).toList();
+        }
+
+        // Fallback: if no recipe-context record found, fallback to equipment's standard critical parameters with defaults
+        if (equipmentId != null && !equipmentId.isBlank()) {
+            Query eqParamQuery = new Query(Criteria.where("isActive").is(true)
+                    .orOperator(Criteria.where("equipmentId").is(equipmentId), Criteria.where("equipmentCode").is(equipmentId)));
+            List<Document> params = mongoTemplate.find(eqParamQuery, Document.class, CRITICAL_PARAMETERS_COLLECTION);
+            return params.stream().map(this::toMap).toList();
+        }
+
+        return List.of();
+    }
+
+    public Map<String, Object> uploadRecipeToHmi(Map<String, Object> request) {
+        String productId = requireText(request, "productId");
+        String recipeId = requireText(request, "recipeId");
+        String batchSize = requireText(request, "batchSize");
+        String equipmentId = requireText(request, "equipmentId");
+        String tenantId = firstNonBlank(stringValue(request.get("tenantId")), DEFAULT_TENANT_ID);
+        String plantId = firstNonBlank(stringValue(request.get("plantId")), DEFAULT_PLANT_ID);
+        String userId = firstNonBlank(stringValue(request.get("userId")), "OPERATOR");
+
+        // Verify Recipe Master is active
+        Query rcpQuery = new Query(new Criteria().orOperator(
+                Criteria.where("recipeId").is(recipeId),
+                Criteria.where("recipeCode").is(recipeId)).and("isActive").is(true));
+        Document rcpDoc = mongoTemplate.findOne(rcpQuery, Document.class, RECIPE_MASTER_COLLECTION);
+        if (rcpDoc == null) {
+            throw new BusinessException("Cannot upload to HMI: Recipe not found or inactive: " + recipeId);
+        }
+
+        // Retrieve effective Recipe Management configurations
+        List<Map<String, Object>> configs = getEffectiveLimits(tenantId, plantId, productId, recipeId, batchSize, equipmentId);
+        if (configs.isEmpty()) {
+            throw new BusinessException("Cannot upload to HMI: No active parameter limits configured for Recipe "
+                    + recipeId + " on Equipment " + equipmentId);
+        }
+
+        // Validate each limit
+        for (Map<String, Object> item : configs) {
+            Double low = parseNullableDouble(item.get("lowLimit"));
+            Double target = parseNullableDouble(item.get("targetSetpoint"));
+            Double high = parseNullableDouble(item.get("highLimit"));
+            validateLimits(low, target, high);
+        }
+
+        // Audit Trail Event
+        Document auditEvent = new Document();
+        auditEvent.put("tenantId", tenantId);
+        auditEvent.put("plantId", plantId);
+        auditEvent.put("productId", productId);
+        auditEvent.put("productCode", rcpDoc.getString("productCode"));
+        auditEvent.put("recipeId", recipeId);
+        auditEvent.put("recipeCode", rcpDoc.getString("recipeCode"));
+        auditEvent.put("batchSize", batchSize);
+        auditEvent.put("equipmentId", equipmentId);
+        auditEvent.put("parameterCount", configs.size());
+        auditEvent.put("action", "UPLOAD_TO_HMI");
+        auditEvent.put("actionCode", "HMI_DISPATCH");
+        auditEvent.put("userId", userId);
+        auditEvent.put("status", "SUCCESS");
+        auditEvent.put("result", "Successfully uploaded " + configs.size() + " parameter setpoints to HMI for " + equipmentId);
+        auditEvent.put("timestamp", Date.from(Instant.now()));
+        auditEvent.put("createdAt", Date.from(Instant.now()));
+
+        mongoTemplate.insert(auditEvent, HMI_DISPATCH_AUDIT_COLLECTION);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", "SUCCESS");
+        result.put("message", "Uploaded " + configs.size() + " parameter configurations to HMI");
+        result.put("recipeId", recipeId);
+        result.put("equipmentId", equipmentId);
+        result.put("batchSize", batchSize);
+        result.put("parametersDispatched", configs.size());
+        result.put("timestamp", Instant.now().toString());
+        return result;
+    }
+
+    private Double parseNullableDouble(Object val) {
+        if (val == null || "".equals(val)) return null;
+        if (val instanceof Number n) return n.doubleValue();
+        try {
+            return Double.parseDouble(String.valueOf(val).trim());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private void validateLimits(Double lowLimit, Double targetSetpoint, Double highLimit) {
+        if (lowLimit != null && highLimit != null && lowLimit > highLimit) {
+            throw new BusinessException("Low limit (" + lowLimit + ") cannot be greater than high limit (" + highLimit + ")");
+        }
+        if (lowLimit != null && targetSetpoint != null && targetSetpoint < lowLimit) {
+            throw new BusinessException("Target setpoint (" + targetSetpoint + ") cannot be less than low limit (" + lowLimit + ")");
+        }
+        if (highLimit != null && targetSetpoint != null && targetSetpoint > highLimit) {
+            throw new BusinessException("Target setpoint (" + targetSetpoint + ") cannot be greater than high limit (" + highLimit + ")");
+        }
     }
 
     public Map<String, Object> getPlantTopology(String tenantId) {
@@ -3527,6 +4381,12 @@ public class IiotOperationsService {
 
     private String firstNonBlank(String primary, String fallback) {
         return primary == null || primary.isBlank() ? fallback : primary;
+    }
+
+    private String firstNonBlank(String first, String second, String third) {
+        if (first != null && !first.isBlank()) return first;
+        if (second != null && !second.isBlank()) return second;
+        return third;
     }
 
     private void putIfPresent(Document doc, Map<String, Object> source, String key) {

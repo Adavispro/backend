@@ -1138,7 +1138,7 @@ db.mdm_tenants.updateOne(
     },
     {
         $set: {
-            companyName: 'Adavis Technologies Ltd.',
+            companyName: 'Adavis Technologies Pvt Ltd.',
             domain: 'https://adavis.technologies.com',
             companyCode: 'NCP',
             contactEmail: 'compliance@adavis.com',
@@ -1163,7 +1163,7 @@ db.mdm_plants.updateOne(
     {
         $set: {
             tenantId: 'TNT-0001',
-            plantName: 'Formulation Plant - Hyderabad',
+            plantName: 'APL-Unit 4 ',
             plantCode: 'HYD-01',
             type: 'Manufacturing',
             address: {

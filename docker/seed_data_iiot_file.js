@@ -193,6 +193,9 @@ function createIndexes() {
         );
 
         db.iiot_product_master.createIndex({ tenantId: 1, productId: 1 }, { unique: true });
+        db.iiot_recipe_master.createIndex({ tenantId: 1, recipeId: 1 }, { unique: true });
+        db.iiot_recipe_master.createIndex({ tenantId: 1, plantId: 1, recipeCode: 1 });
+        db.iiot_recipe_management.createIndex({ tenantId: 1, plantId: 1, productId: 1, recipeId: 1, batchSize: 1, equipmentId: 1, parameterCode: 1 });
         logInfo("Indexes created successfully");
     } catch (e) {
         logInfo("Error creating indexes: " + e.message);
@@ -366,6 +369,160 @@ function seedMasterData() {
         parameterLimitDocs = parameterLimitDocs.concat(payload.limits);
     });
 
+    var recipeDocs = [
+        {
+            recipeId: "RCP-0001",
+            recipeCode: "RCP-MIRT-01",
+            recipeName: "Mirtazapine 5mg Granulation & Blending Recipe",
+            productId: "STFS7000",
+            productCode: "STFS7000",
+            productName: "Mirtazapine Tablets USP 5 mg",
+            description: "Granulation and blending process for Mirtazapine 5mg tablets",
+            version: "1.0",
+            associatedBatchSizes: ["1000 KG", "2000 KG", "5000 KG"],
+            tenantId: TENANT_ID,
+            plantId: PLANT_ID,
+            isActive: true,
+            createdAt: ts,
+            updatedAt: ts
+        },
+        {
+            recipeId: "RCP-0002",
+            recipeCode: "RCP-ALLO-01",
+            recipeName: "Allopurinol 100mg Direct Compression Recipe",
+            productId: "STAPU1000",
+            productCode: "STAPU1000",
+            productName: "Allopurinol tablets",
+            description: "Compression process for Allopurinol 100mg",
+            version: "1.0",
+            associatedBatchSizes: ["1000 KG", "2500 KG"],
+            tenantId: TENANT_ID,
+            plantId: PLANT_ID,
+            isActive: true,
+            createdAt: ts,
+            updatedAt: ts
+        },
+        {
+            recipeId: "RCP-0003",
+            recipeCode: "RCP-LEVE-01",
+            recipeName: "Levetiracetam 500mg Coating Recipe",
+            productId: "STLEV5000",
+            productCode: "STLEV5000",
+            productName: "Levetiracetam tablets",
+            description: "Film coating recipe for Levetiracetam 500mg",
+            version: "1.0",
+            associatedBatchSizes: ["1500 KG", "3000 KG"],
+            tenantId: TENANT_ID,
+            plantId: PLANT_ID,
+            isActive: true,
+            createdAt: ts,
+            updatedAt: ts
+        }
+    ];
+
+    var recipeManagementDocs = [
+        {
+            recipeManagementId: "RCM-0001",
+            tenantId: TENANT_ID,
+            plantId: PLANT_ID,
+            productId: "STFS7000",
+            productCode: "STFS7000",
+            productName: "Mirtazapine Tablets USP 5 mg",
+            recipeId: "RCP-0001",
+            recipeCode: "RCP-MIRT-01",
+            recipeName: "Mirtazapine 5mg Granulation & Blending Recipe",
+            batchSize: "1000 KG",
+            equipmentId: "RMG-01",
+            equipmentCode: "RMG-01",
+            equipmentName: "Rapid Mixer Granulator 01",
+            parameterCode: "agSpeed",
+            parameterName: "Agitator Speed",
+            unitOfMeasure: "RPM",
+            uom: "RPM",
+            targetSetpoint: 140.0,
+            lowLimit: 100.0,
+            highLimit: 160.0,
+            isActive: true,
+            createdAt: ts,
+            updatedAt: ts
+        },
+        {
+            recipeManagementId: "RCM-0002",
+            tenantId: TENANT_ID,
+            plantId: PLANT_ID,
+            productId: "STFS7000",
+            productCode: "STFS7000",
+            productName: "Mirtazapine Tablets USP 5 mg",
+            recipeId: "RCP-0001",
+            recipeCode: "RCP-MIRT-01",
+            recipeName: "Mirtazapine 5mg Granulation & Blending Recipe",
+            batchSize: "1000 KG",
+            equipmentId: "RMG-01",
+            equipmentCode: "RMG-01",
+            equipmentName: "Rapid Mixer Granulator 01",
+            parameterCode: "agAmps",
+            parameterName: "Agitator Current",
+            unitOfMeasure: "A",
+            uom: "A",
+            targetSetpoint: 28.0,
+            lowLimit: 20.0,
+            highLimit: 35.0,
+            isActive: true,
+            createdAt: ts,
+            updatedAt: ts
+        },
+        {
+            recipeManagementId: "RCM-0003",
+            tenantId: TENANT_ID,
+            plantId: PLANT_ID,
+            productId: "STFS7000",
+            productCode: "STFS7000",
+            productName: "Mirtazapine Tablets USP 5 mg",
+            recipeId: "RCP-0001",
+            recipeCode: "RCP-MIRT-01",
+            recipeName: "Mirtazapine 5mg Granulation & Blending Recipe",
+            batchSize: "1000 KG",
+            equipmentId: "RMG-01",
+            equipmentCode: "RMG-01",
+            equipmentName: "Rapid Mixer Granulator 01",
+            parameterCode: "chpSpeed",
+            parameterName: "Granulator Speed",
+            unitOfMeasure: "RPM",
+            uom: "RPM",
+            targetSetpoint: 1420.0,
+            lowLimit: 1000.0,
+            highLimit: 1500.0,
+            isActive: true,
+            createdAt: ts,
+            updatedAt: ts
+        },
+        {
+            recipeManagementId: "RCM-0004",
+            tenantId: TENANT_ID,
+            plantId: PLANT_ID,
+            productId: "STFS7000",
+            productCode: "STFS7000",
+            productName: "Mirtazapine Tablets USP 5 mg",
+            recipeId: "RCP-0001",
+            recipeCode: "RCP-MIRT-01",
+            recipeName: "Mirtazapine 5mg Granulation & Blending Recipe",
+            batchSize: "1000 KG",
+            equipmentId: "RMG-01",
+            equipmentCode: "RMG-01",
+            equipmentName: "Rapid Mixer Granulator 01",
+            parameterCode: "heaterTemp",
+            parameterName: "Granulation Temperature",
+            unitOfMeasure: "°C",
+            uom: "°C",
+            targetSetpoint: 55.0,
+            lowLimit: 45.0,
+            highLimit: 65.0,
+            isActive: true,
+            createdAt: ts,
+            updatedAt: ts
+        }
+    ];
+
     EQUIPMENT_MASTER_COLLECTIONS.forEach(function (name) {
         safeUpsert(name, equipmentDocs, "equipmentId");
     });
@@ -373,8 +530,10 @@ function seedMasterData() {
     safeUpsert("iiot_product_master", productDocs, "productId");
     safeUpsert("iiot_equipment_critical_parameters", parameterDocs, "parameterId");
     safeUpsert("iiot_equipment_critical_parameters_limit", parameterLimitDocs, "parameterLimitId");
+    safeUpsert("iiot_recipe_master", recipeDocs, "recipeId");
+    safeUpsert("iiot_recipe_management", recipeManagementDocs, "recipeManagementId");
 
-    logInfo("Master data seeded: equipment=" + equipmentDocs.length + ", products=" + productDocs.length + ", parameters=" + parameterDocs.length + ", limits=" + parameterLimitDocs.length + ", liveStatuses=" + liveStatusDocs.length);
+    logInfo("Master data seeded: equipment=" + equipmentDocs.length + ", products=" + productDocs.length + ", parameters=" + parameterDocs.length + ", limits=" + parameterLimitDocs.length + ", recipes=" + recipeDocs.length + ", recipeConfigs=" + recipeManagementDocs.length);
 }
 
 function runSeed() {
@@ -386,6 +545,8 @@ function runSeed() {
         "iiot_equipment_critical_parameters",
         "iiot_equipment_critical_parameters_limit",
         "iiot_product_master",
+        "iiot_recipe_master",
+        "iiot_recipe_management",
         "ingestion_state",
         "iiot_ingested_events_registry",
         "iiot_batch_summary"
