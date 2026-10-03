@@ -107,4 +107,35 @@ class IiotOperationsServiceMonitoringTest {
         assertEquals(0.0, details.get("downtimeSeconds"));
         assertEquals(2328.0, details.get("goodUnits"));
     }
+
+    @Test
+    void getCppDataWithEquipmentIdAndDateFilterDoesNotThrow() {
+        Map<String, Object> filter = Map.of(
+                "equipmentId", "MB005",
+                "batchNo", "AGO0026015",
+                "lotNo", "01",
+                "toDate", "2026-10-02T11:27:32.999Z"
+        );
+        when(mongoTemplate.collectionExists("iiot_ts_batch_MB005")).thenReturn(true);
+        when(mongoTemplate.find(any(Query.class), eq(Document.class), eq("iiot_ts_batch_MB005")))
+                .thenReturn(List.of(new Document("observedAt", new Date())));
+
+        List<Map<String, Object>> result = service.getCppData(filter);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getAlarmEventDataWithEquipmentIdAndDateFilterDoesNotThrow() {
+        Map<String, Object> filter = Map.of(
+                "equipmentId", "MB040",
+                "fromDate", "2026-10-02T11:00:00.000Z",
+                "toDate", "2026-10-02T11:27:32.999Z"
+        );
+        when(mongoTemplate.collectionExists("iiot_ts_alarm_MB040")).thenReturn(true);
+        when(mongoTemplate.find(any(Query.class), eq(Document.class), eq("iiot_ts_alarm_MB040")))
+                .thenReturn(List.of(new Document("event_time", new Date())));
+
+        List<Map<String, Object>> result = service.getAlarmEventData(filter);
+        assertEquals(1, result.size());
+    }
 }

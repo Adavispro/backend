@@ -15,7 +15,7 @@ SCHEDULER_LOG="$LOG_DIR/scheduler.log"
 MOCK_LOG="$LOG_DIR/mock-data-service.log"
 
 # Default configuration
-INTERVAL_SECONDS="${INTERVAL_SECONDS:-600}" # 10 minutes
+INTERVAL_SECONDS="${INTERVAL_SECONDS:-10}" # 10 seconds continuous stream
 MONGO_URI="${MONGO_URI:-mongodb://admin:Admin123!@localhost:37017/adavis_platform?authSource=admin}"
 DB_NAME="${DB_NAME:-adavis_platform}"
 MOCK_PORT="${MOCK_PORT:-8000}"

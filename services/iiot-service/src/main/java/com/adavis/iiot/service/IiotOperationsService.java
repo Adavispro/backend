@@ -2316,10 +2316,10 @@ public class IiotOperationsService {
         String tenantId = firstNonBlank(stringValue(filter.get("tenantId")), DEFAULT_TENANT_ID);
         String equipmentId = requireFilterText(filter, "equipmentId");
         String category = stringValue(filter.get("eventCategory"));
-        boolean isRmg = equipmentId != null && (equipmentId.toUpperCase().contains("RMG") || equipmentId.equalsIgnoreCase("G5RMG") || equipmentId.equalsIgnoreCase("RMGC0219"));
-        boolean isFbd = equipmentId != null && (equipmentId.toUpperCase().contains("FBD") || equipmentId.equalsIgnoreCase("G5FBD") || equipmentId.equalsIgnoreCase("FBDC0220"));
-        boolean isBle = equipmentId != null && (equipmentId.toUpperCase().contains("BLE") || equipmentId.toUpperCase().contains("OGB") || equipmentId.toUpperCase().contains("OCB") || equipmentId.equalsIgnoreCase("G5BLE") || equipmentId.equalsIgnoreCase("OCBC0222"));
-        boolean isCoat = equipmentId != null && (equipmentId.toUpperCase().contains("COAT") || equipmentId.toUpperCase().contains("COTC") || equipmentId.equalsIgnoreCase("G5COT") || equipmentId.equalsIgnoreCase("G5COAT") || equipmentId.equalsIgnoreCase("COATC0223") || equipmentId.equalsIgnoreCase("COTC0226"));
+        boolean isRmg = equipmentId != null && (equipmentId.toUpperCase().contains("RMG") || equipmentId.equalsIgnoreCase("G5RMG") || equipmentId.equalsIgnoreCase("RMGC0219") || equipmentId.equalsIgnoreCase("MB003"));
+        boolean isFbd = equipmentId != null && (equipmentId.toUpperCase().contains("FBD") || equipmentId.equalsIgnoreCase("G5FBD") || equipmentId.equalsIgnoreCase("FBDC0220") || equipmentId.equalsIgnoreCase("MB004"));
+        boolean isBle = equipmentId != null && (equipmentId.toUpperCase().contains("BLE") || equipmentId.toUpperCase().contains("OGB") || equipmentId.toUpperCase().contains("OCB") || equipmentId.equalsIgnoreCase("G5BLE") || equipmentId.equalsIgnoreCase("OCBC0222") || equipmentId.equalsIgnoreCase("MB005"));
+        boolean isCoat = equipmentId != null && (equipmentId.toUpperCase().contains("COAT") || equipmentId.toUpperCase().contains("COTC") || equipmentId.equalsIgnoreCase("G5COT") || equipmentId.equalsIgnoreCase("G5COAT") || equipmentId.equalsIgnoreCase("COATC0223") || equipmentId.equalsIgnoreCase("COTC0226") || equipmentId.equalsIgnoreCase("MB041"));
 
         if (isRmg && "ALARM".equalsIgnoreCase(category)) {
             return getRmgCanonicalAlarms();
@@ -2843,9 +2843,26 @@ public class IiotOperationsService {
                                                                 Map<String, Object> filter,
                                                                 String equipmentId,
                                                                 String category) {
+        List<Criteria> andClauses = new ArrayList<>();
+        Criteria eqCrit = buildEquipmentCriteria(equipmentId);
+        if (eqCrit != null) {
+            andClauses.add(eqCrit);
+        }
+        if (category != null && !category.isBlank()) {
+            andClauses.add(Criteria.where("event.eventCategory").is(category));
+        }
+        Criteria dateCrit = buildDateRangeCriteria(filter, "event_time", "fromDate", "toDate");
+        if (dateCrit != null) {
+            andClauses.add(dateCrit);
+        }
+
         Query query = new Query();
-        applyEquipmentCriteria(query, equipmentId);
-        applyDateRangeCriteria(query, filter, "event_time", "fromDate", "toDate");
+        if (andClauses.size() == 1) {
+            query.addCriteria(andClauses.get(0));
+        } else if (andClauses.size() > 1) {
+            query.addCriteria(new Criteria().andOperator(andClauses.toArray(new Criteria[0])));
+        }
+
         int limit = toInteger(filter.get("limit"), 1000, 10000);
         int offset = toNonNegativeInteger(filter.get("offset"));
         if (offset > 0) {
@@ -2905,14 +2922,31 @@ public class IiotOperationsService {
                                                    Map<String, Object> filter,
                                                    String equipmentId,
                                                    boolean includeBatchCriteria) {
-        Query query = new Query();
-        applyEquipmentCriteria(query, equipmentId);
-        if (includeBatchCriteria) {
-            applyMetaCriteria(query, "meta.batchNo", stringValue(filter.get("batchNo")));
-            applyMetaCriteria(query, "meta.lotNo", stringValue(filter.get("lotNo")));
-            applyMetaCriteria(query, "meta.productName", stringValue(filter.get("productName")));
+        List<Criteria> andClauses = new ArrayList<>();
+        Criteria eqCrit = buildEquipmentCriteria(equipmentId);
+        if (eqCrit != null) {
+            andClauses.add(eqCrit);
         }
-        applyDateRangeCriteria(query, filter, "observedAt", "fromDate", "toDate");
+        if (includeBatchCriteria) {
+            String bNo = stringValue(filter.get("batchNo"));
+            if (bNo != null && !bNo.isBlank()) andClauses.add(Criteria.where("meta.batchNo").is(bNo));
+            String lNo = stringValue(filter.get("lotNo"));
+            if (lNo != null && !lNo.isBlank()) andClauses.add(Criteria.where("meta.lotNo").is(lNo));
+            String pName = stringValue(filter.get("productName"));
+            if (pName != null && !pName.isBlank()) andClauses.add(Criteria.where("meta.productName").is(pName));
+        }
+        Criteria dateCrit = buildDateRangeCriteria(filter, "observedAt", "fromDate", "toDate");
+        if (dateCrit != null) {
+            andClauses.add(dateCrit);
+        }
+
+        Query query = new Query();
+        if (andClauses.size() == 1) {
+            query.addCriteria(andClauses.get(0));
+        } else if (andClauses.size() > 1) {
+            query.addCriteria(new Criteria().andOperator(andClauses.toArray(new Criteria[0])));
+        }
+
         int limit = toInteger(filter.get("limit"), 1000, 100000);
         int offset = toNonNegativeInteger(filter.get("offset"));
         if (offset > 0) {
@@ -2926,10 +2960,19 @@ public class IiotOperationsService {
                                                                  String equipmentId,
                                                                  String batchNo,
                                                                  boolean includeBatchCriteria) {
-        Query query = new Query();
-        addEquipmentCriteria(query, equipmentId);
+        List<Criteria> andClauses = new ArrayList<>();
+        Criteria eqCrit = buildEquipmentCriteria(equipmentId);
+        if (eqCrit != null) {
+            andClauses.add(eqCrit);
+        }
         if (includeBatchCriteria && batchNo != null && !batchNo.isBlank()) {
-            query.addCriteria(Criteria.where("meta.batchNo").is(batchNo));
+            andClauses.add(Criteria.where("meta.batchNo").is(batchNo));
+        }
+        Query query = new Query();
+        if (andClauses.size() == 1) {
+            query.addCriteria(andClauses.get(0));
+        } else if (andClauses.size() > 1) {
+            query.addCriteria(new Criteria().andOperator(andClauses.toArray(new Criteria[0])));
         }
         query.with(Sort.by(Sort.Direction.ASC, "observedAt"));
         return mongoTemplate.find(query, Document.class, collection)
@@ -3552,18 +3595,25 @@ public class IiotOperationsService {
         return buildPerEquipmentCollectionName(legacyPrefix, tenantId, equipmentId);
     }
 
-    private void applyEquipmentCriteria(Query query, String equipmentId) {
+    private Criteria buildEquipmentCriteria(String equipmentId) {
         if (equipmentId == null || equipmentId.isBlank()) {
-            return;
+            return null;
         }
-        addEquipmentCriteria(query, equipmentId);
+        return new Criteria().orOperator(
+                Criteria.where("meta.equipmentId").is(equipmentId),
+                Criteria.where("meta.equipmentCode").is(equipmentId),
+                Criteria.where("meta.equipment_code").is(equipmentId));
+    }
+
+    private void applyEquipmentCriteria(Query query, String equipmentId) {
+        Criteria crit = buildEquipmentCriteria(equipmentId);
+        if (crit != null) {
+            query.addCriteria(crit);
+        }
     }
 
     private void addEquipmentCriteria(Query query, String equipmentId) {
-        query.addCriteria(new Criteria().orOperator(
-                Criteria.where("meta.equipmentId").is(equipmentId),
-                Criteria.where("meta.equipmentCode").is(equipmentId),
-                Criteria.where("meta.equipment_code").is(equipmentId)));
+        applyEquipmentCriteria(query, equipmentId);
     }
 
     private String resolveTimeSeriesWriteCollection(String streamType, Map<String, Object> tsDoc) {
@@ -3620,30 +3670,32 @@ public class IiotOperationsService {
         }
     }
 
-    private void applyDateRangeCriteria(Query query,
-                                        Map<String, Object> filter,
-                                        String field,
-                                        String fromKey,
-                                        String toKey) {
+    private Criteria buildDateRangeCriteria(Map<String, Object> filter,
+                                            String field,
+                                            String fromKey,
+                                            String toKey) {
         Instant from = parseInstantSafe(filter.get(fromKey));
         Instant to = parseInstantSafe(filter.get(toKey));
-        if (from == null && to == null) {
-            return;
+        String fromText = stringValue(filter.get(fromKey));
+        String toText = stringValue(filter.get(toKey));
+
+        if (from == null && to == null && (fromText == null || fromText.isBlank()) && (toText == null || toText.isBlank())) {
+            return null;
         }
 
         List<Criteria> orBranches = new ArrayList<>();
-        Criteria primaryCrit = Criteria.where(field);
-        if (from != null) {
-            primaryCrit = primaryCrit.gte(Date.from(from));
+        if (from != null || to != null) {
+            Criteria primaryCrit = Criteria.where(field);
+            if (from != null) {
+                primaryCrit = primaryCrit.gte(Date.from(from));
+            }
+            if (to != null) {
+                primaryCrit = primaryCrit.lte(Date.from(to));
+            }
+            orBranches.add(primaryCrit);
         }
-        if (to != null) {
-            primaryCrit = primaryCrit.lte(Date.from(to));
-        }
-        orBranches.add(primaryCrit);
 
-        String fromText = stringValue(filter.get(fromKey));
-        String toText = stringValue(filter.get(toKey));
-        if (fromText != null || toText != null) {
+        if ((fromText != null && !fromText.isBlank()) || (toText != null && !toText.isBlank())) {
             Criteria dtCrit = Criteria.where("dt");
             if (fromText != null && !fromText.isBlank()) {
                 dtCrit = dtCrit.gte(fromText.trim().replace(" ", "T"));
@@ -3654,7 +3706,24 @@ public class IiotOperationsService {
             orBranches.add(dtCrit);
         }
 
-        query.addCriteria(new Criteria().orOperator(orBranches.toArray(new Criteria[0])));
+        if (orBranches.isEmpty()) {
+            return null;
+        }
+        if (orBranches.size() == 1) {
+            return orBranches.get(0);
+        }
+        return new Criteria().orOperator(orBranches.toArray(new Criteria[0]));
+    }
+
+    private void applyDateRangeCriteria(Query query,
+                                        Map<String, Object> filter,
+                                        String field,
+                                        String fromKey,
+                                        String toKey) {
+        Criteria crit = buildDateRangeCriteria(filter, field, fromKey, toKey);
+        if (crit != null) {
+            query.addCriteria(crit);
+        }
     }
 
     private Instant parseInstantSafe(Object value) {

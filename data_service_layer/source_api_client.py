@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Client utilities for retrieving source batch, alarm, and audit data.
 
-This is the first step in the ingestion pipeline. It talks to a mock source API
-that mimics the production system until the real API is connected.
+Supports:
+- 5 target equipments: MB003 (10094), MB004 (10110), MB005 (10095), MB040 (10040), MB041 (10141)
+- Querying by @AssetId, @BatchNo, @LotNo
+- Resilient normalization of HMI and standard payload envelopes
 """
 
 from __future__ import annotations
@@ -11,7 +13,7 @@ import json
 import logging
 import os
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
@@ -23,10 +25,22 @@ from urllib3.util.retry import Retry
 logger = logging.getLogger(__name__)
 
 BASE_URL = os.getenv("SOURCE_API_BASE_URL", "http://localhost:8000/fwxapi/rest/v1/Dataset")
-DEFAULT_DATASET_ID = "G5RMG"
+DEFAULT_DATASET_ID = "MB003"
 DEFAULT_TIMEOUT_SECONDS = int(os.getenv("SOURCE_API_TIMEOUT", "30"))
 MAX_RETRIES = int(os.getenv("SOURCE_API_MAX_RETRIES", "3"))
 BACKOFF_FACTOR = float(os.getenv("SOURCE_API_BACKOFF_FACTOR", "0.5"))
+
+EQUIPMENT_ASSET_MAP = {
+    "MB003": "10094",
+    "MB004": "10110",
+    "MB005": "10095",
+    "MB040": "10040",
+    "MB041": "10141",
+    "G5RMG": "10094",
+    "G5FBD": "10110",
+    "G5OGB": "10095",
+    "G5COAT": "10141",
+}
 
 # Global thread-safe session with connection pooling
 _SESSION: Optional[requests.Session] = None
@@ -64,10 +78,35 @@ class BatchDetail:
     @classmethod
     def from_dict(cls, payload: Dict[str, Any]) -> "BatchDetail":
         return cls(
-            product_name=str(payload.get("PRODUCT_NAME") or payload.get("product_name") or ""),
-            product_code=str(payload.get("PRODUCT_CODE") or payload.get("product_code") or ""),
-            batch_no=str(payload.get("BATCH_NO") or payload.get("batch_no") or ""),
-            lot_no=str(payload.get("LOT_NO") or payload.get("lot_no") or ""),
+            product_name=str(
+                payload.get("PRODUCT_NAME")
+                or payload.get("product_name")
+                or payload.get("Product Name")
+                or payload.get("ProductName")
+                or payload.get("ProductNo")
+                or ""
+            ),
+            product_code=str(
+                payload.get("PRODUCT_CODE")
+                or payload.get("product_code")
+                or payload.get("Product Code")
+                or payload.get("ProductNo")
+                or "STGW2000"
+            ),
+            batch_no=str(
+                payload.get("BATCH_NO")
+                or payload.get("batch_no")
+                or payload.get("Batch Number")
+                or payload.get("BatchNo")
+                or ""
+            ),
+            lot_no=str(
+                payload.get("LOT_NO")
+                or payload.get("lot_no")
+                or payload.get("Lot Number")
+                or payload.get("LotNo")
+                or ""
+            ),
         )
 
 
@@ -85,6 +124,7 @@ class BatchDataRecord:
     def from_dict(cls, payload: Dict[str, Any]) -> "BatchDataRecord":
         standard_keys = {
             "dt",
+            "timestamp",
             "batch_no",
             "lot_no",
             "time",
@@ -95,15 +135,45 @@ class BatchDataRecord:
             "equipmenttype",
             "equipment_type",
         }
-        critical_params = {key: value for key, value in payload.items() if key.lower() not in standard_keys}
+        critical_params = {
+            key: value for key, value in payload.items() if key.lower() not in standard_keys
+        }
 
+        ts = str(
+            payload.get("timestamp")
+            or payload.get("TimeStamp")
+            or payload.get("TIMESTAMP")
+            or payload.get("DT")
+            or payload.get("TIME")
+            or ""
+        )
         return cls(
-            timestamp=str(payload.get("timestamp") or payload.get("TimeStamp") or payload.get("TIMESTAMP") or payload.get("DT") or ""),
-            batch_no=str(payload.get("batch_no") or payload.get("Batch_No") or payload.get("BATCH_NO") or ""),
-            lot_no=str(payload.get("lot_no") or payload.get("Lot_No") or payload.get("LOT_NO") or ""),
-            time=payload.get("time") if payload.get("time") is not None else payload.get("Time"),
-            status=str(payload.get("status") or payload.get("Status") or payload.get("STATUS") or ""),
-            user_name=str(payload.get("user_name") or payload.get("User_Name") or payload.get("USER_NAME") or ""),
+            timestamp=ts,
+            batch_no=str(
+                payload.get("batch_no")
+                or payload.get("Batch_No")
+                or payload.get("BATCH_NO")
+                or payload.get("Batch Number")
+                or payload.get("BatchNo")
+                or ""
+            ),
+            lot_no=str(
+                payload.get("lot_no")
+                or payload.get("Lot_No")
+                or payload.get("LOT_NO")
+                or payload.get("Lot Number")
+                or payload.get("LotNo")
+                or ""
+            ),
+            time=payload.get("time") if payload.get("time") is not None else payload.get("Time") or payload.get("TIME"),
+            status=str(payload.get("status") or payload.get("Status") or payload.get("STATUS") or "RUNNING"),
+            user_name=str(
+                payload.get("user_name")
+                or payload.get("User_Name")
+                or payload.get("USER_NAME")
+                or payload.get("User Name")
+                or ""
+            ),
             critical_params=critical_params,
         )
 
@@ -143,7 +213,7 @@ class AlarmRecord:
             msg_proc=int(payload.get("MsgProc") or payload.get("msg_proc") or payload.get("MSG_PROC") or 0),
             state_after=int(payload.get("StateAfter") or payload.get("state_after") or payload.get("STATE_AFTER") or 0),
             msg_class=int(payload.get("MsgClass") or payload.get("msg_class") or payload.get("MSG_CLASS") or 0),
-            msg_number=int(payload.get("MsgNumber") or payload.get("msg_number") or payload.get("MSG_NUMBER") or 0),
+            msg_number=int(payload.get("MsgNumber") or payload.get("msg_number") or payload.get("MSG_NUMBER") or 101),
             var1=str(payload.get("Var1") or payload.get("var1") or payload.get("VAR1") or ""),
             var2=str(payload.get("Var2") or payload.get("var2") or payload.get("VAR2") or ""),
             var3=str(payload.get("Var3") or payload.get("var3") or payload.get("VAR3") or ""),
@@ -178,20 +248,23 @@ class AuditRecord:
     @classmethod
     def from_dict(cls, payload: Dict[str, Any]) -> "AuditRecord":
         return cls(
-            record_id=str(payload.get("RecordID") or payload.get("record_id") or payload.get("RECORD_ID") or ""),
-            time_stamp=str(payload.get("TimeStamp") or payload.get("time_stamp") or payload.get("TIMESTAMP") or ""),
-            delta_to_utc=str(payload.get("DeltaToUTC") or payload.get("delta_to_utc") or payload.get("DELTA_TO_UTC") or ""),
-            user_id=str(payload.get("UserID") or payload.get("user_id") or payload.get("USER_ID") or ""),
+            record_id=str(payload.get("RecordID") or payload.get("record_id") or payload.get("RECORD_ID") or payload.get("recordId") or ""),
+            time_stamp=str(payload.get("TimeStamp") or payload.get("time_stamp") or payload.get("TIMESTAMP") or payload.get("DateTime") or payload.get("Date Time") or ""),
+            delta_to_utc=str(payload.get("DeltaToUTC") or payload.get("delta_to_utc") or payload.get("DELTA_TO_UTC") or "+05:30"),
+            user_id=str(payload.get("UserID") or payload.get("user_id") or payload.get("USER_ID") or payload.get("UserName") or payload.get("User Name") or ""),
             object_id=str(payload.get("ObjectID") or payload.get("object_id") or payload.get("OBJECT_ID") or ""),
             description=str(payload.get("Description") or payload.get("description") or payload.get("DESCRIPTION") or ""),
             comment=payload.get("Comment") if payload.get("Comment") is not None else payload.get("comment"),
             checksum=str(payload.get("Checksum") or payload.get("checksum") or payload.get("CHECKSUM") or ""),
-            dt=str(payload.get("DT") or payload.get("dt") or payload.get("DATE_TIME") or ""),
+            dt=str(payload.get("DT") or payload.get("dt") or payload.get("DATE_TIME") or payload.get("DateTime") or ""),
         )
 
 
 def build_point_name(dataset: str, params: Optional[Dict[str, Any]] = None, dataset_id: str = DEFAULT_DATASET_ID) -> str:
-    params = params or {}
+    params = dict(params or {})
+    if dataset_id in EQUIPMENT_ASSET_MAP and "AssetId" not in params:
+        params["AssetId"] = EQUIPMENT_ASSET_MAP[dataset_id]
+
     inner = ", ".join(f"@{key}='{value}'" for key, value in params.items())
     if inner:
         return f"db:{dataset_id}.{dataset}<{inner}>"
@@ -218,7 +291,6 @@ def fetch_dataset(
         raise RuntimeError(f"Source API connection failed for dataset '{dataset_name}': {str(exc)}") from exc
 
     if response.status_code >= 400 and response.status_code < 500:
-        # Non-retryable 4xx error: fail fast
         raise ValueError(f"Source API rejected request for dataset '{dataset_name}' with status {response.status_code}")
 
     response.raise_for_status()
@@ -240,19 +312,15 @@ def fetch_batch_details(
     lot_no: Optional[str] = None,
     dataset_id: str = DEFAULT_DATASET_ID,
 ) -> List[BatchDetail]:
-    """Fetch raw batch details. Filter by batch_no and lot_no when provided.
-
-    This keeps the raw payload layer while allowing the scheduler to update
-    records for a specific batch and lot during ingestion.
-    """
+    """Fetch raw batch details. Filter by batch_no and lot_no when provided."""
     payload = fetch_dataset("BATCHDETAILS", dataset_id=dataset_id)
     data = payload.get("data", [])
 
     if batch_no or lot_no:
         filtered = []
         for item in data:
-            item_batch = str(item.get("BATCH_NO") or item.get("batch_no") or "")
-            item_lot = str(item.get("LOT_NO") or item.get("lot_no") or "")
+            item_batch = str(item.get("BATCH_NO") or item.get("batch_no") or item.get("BatchNo") or item.get("Batch Number") or "")
+            item_lot = str(item.get("LOT_NO") or item.get("lot_no") or item.get("LotNo") or item.get("Lot Number") or "")
             if batch_no and item_batch != batch_no:
                 continue
             if lot_no and item_lot != lot_no:
@@ -264,7 +332,8 @@ def fetch_batch_details(
 
 
 def fetch_batch_data(batch_no: str, lot_no: str, dataset_id: str = DEFAULT_DATASET_ID) -> List[BatchDataRecord]:
-    payload = fetch_dataset("BATCHDATA", {"BATCH_NO": batch_no, "LOT_NO": lot_no}, dataset_id=dataset_id)
+    params = {"BATCH_NO": batch_no, "LOT_NO": lot_no, "BatchNo": batch_no, "LotNo": lot_no}
+    payload = fetch_dataset("BATCHDATA", params, dataset_id=dataset_id)
     data = payload.get("data", [])
     return [BatchDataRecord.from_dict(item) for item in data]
 
@@ -286,7 +355,6 @@ def fetch_audit_data(from_time: str, to_time: str, dataset_id: str = DEFAULT_DAT
     return [AuditRecord.from_dict(item) for item in data]
 
 
-
 def _format_batch_timestamp(value: str) -> Optional[str]:
     text = str(value or "").strip()
     if not text:
@@ -297,6 +365,7 @@ def _format_batch_timestamp(value: str) -> Optional[str]:
         "%Y-%m-%dT%H:%M:%S",
         "%Y-%m-%d %H:%M:%S.%f",
         "%Y-%m-%d %H:%M:%S",
+        "%d/%m/%Y %H:%M:%S",
     ]
     for fmt in candidates:
         try:
@@ -337,12 +406,6 @@ def build_product_response(
     from_time: Optional[str] = None,
     to_time: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Build one complete product response using the fetched batch context.
-
-    The batch detail drives the batch number and lot number. The batch telemetry
-    then drives the alarm and audit time window so the example stays dynamic and
-    aligned with the scheduler ingestion flow.
-    """
     details = fetch_batch_details(batch_no=batch_no, lot_no=lot_no, dataset_id=dataset_id)
     selected_detail = _resolve_product_context(details, batch_no=batch_no, lot_no=lot_no)
 
@@ -378,6 +441,5 @@ def build_product_response(
 
 if __name__ == "__main__":
     product_response = build_product_response(dataset_id=DEFAULT_DATASET_ID)
-
     print("Product Response:")
     print(json.dumps(product_response, indent=2, default=str))

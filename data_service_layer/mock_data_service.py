@@ -1,95 +1,339 @@
 #!/usr/bin/env python3
 """Mock data service that mimics the source API used by the scheduler.
 
-Matches endpoints defined in:
-- data_service_layer/script_requirement.md
-- scheduler/requirement.md
-- reference_documents/reports (RMG.pdf, FBD.pdf, BLE.pdf, COAT.pdf)
-
-Exposes sample data for:
-- BATCHDETAILS
-- BATCHDATA
-- ALARMDATA
-- AUDITDATA
-- PARAMETERSETTINGS
+Supports:
+- PointName datasets matching live production fwxapi endpoint contract:
+  * GET /Dataset?pointName=db:HMI.<dataset_name><@AssetId='...', ...>
+  * GET /fwxapi/rest/v1/Dataset?pointname=...
+- Target Equipments:
+  * 10094 / MB003 (RMG)
+  * 10110 / MB004 (FBD)
+  * 10095 / MB005 (Blender)
+  * 10040 / MB040 (Compression Machine)
+  * 10141 / MB041 (Auto Coater)
+- Continuous real-time streaming telemetry with realistic parameter fluctuations
+  using persistent per-equipment state for smooth, continuous variation across polls.
+- Each poll returns exactly ONE new telemetry point at the current timestamp.
 """
 
 from __future__ import annotations
 
 import json
+import math
 import os
+import random
 import sys
+import time
+import threading
+from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 HOST = "0.0.0.0"
 PORT = 8000
 
-# Try to load extracted reference data from reference_documents/extracted_equipment_data.json
-EXTRACTED_DATA_PATH = os.path.join(
+ASSET_EQUIPMENT_MAP = {
+    "10094": "MB003",
+    "10110": "MB004",
+    "10095": "MB005",
+    "10040": "MB040",
+    "10141": "MB041",
+}
+
+EQUIPMENT_ASSET_MAP = {
+    "MB003": "10094",
+    "MB004": "10110",
+    "MB005": "10095",
+    "MB040": "10040",
+    "MB041": "10141",
+    "G5RMG": "10094",
+    "G5FBD": "10110",
+    "G5OGB": "10095",
+    "G5COAT": "10141",
+}
+
+EQUIPMENT_FAMILY_MAP = {
+    "MB003": "RMG",
+    "MB004": "FBD",
+    "MB005": "BLE",
+    "MB040": "COMP",
+    "MB041": "COAT",
+    "G5RMG": "RMG",
+    "G5FBD": "FBD",
+    "G5OGB": "BLE",
+    "G5COAT": "COAT",
+}
+
+# Try to load extracted reference data from reference_documents or data_service_layer
+LOCAL_EXTRACTED_DATA_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "extracted_reference_data.json",
+)
+ROOT_EXTRACTED_DATA_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     "reference_documents",
     "extracted_equipment_data.json",
 )
 
 REFERENCE_DOC_DATA: dict[str, dict] = {}
-if os.path.exists(EXTRACTED_DATA_PATH):
-    try:
-        with open(EXTRACTED_DATA_PATH, "r", encoding="utf-8") as f:
-            REFERENCE_DOC_DATA = json.load(f)
-    except Exception as e:
-        print(f"Warning: Failed to load {EXTRACTED_DATA_PATH}: {e}", file=sys.stderr)
+for path in (LOCAL_EXTRACTED_DATA_PATH, ROOT_EXTRACTED_DATA_PATH):
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                if loaded:
+                    REFERENCE_DOC_DATA.update(loaded)
+                    break
+        except Exception as e:
+            print(f"Warning: Failed to load {path}: {e}", file=sys.stderr)
 
 
-def dataset_family(dataset_id: str) -> str:
-    cleaned = (
-        (dataset_id or "G5RMG")
-        .upper()
-        .replace("PB3", "")
-        .replace("C0219", "RMG")
-        .replace("C0220", "FBD")
-        .replace("C0222", "BLE")
-        .replace("C0223", "COAT")
-        .replace("C0226", "COAT")
-        .replace("C0224", "CIP")
-    )
-    if "RMG" in cleaned:
-        return "RMG"
-    if "FBD" in cleaned:
-        return "FBD"
-    if "BLE" in cleaned or "OCB" in cleaned or "OGB" in cleaned:
-        return "BLE"
-    if "COAT" in cleaned or "COT" in cleaned:
-        return "COAT"
-    if "CIP" in cleaned:
-        return "CIP"
-    return (dataset_id or "G5RMG")[-3:].upper()
+# ==========================================
+# Persistent Per-Equipment State Machine
+# ==========================================
+# Each equipment maintains a stateful context so that telemetry values
+# change smoothly and continuously across polls (not reset each call).
+
+_STATE_LOCK = threading.RLock()
+
+# Per-equipment live state for smooth value generation
+_EQUIPMENT_STATE: dict[str, dict] = {}
+
+# Equipment state machine phases
+EQUIPMENT_PHASES = {
+    "RMG": ["DRY_CYCLE", "WET_MIXING", "WET_MIXING", "WET_MIXING", "IDLE"],
+    "FBD": ["HEATING", "DRYING", "DRYING", "DRYING", "SHAKING", "DRYING", "IDLE"],
+    "BLE": ["BATCH_READY", "MIXING_1", "MIXING_1", "MIXING_1", "MIXING_1_DONE", "MIXING_2", "MIXING_2", "BLENDING_OVER"],
+    "COAT": ["PRE_HEATING", "SPRAYING", "SPRAYING", "SPRAYING", "SPRAYING", "SPRAYING", "POST_JOG"],
+    "COMP": ["RUNNING", "RUNNING", "RUNNING", "RUNNING", "RUNNING", "IDLE"],
+}
+
+def _get_equipment_state(eq_code: str) -> dict:
+    """Get or initialize persistent equipment state."""
+    with _STATE_LOCK:
+        if eq_code not in _EQUIPMENT_STATE:
+            family = EQUIPMENT_FAMILY_MAP.get(eq_code, "RMG")
+            _EQUIPMENT_STATE[eq_code] = _init_equipment_state(eq_code, family)
+        return _EQUIPMENT_STATE[eq_code]
 
 
-def dataset_number(dataset_id: str) -> int:
-    text = str(dataset_id or "")
-    digits = "".join(ch for ch in text if ch.isdigit())
-    return int(digits[-1]) if digits else 5
+def _init_equipment_state(eq_code: str, family: str) -> dict:
+    """Initialize equipment state with realistic starting values."""
+    state = {
+        "family": family,
+        "phase_idx": 1,  # Start at first running phase (index 1)
+        "phase_tick": 0,
+        "phase_duration": random.randint(20, 60),  # ticks in current phase
+        "poll_count": 0,
+        "machine_state": "RUNNING",
+        # Tablet count: monotonically increasing for COMP
+        "tablet_count": random.randint(150000, 200000),
+    }
+
+    if family == "RMG":
+        state.update({
+            "impeller_amp": 22.0,
+            "chopper_amp": 4.8,
+            "pump_rpm": 60.0,
+        })
+    elif family == "FBD":
+        state.update({
+            "inlet_temp": 50.0,
+            "exhaust_temp": 32.0,
+            "shaking": False,
+        })
+    elif family == "BLE":
+        state.update({
+            "blender_speed": 6.0,
+            "mixing_no": 1,
+            "countdown_sec": 600,   # 10 minutes in seconds
+            "vacuum": True,
+        })
+    elif family == "COAT":
+        state.update({
+            "inlet_temp": 45.0,
+            "exhaust_temp": 40.0,
+            "bed_temp": 38.0,
+            "dosing_rpm": 14.0,
+            "pan_speed": 2.1,
+            "cycle_counter": 0,
+            "coat_status": "SPRAYING",
+        })
+    elif family == "COMP":
+        state.update({
+            "turret_rpm": 32.5,
+            "main_force": 15.2,
+            "pre_force": 4.5,
+        })
+    return state
+
+
+def _smooth_walk(current: float, target_min: float, target_max: float, max_delta: float) -> float:
+    """Move current value toward the range center with bounded random walk."""
+    center = (target_min + target_max) / 2.0
+    # Gentle drift toward center + small random noise
+    drift = (center - current) * 0.05
+    noise = random.uniform(-max_delta, max_delta)
+    new_val = current + drift + noise
+    return max(target_min, min(target_max, new_val))
+
+
+def _advance_equipment_state(state: dict) -> None:
+    """Advance the equipment state by one poll tick (10 seconds)."""
+    state["poll_count"] += 1
+    state["phase_tick"] += 1
+
+    family = state["family"]
+    phases = EQUIPMENT_PHASES.get(family, ["RUNNING"])
+
+    # Occasionally transition phase
+    if state["phase_tick"] >= state["phase_duration"]:
+        state["phase_tick"] = 0
+        state["phase_duration"] = random.randint(15, 50)
+        state["phase_idx"] = (state["phase_idx"] + 1) % len(phases)
+
+    current_phase = phases[state["phase_idx"]]
+
+    # Occasionally enter brief IDLE or ALARM state (~5% probability)
+    alarm_roll = random.random()
+    if alarm_roll < 0.02:
+        state["machine_state"] = "ALARM"
+    elif alarm_roll < 0.05:
+        state["machine_state"] = "IDLE"
+    else:
+        state["machine_state"] = "RUNNING"
+
+    if family == "RMG":
+        if current_phase == "DRY_CYCLE":
+            state["impeller_amp"] = _smooth_walk(state["impeller_amp"], 18.0, 20.0, 0.3)
+            state["chopper_amp"] = _smooth_walk(state["chopper_amp"], 3.5, 4.0, 0.1)
+            state["pump_rpm"] = 60.0
+        else:  # WET_MIXING
+            state["impeller_amp"] = _smooth_walk(state["impeller_amp"], 21.0, 26.7, 0.4)
+            state["chopper_amp"] = _smooth_walk(state["chopper_amp"], 4.5, 6.2, 0.15)
+            state["pump_rpm"] = 60.0 if state["machine_state"] == "RUNNING" else 0.0
+
+    elif family == "FBD":
+        if current_phase == "HEATING":
+            state["inlet_temp"] = _smooth_walk(state["inlet_temp"], 40.0, 61.0, 1.0)
+            state["exhaust_temp"] = _smooth_walk(state["exhaust_temp"], 26.0, 38.0, 0.8)
+            state["shaking"] = False
+        elif current_phase == "SHAKING":
+            state["inlet_temp"] = _smooth_walk(state["inlet_temp"], 30.0, 50.0, 0.5)
+            state["exhaust_temp"] = _smooth_walk(state["exhaust_temp"], 20.0, 35.0, 0.4)
+            state["shaking"] = True
+        else:  # DRYING
+            state["inlet_temp"] = _smooth_walk(state["inlet_temp"], 50.0, 61.0, 0.6)
+            state["exhaust_temp"] = _smooth_walk(state["exhaust_temp"], 35.0, 49.0, 0.5)
+            state["shaking"] = False
+
+    elif family == "BLE":
+        # countdown decrements by 10 seconds per poll tick
+        if state["countdown_sec"] > 0 and state["machine_state"] == "RUNNING":
+            state["countdown_sec"] = max(0, state["countdown_sec"] - 10)
+
+        if current_phase in ("BATCH_READY",):
+            state["blender_speed"] = 0.0
+            state["vacuum"] = False
+            state["mixing_no"] = 1
+        elif current_phase in ("MIXING_1", "MIXING_1_DONE"):
+            state["blender_speed"] = _smooth_walk(state["blender_speed"], 5.9, 6.1, 0.02)
+            state["vacuum"] = True
+            state["mixing_no"] = 1
+            if current_phase == "MIXING_1" and state["countdown_sec"] <= 0:
+                # Reset countdown for mixing 2
+                state["countdown_sec"] = 300  # 5 minutes
+        elif current_phase == "MIXING_2":
+            state["blender_speed"] = _smooth_walk(state["blender_speed"], 5.9, 6.1, 0.02)
+            state["vacuum"] = True
+            state["mixing_no"] = 2
+        else:  # BLENDING_OVER
+            state["blender_speed"] = 0.0
+            state["vacuum"] = False
+
+    elif family == "COAT":
+        if current_phase == "PRE_HEATING":
+            state["inlet_temp"] = _smooth_walk(state["inlet_temp"], 29.9, 55.0, 1.5)
+            state["exhaust_temp"] = _smooth_walk(state["exhaust_temp"], 31.7, 44.0, 1.0)
+            state["bed_temp"] = _smooth_walk(state["bed_temp"], 27.2, 42.0, 1.0)
+            state["dosing_rpm"] = 0.0
+            state["pan_speed"] = _smooth_walk(state["pan_speed"], 0.5, 2.1, 0.1)
+            state["coat_status"] = "PRE-HEATING"
+        elif current_phase == "SPRAYING":
+            state["inlet_temp"] = _smooth_walk(state["inlet_temp"], 57.0, 63.4, 0.5)
+            state["exhaust_temp"] = _smooth_walk(state["exhaust_temp"], 48.2, 49.3, 0.3)
+            state["bed_temp"] = _smooth_walk(state["bed_temp"], 48.6, 50.5, 0.2)
+            state["dosing_rpm"] = _smooth_walk(state["dosing_rpm"], 13.6, 15.6, 0.15)
+            state["pan_speed"] = _smooth_walk(state["pan_speed"], 2.0, 2.2, 0.02)
+            state["cycle_counter"] = min(265, state["cycle_counter"] + random.randint(1, 4))
+            state["coat_status"] = "SPRAYING"
+        else:  # POST_JOG
+            state["inlet_temp"] = _smooth_walk(state["inlet_temp"], 29.0, 50.0, 1.0)
+            state["exhaust_temp"] = _smooth_walk(state["exhaust_temp"], 27.4, 45.0, 0.8)
+            state["bed_temp"] = _smooth_walk(state["bed_temp"], 23.6, 45.0, 0.8)
+            state["dosing_rpm"] = 0.0
+            state["pan_speed"] = _smooth_walk(state["pan_speed"], 1.0, 2.0, 0.05)
+            state["coat_status"] = "POST-JOG"
+
+    elif family == "COMP":
+        state["turret_rpm"] = _smooth_walk(state["turret_rpm"], 25.0, 40.0, 0.8)
+        state["main_force"] = _smooth_walk(state["main_force"], 14.0, 17.5, 0.3)
+        state["pre_force"] = _smooth_walk(state["pre_force"], 4.0, 5.5, 0.12)
+        # Tablet count monotonically increases while RUNNING
+        if state["machine_state"] == "RUNNING":
+            # ~100 tablets per 10s at 32 RPM (32 * 10 = 320 tablets/s * time = conservative estimate)
+            tablets_per_poll = int(state["turret_rpm"] * 10 * random.uniform(0.8, 1.2))
+            state["tablet_count"] += tablets_per_poll
+
+
+def resolve_equipment_code(dataset_id: str, asset_id: str | None = None) -> str:
+    if asset_id and str(asset_id).strip() in ASSET_EQUIPMENT_MAP:
+        return ASSET_EQUIPMENT_MAP[str(asset_id).strip()]
+
+    clean = (dataset_id or "").strip().upper()
+    if clean in ("MB003", "MB004", "MB005", "MB040", "MB041"):
+        return clean
+    if clean in ("G5RMG", "RMGC0219", "RMG"):
+        return "MB003"
+    if clean in ("G5FBD", "FBDC0220", "FBD"):
+        return "MB004"
+    if clean in ("G5OGB", "OCBC0222", "BLE", "OGB", "OCB"):
+        return "MB005"
+    if clean in ("MB040", "COMP"):
+        return "MB040"
+    if clean in ("G5COAT", "COATC0223", "COATC0226", "COAT"):
+        return "MB041"
+
+    # Digits fallback
+    for aid, eq in ASSET_EQUIPMENT_MAP.items():
+        if aid in clean:
+            return eq
+    return "MB003"
+
+
+def dataset_family(dataset_id: str, asset_id: str | None = None) -> str:
+    eq_code = resolve_equipment_code(dataset_id, asset_id)
+    return EQUIPMENT_FAMILY_MAP.get(eq_code, "RMG")
 
 
 def parse_pointname(pointname: str):
-    """Return the dataset id, dataset name, and parameter map from a source pointname string.
+    """Return dataset_id, dataset_name, params from pointname.
 
-    Examples:
-        db:G5RMG.BATCHDATA<@BATCH_NO='NL0026008', @LOT_NO='01 of 05'>
-        db:G5RMG.PARAMETERSETTINGS<@BATCH_NO='NL0026008', @LOT_NO='01 of 05'>
-        db:G5RMG.ALARMDATA<@FROMTIME='2026-08-13 06:57:45', @TOTIME='2026-08-13 13:39:54'>
+    Handles:
+      db:HMI.Batch_Info<@AssetId='10094', @Batch_No=''>
+      db:HMI.RMG_op_data<@AssetId='10094', @BatchNo='AGO0026016', @LotNo='01'>
+      db:G5RMG.BATCHDATA<@BATCH_NO='AGO0026016', @LOT_NO='01'>
+      db:MB003.BATCHDETAILS
     """
-    name = pointname.strip()
+    name = (pointname or "").strip()
     params = {}
-
-    dataset_id = "G5RMG"
+    dataset_id = "HMI"
 
     if "<" in name and ">" in name:
         left = name.index("<") + 1
         right = name.index(">")
         inner = name[left:right]
-        name = name[: name.index("<")]
+        name = name[: name.index("<")].strip()
         for part in inner.split(","):
             if "=" not in part:
                 continue
@@ -97,141 +341,30 @@ def parse_pointname(pointname: str):
             params[key.lstrip("@")] = value.strip("'\"")
 
     if "." in name:
-        dataset_id = name.split(".")[0].replace("db:", "")
-        dataset_name = name.split(".")[-1]
+        parts = name.split(".")
+        dataset_id = parts[0].replace("db:", "").strip()
+        dataset_name = parts[-1].strip()
     else:
-        dataset_name = name
+        dataset_name = name.replace("db:", "").strip()
+
+    # Determine assetId or equipmentCode
+    asset_id = params.get("AssetId") or params.get("AssetID") or params.get("assetId") or params.get("asset_id")
+    if not asset_id:
+        if dataset_id in EQUIPMENT_ASSET_MAP:
+            asset_id = EQUIPMENT_ASSET_MAP[dataset_id]
+        elif dataset_id.upper() in EQUIPMENT_ASSET_MAP:
+            asset_id = EQUIPMENT_ASSET_MAP[dataset_id.upper()]
+
+    if asset_id:
+        params["AssetId"] = str(asset_id)
 
     return dataset_id, dataset_name, params
 
 
-def build_batch_details(dataset_id: str):
-    family = dataset_family(dataset_id)
-    # CIP excluded from active data load
-    if family == "CIP":
-        return []
-
-    # RMG, FBD, BLE, COAT: 1 batch and 1 lot matching reference document
-    return [
-        {
-            "PRODUCT_NAME": "Mirtazapine Tablets USP 5 mg",
-            "PRODUCT_CODE": "STFS7000",
-            "RECIPE_NAME": "STFS7000",
-            "BATCH_NO": "NL0026008",
-            "LOT_NO": "01 of 05",
-            "BATCH_SIZE_KG": 900.0,
-        }
-    ]
-
-
-def build_parameter_settings(dataset_id: str, batch_no: str, lot_no: str):
-    family = dataset_family(dataset_id)
-    ref = REFERENCE_DOC_DATA.get(family, {})
-    if ref and "parameterSettings" in ref:
-        return ref["parameterSettings"]
-
-    if family == "RMG":
-        return {
-            "dryCycle1": {
-                "DRY CYCLE1 IMPELLER SLOW SET (Sec)": 600,
-                "DRY CYCLE1 IMPELLER FAST SET (Sec)": 0,
-                "DRY CYCLE1 CHOPPER DELAY (Sec)": 0,
-                "DRY CYCLE1 CHOPPER SLOW SET (Sec)": 0,
-                "DRY CYCLE1 CHOPPER FAST SET (Sec)": 0,
-            },
-            "wetCycle1": {
-                "WET CYCLE1 IMPELLER SLOW SET (Sec)": 180,
-                "WET CYCLE1 IMPELLER FAST SET (Sec)": 0,
-                "WET CYCLE1 CHOPPER DELAY (Sec)": 0,
-                "WET CYCLE1 CHOPPER SLOW SET (Sec)": 0,
-                "WET CYCLE1 CHOPPER FAST SET (Sec)": 0,
-                "WET CYCLE1 PUMP1 ON DELAY (Sec)": 0,
-                "WET CYCLE1 PUMP1 SET (Sec)": 180,
-                "WET CYCLE1 PUMP1 RPM": 240,
-            },
-            "wetCycle2": {
-                "WET CYCLE2 IMPELLER SLOW SET (Sec)": 180,
-                "WET CYCLE2 IMPELLER FAST SET (Sec)": 0,
-                "WET CYCLE2 CHOPPER DELAY (Sec)": 0,
-                "WET CYCLE2 CHOPPER SLOW SET (Sec)": 180,
-                "WET CYCLE2 CHOPPER FAST SET (Sec)": 0,
-                "WET CYCLE2 PUMP1 ON DELAY (Sec)": 0,
-                "WET CYCLE2 PUMP1 SET (Sec)": 0,
-                "WET CYCLE2 PUMP1 RPM": 0,
-            },
-            "wetCycle3": {
-                "WET CYCLE3 IMPELLER SLOW SET (Sec)": 480,
-                "WET CYCLE3 IMPELLER FAST SET (Sec)": 0,
-                "WET CYCLE3 CHOPPER DELAY (Sec)": 0,
-                "WET CYCLE3 CHOPPER SLOW SET (Sec)": 480,
-                "WET CYCLE3 CHOPPER FAST SET (Sec)": 0,
-                "WET CYCLE3 PUMP1 ON DELAY (Sec)": 0,
-                "WET CYCLE3 PUMP1 SET (Sec)": 0,
-                "WET CYCLE3 PUMP1 RPM": 0,
-            },
-            "unloadingParameters": {
-                "IMPELLER": "SLOW",
-                "CHOPPER": "SLOW",
-            },
-        }
-
-    if family == "BLE":
-        return {
-            "SELECT NUMBER OF MIXINGS": 2,
-            "FIRST MIXING TIME (MIN)": 15,
-            "SECOND MIXING TIME (MIN)": 5,
-            "THIRD MIXING TIME (MIN)": 0,
-            "FOURTH MIXING TIME (MIN)": 0,
-            "BLENDING SPEED (RPM)": 5,
-            "VACUUM ON TIME (MIN)": 100,
-            "PURGE ON TIME (Sec)": 5,
-        }
-
-    if family == "COAT":
-        return {
-            "PRE_HEATING": {
-                "INLET AIR TEMP SET (C)": 65,
-                "BED TEMP SET (C)": 42,
-                "PAN SPEED SET (RPM)": 3,
-                "DRYING TIME (MIN)": 15,
-            },
-            "SPRAYING_CYCLE": {
-                "INLET AIR TEMP SET (C)": 65,
-                "BED TEMP SET (C)": 44,
-                "PAN SPEED SET (RPM)": 8,
-                "SPRAY RATE SET (G/MIN)": 120,
-                "ATOMIZING AIR PRESSURE (BAR)": 2.5,
-                "PATTERN AIR PRESSURE (BAR)": 2.0,
-                "PROCESS TIME (MIN)": 180,
-            },
-            "POST_DRYING": {
-                "INLET AIR TEMP SET (C)": 50,
-                "BED TEMP SET (C)": 40,
-                "PAN SPEED SET (RPM)": 3,
-                "DRYING TIME (MIN)": 30,
-            },
-        }
-
-    # FBD
-    return {
-        "PROCESS TIME (MIN)": 300,
-        "AIR DRY TIME (MIN)": 5,
-        "COOLING TIME (MIN)": 0,
-        "SHAKE INTERVAL (MIN)": 10,
-        "SHAKE DURATION (SEC)": 30,
-        "END SHAKE TIME (SEC)": 30,
-        "INLET TEMPERATURE (C)": 60,
-        "INLET TEMPERATURE HIGH (C)": 64,
-        "OUTLET TEMPERATURE (C)": 48,
-        "PRINT INTERVAL (MIN)": 5,
-    }
-
-
 def _to_iso(dt_str: str) -> str:
-    """Convert 'DD/MM/YYYY HH:MM:SS' to 'YYYY-MM-DDTHH:MM:SS'."""
     s = str(dt_str or "").strip()
     if not s:
-        return "2026-02-09T18:00:00"
+        return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     if "T" in s:
         return s
     if "/" in s:
@@ -244,522 +377,384 @@ def _to_iso(dt_str: str) -> str:
     return s
 
 
-def build_batch_data(dataset_id: str, batch_no: str, lot_no: str):
-    family = dataset_family(dataset_id)
-    if family == "CIP":
-        return []
+def build_batch_info(eq_code: str):
+    """Return Batch_Info / BATCHDETAILS payload for equipment."""
+    ref = REFERENCE_DOC_DATA.get(eq_code, {})
+    b = ref.get("batchDetails", {})
 
-    user_name = {
-        "RMG": "91525 (PB3 RMGC0219 Operator)",
-        "FBD": "91525 (PB3 FBDC0220 Operator)",
-        "BLE": "91525 (PB3 OCBC0222 Operator)",
-        "COAT": "91525 (PB3 COATC0223 Operator)",
-    }.get(family, "91525 (PB3 Operator)")
+    # Defaults per equipment derived from authentic PDF batch reports & master recipes
+    _defaults = {
+        "MB003": ("AGO0026016", "01",  "LAMOTRIGINE",          "STGW2000", "Lamotrigine Granulation & Drying Recipe (AGO)",  "248.640"),
+        "MB004": ("AGO0026016", "1B",  "LAMOTRIGINE",          "STGW2000", "Lamotrigine Granulation & Drying Recipe (AGO)",  "248.640"),
+        "MB005": ("AGO0026015", "01",  "LAMOTRIGINE",          "STGW2000", "Lamotrigine Octagonal Blending Recipe (AGO0026015)",  "248.640"),
+        "MB041": ("PED26009",   "NA",  "PAROXETINE USP 40 mg", "STPA1D00", "Paroxetine USP 40mg Film Coating Recipe (PAROXE40)",    "625000"),
+        "MB040": ("Pb1 Mb Compression", "01", "LAMOTRIGINE",   "STGW2000", "Lamotrigine Compression Recipe (COMP)",        "248.640"),
+    }
+    defs = _defaults.get(eq_code, _defaults["MB003"])
+    batch_no   = b.get("batchNumber", defs[0])
+    lot_no     = b.get("lotNumber",   defs[1])
+    prod_name  = b.get("productName", defs[2])
+    prod_code  = b.get("productCode", defs[3])
+    recipe_name= b.get("recipeName",  defs[4])
+    batch_size_raw = str(b.get("batchSize", defs[5])).split()[0]
+    try:
+        batch_size = float(batch_size_raw)
+    except ValueError:
+        batch_size = 0.0
 
-    # 1. RMG Telemetry
-    if family == "RMG":
-        rmg_raw = [
-            ("09/02/2026 18:02:40", "DRY CYCLE 1 IMPELLER SLOW START", 140.0, 24.5, None, None, 28.5, None),
-            ("09/02/2026 18:12:40", "DRY CYCLE 1 IMPELLER SLOW STOP", None, 25.1, None, None, None, 600),
-            ("09/02/2026 18:16:03", "WET CYCLE 1 IMPELLER SLOW START", 140.0, 26.2, None, None, 29.5, None),
-            ("09/02/2026 18:16:03", "WET CYCLE 1 PUMP 1 START", 140.0, 26.2, None, None, 29.5, None),
-            ("09/02/2026 18:18:38", "WET CYCLE 1 IMPELLER SLOW STOP", None, 30.5, None, None, None, 155),
-            ("09/02/2026 18:18:38", "WET CYCLE 1 PUMP 1 STOP", None, 30.5, None, None, None, 155),
-            ("09/02/2026 18:19:50", "WET CYCLE 1 IMPELLER SLOW START", 140.0, 27.0, None, None, 30.1, None),
-            ("09/02/2026 18:19:50", "WET CYCLE 1 PUMP 1 START", 140.0, 27.0, None, None, 30.1, None),
-            ("09/02/2026 18:20:15", "WET CYCLE 1 IMPELLER SLOW STOP", None, 30.4, None, None, None, 25),
-            ("09/02/2026 18:20:15", "WET CYCLE 1 PUMP 1 STOP", None, 30.4, None, None, None, 25),
-            ("09/02/2026 18:22:26", "WET CYCLE 2 IMPELLER SLOW START", 140.0, 28.0, None, None, 30.5, None),
-            ("09/02/2026 18:22:26", "WET CYCLE 2 CHOPPER SLOW START", None, None, 1500.0, 6.5, None, None),
-            ("09/02/2026 18:23:24", "WET CYCLE 2 IMPELLER SLOW STOP", None, 30.6, None, None, None, 58),
-            ("09/02/2026 18:23:24", "WET CYCLE 2 CHOPPER SLOW STOP", None, None, None, 6.5, None, 58),
-            ("09/02/2026 18:26:03", "WET CYCLE 2 IMPELLER SLOW START", 140.0, 28.5, None, None, 31.0, None),
-            ("09/02/2026 18:26:03", "WET CYCLE 2 CHOPPER SLOW START", None, None, 1500.0, 6.5, None, None),
-            ("09/02/2026 18:27:06", "WET CYCLE 2 IMPELLER SLOW STOP", None, 30.6, None, None, None, 63),
-            ("09/02/2026 18:27:06", "WET CYCLE 2 CHOPPER SLOW STOP", None, None, None, 6.5, None, 63),
-            ("09/02/2026 18:29:09", "WET CYCLE 2 IMPELLER SLOW START", 140.0, 28.8, None, None, 31.4, None),
-            ("09/02/2026 18:29:09", "WET CYCLE 2 CHOPPER SLOW START", None, None, 1500.0, 6.5, None, None),
-            ("09/02/2026 18:30:08", "WET CYCLE 2 IMPELLER SLOW STOP", None, 30.7, None, None, None, 59),
-            ("09/02/2026 18:30:08", "WET CYCLE 2 CHOPPER SLOW STOP", None, None, None, 6.5, None, 59),
-            ("09/02/2026 18:31:02", "WET CYCLE 3 IMPELLER SLOW START", 140.0, 29.0, None, None, 31.8, None),
-            ("09/02/2026 18:31:02", "WET CYCLE 3 CHOPPER SLOW START", None, None, 1500.0, 6.5, None, None),
-            ("09/02/2026 18:39:02", "WET CYCLE 3 IMPELLER SLOW STOP", None, 31.0, None, None, None, 480),
-            ("09/02/2026 18:39:02", "WET CYCLE 3 CHOPPER SLOW STOP", None, None, None, 6.6, None, 480),
-        ]
-        return [
-            {
-                "DT": _to_iso(t),
-                "Time": t,
-                "Batch_No": batch_no,
-                "Lot_No": lot_no,
-                "Status": status,
-                "User_Name": user_name,
-                "EquipmentCode": dataset_id,
-                "EquipmentType": "RMG",
-                "Agitator_Speed": ag_spd,
-                "Agitator_Current": ag_cur,
-                "Granulator_Speed": chp_spd,
-                "Granulator_Current": chp_cur,
-                "Granulation_Temperature": p_temp,
-                "Duration_Sec": dur,
-            }
-            for (t, status, ag_spd, ag_cur, chp_spd, chp_cur, p_temp, dur) in rmg_raw
-        ]
+    batch_size_unit = b.get("batchSizeUnit", "Kgs")
 
-    # 2. FBD Telemetry
-    if family == "FBD":
-        fbd_raw = [
-            ("09/02/2026 19:30:01", "DRYING START", 27.0, 25.0),
-            ("09/02/2026 19:35:01", "DRYING RUNNING", 35.0, 20.0),
-            ("09/02/2026 19:48:45", "DRYING RUNNING", 29.0, 23.0),
-            ("09/02/2026 19:50:45", "DRYING RUNNING", 48.0, 20.0),
-            ("09/02/2026 19:51:21", "DRYING RUNNING", 64.0, 21.0),
-            ("09/02/2026 19:55:05", "DRYING RUNNING", 55.0, 22.0),
-            ("09/02/2026 20:00:05", "DRYING RUNNING", 56.0, 23.0),
-            ("09/02/2026 20:05:05", "DRYING RUNNING", 52.0, 23.0),
-            ("09/02/2026 20:10:05", "DRYING RUNNING", 55.0, 23.0),
-            ("09/02/2026 20:15:05", "DRYING RUNNING", 51.0, 23.0),
-            ("09/02/2026 20:20:05", "DRYING RUNNING", 56.0, 23.0),
-            ("09/02/2026 20:25:05", "DRYING RUNNING", 51.0, 23.0),
-            ("09/02/2026 20:30:05", "DRYING RUNNING", 55.0, 23.0),
-            ("09/02/2026 20:35:05", "DRYING RUNNING", 52.0, 23.0),
-            ("09/02/2026 22:40:11", "DRYING RUNNING", 60.0, 30.0),
-            ("09/02/2026 22:45:11", "DRYING RUNNING", 63.0, 37.0),
-            ("09/02/2026 22:45:11", "DRYING RUNNING", 64.0, 37.0),
-            ("09/02/2026 22:45:57", "DRYING RUNNING", 63.0, 37.0),
-            ("09/02/2026 22:46:13", "DRYING COMPLETED", 63.0, 37.0),
-        ]
-        return [
-            {
-                "DT": _to_iso(t),
-                "Time": t,
-                "Batch_No": batch_no,
-                "Lot_No": lot_no,
-                "Status": status,
-                "User_Name": user_name,
-                "EquipmentCode": dataset_id,
-                "EquipmentType": "FBD",
-                "Inlet_Temp": in_t,
-                "Outlet_Temp": out_t,
-            }
-            for (t, status, in_t, out_t) in fbd_raw
-        ]
+    now = datetime.now()
+    start_dt = now - timedelta(hours=3)
 
-    # 3. BLE Telemetry
-    if family == "BLE":
-        ble_raw = [
-            ("11/02/2026 10:21:02", "MIXING 1 STARTED", 5.0),
-            ("11/02/2026 10:36:02", "MIXING 1 COMPLETED", 5.0),
-            ("11/02/2026 10:55:01", "MIXING 2 STARTED", 5.0),
-            ("11/02/2026 11:00:01", "BLENDING OVER", 5.0),
-        ]
-        return [
-            {
-                "DT": _to_iso(t),
-                "Time": t,
-                "Batch_No": batch_no,
-                "Lot_No": lot_no,
-                "Status": status,
-                "User_Name": user_name,
-                "EquipmentCode": dataset_id,
-                "EquipmentType": "BLE",
-                "Blending_Speed": rpm,
-            }
-            for (t, status, rpm) in ble_raw
-        ]
-
-    # 4. COAT Telemetry
-    coat_raw = [
-        ("12/02/2026 08:35:00", "PRE-HEATING STARTED", 52.0, 38.0, 3.0, 0.0, 0.0),
-        ("12/02/2026 08:50:00", "PRE-HEATING COMPLETED", 65.0, 42.0, 3.0, 0.0, 0.0),
-        ("12/02/2026 08:55:00", "SPRAYING CYCLE 1 START", 65.0, 43.5, 8.0, 118.0, 2.5),
-        ("12/02/2026 09:55:00", "SPRAYING RUNNING", 65.5, 44.0, 8.0, 120.0, 2.5),
-        ("12/02/2026 11:55:00", "SPRAYING COMPLETED", 64.8, 44.2, 8.0, 120.0, 2.5),
-        ("12/02/2026 12:00:00", "POST DRYING START", 50.0, 41.0, 3.0, 0.0, 0.0),
-        ("12/02/2026 12:30:00", "POST DRYING COMPLETED", 48.0, 38.5, 3.0, 0.0, 0.0),
-    ]
     return [
         {
-            "DT": _to_iso(t),
-            "Time": t,
-            "Batch_No": batch_no,
-            "Lot_No": lot_no,
-            "Status": status,
-            "User_Name": user_name,
-            "EquipmentCode": dataset_id,
-            "EquipmentType": "COAT",
-            "Inlet_Air_Temp": in_t,
-            "Bed_Temp": bed_t,
-            "Pan_Speed": pan_spd,
-            "Spray_Rate": spray,
-            "Atom_Air_Press": atom,
+            "BatchNo":         batch_no,
+            "LotNo":           lot_no,
+            "ProductNo":       prod_code,
+            "ProductName":     prod_name,
+            "PRODUCT_NAME":    prod_name,
+            "PRODUCT_CODE":    prod_code,
+            "RECIPE_NAME":     recipe_name,
+            "BATCH_NO":        batch_no,
+            "LOT_NO":          lot_no,
+            "BATCH_SIZE_KG":   batch_size,
+            "BATCH_SIZE_UNIT": batch_size_unit,
+            "BatchStartDate":  start_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+            "BatchEndDate":    None,
         }
-        for (t, status, in_t, bed_t, pan_spd, spray, atom) in coat_raw
     ]
 
 
-def build_alarm_data(dataset_id: str, from_time: str, to_time: str):
-    family = dataset_family(dataset_id)
-    if family == "BLE":
-        return []  # 0 alarms in BLE.pdf
+def build_batch_summary(eq_code: str, batch_no: str | None = None, lot_no: str | None = None):
+    ref = REFERENCE_DOC_DATA.get(eq_code, {})
+    b = ref.get("batchDetails", {})
+    defs = {
+        "MB003": ("AGO0026016", "01", "LAMOTRIGINE", "Lamotrigine Granulation & Drying Recipe (AGO)", "248.640 Kg"),
+        "MB004": ("AGO0026016", "1B", "LAMOTRIGINE", "Lamotrigine Granulation & Drying Recipe (AGO)", "248.640 Kg"),
+        "MB005": ("AGO0026015", "01", "LAMOTRIGINE", "Lamotrigine Octagonal Blending Recipe (AGO0026015)", "248.640 Kg"),
+        "MB041": ("PED26009",   "NA", "PAROXETINE USP 40 mg", "Paroxetine USP 40mg Film Coating Recipe (PAROXE40)", "625000 Tablets"),
+        "MB040": ("Pb1 Mb Compression", "01", "LAMOTRIGINE", "Lamotrigine Compression Recipe (COMP)", "248.640 Kg"),
+    }.get(eq_code, ("AGO0026016", "01", "LAMOTRIGINE", "Lamotrigine Granulation & Drying Recipe (AGO)", "248.640 Kg"))
 
-    if family == "RMG":
-        rmg_alarms = [
-            ("DISCHARGE VALVE CLOSE FAIL", "09/02/2026 18:47:04", "09/02/2026 19:01:32", "00:14:28", 101),
-            ("LID OPENED", "09/02/2026 18:54:45", "09/02/2026 19:01:23", "00:06:38", 102),
-            ("DISCHARGE VALVE CLOSE FAIL", "09/02/2026 19:03:08", "09/02/2026 19:03:39", "00:00:31", 103),
-        ]
-        return [
-            {
-                "MsgNumber": msg_no,
-                "DT": _to_iso(occ),
-                "Alarm_Name": name,
-                "Occurred_Time": occ,
-                "Resolved_Time": res,
-                "Duration": dur,
-                "MsgText": f"RMG: {name}",
-                "EquipmentCode": dataset_id,
-                "EquipmentType": "RMG",
-            }
-            for (name, occ, res, dur, msg_no) in rmg_alarms
-        ]
+    b_no = batch_no or b.get("batchNumber", defs[0])
+    l_no = lot_no or b.get("lotNumber", defs[1])
+    prod_name = b.get("productName", defs[2])
+    recipe_name = b.get("recipeName", defs[3])
+    batch_size = b.get("batchSize", defs[4])
 
-    if family == "COAT":
-        coat_alarms = [
-            ("INLET AIR TEMP HIGH", "23/02/2026 12:14:46", "23/02/2026 12:14:58", "00:00:12", 301),
-        ]
-        return [
-            {
-                "MsgNumber": msg_no,
-                "DT": _to_iso(occ),
-                "Alarm_Name": name,
-                "Occurred_Time": occ,
-                "Resolved_Time": res,
-                "Duration": dur,
-                "MsgText": f"COAT: {name}",
-                "EquipmentCode": dataset_id,
-                "EquipmentType": "COAT",
-            }
-            for (name, occ, res, dur, msg_no) in coat_alarms
-        ]
-
-    # FBD
-    fbd_alarms = [
-        ("PC AIR PRESSURE LOW", "08/02/2026 18:43:46", "-", "-", 201),
-        ("EARTH FAULT", "08/02/2026 18:44:55", "-", "-", 202),
-    ]
     return [
         {
-            "MsgNumber": msg_no,
-            "DT": _to_iso(occ),
-            "Alarm_Name": name,
-            "Occurred_Time": occ,
-            "Resolved_Time": res,
-            "Duration": dur,
-            "MsgText": f"FBD: {name}",
-            "EquipmentCode": dataset_id,
-            "EquipmentType": "FBD",
+            "Batch Number": b_no,
+            "Lot Number": l_no,
+            "Product Name": prod_name,
+            "Recipe Name": recipe_name,
+            "Batch Size": batch_size,
         }
-        for (name, occ, res, dur, msg_no) in fbd_alarms
     ]
 
 
-def build_audit_data(dataset_id: str, from_time: str, to_time: str):
-    family = dataset_family(dataset_id)
-    audit_user = {
-        "RMG": "91525 (PB3 RMGC0219 Operator)",
-        "FBD": "91525 (PB3 FBDC0220 Operator)",
-        "BLE": "91525 (PB3 OCBC0222 Operator)",
-        "COAT": "91525 (PB3 COATC0223 Operator)",
-    }.get(family, "91525 (PB3 Operator)")
-
-    supervisor_user = {
-        "RMG": "91525 (PB3 RMGC0219 Supervisor)",
-        "FBD": "91525 (PB3 FBDC0220 Supervisor)",
-        "BLE": "91525 (PB3 OCBC0222 Supervisor)",
-        "COAT": "91525 (PB3 COATC0223 Supervisor)",
-    }.get(family, "91525 (PB3 Supervisor)")
-
-    if family == "RMG":
-        rmg_sup = "91525 (PB3 RMGC0219 Supervisor)"
-        rmg_op = "8961 (PB3 RMGC0219 Operator)"
-        rmg_audits = [
-            ("09/02/2026 16:04:17", "BATCH START", None, None, None, rmg_sup),
-            ("09/02/2026 16:05:36", "PTS START", None, None, None, rmg_op),
-            ("09/02/2026 16:20:01", "PTS STOP", None, None, None, rmg_op),
-            ("09/02/2026 18:02:39", "AUTO START", None, None, None, rmg_op),
-            ("09/02/2026 18:15:28", "ACKNOWLEDGE", None, None, None, rmg_op),
-            ("09/02/2026 18:16:02", "AUTO START", None, None, None, rmg_op),
-            ("09/02/2026 18:18:38", "AUTO PAUSE", None, None, None, rmg_op),
-            ("09/02/2026 18:18:41", "AUTO PAUSE REASON", None, None, "BINDER/GRANULATING AGENT ADDITION", rmg_op),
-            ("09/02/2026 18:19:49", "AUTO CONTINUE", None, None, None, rmg_op),
-            ("09/02/2026 18:20:23", "ACKNOWLEDGE", None, None, None, rmg_op),
-            ("09/02/2026 18:22:25", "AUTO START", None, None, None, rmg_op),
-            ("09/02/2026 18:23:24", "AUTO PAUSE", None, None, None, rmg_op),
-            ("09/02/2026 18:23:27", "AUTO PAUSE REASON", None, None, "BINDER/GRANULATING AGENT ADDITION", rmg_op),
-            ("09/02/2026 18:26:02", "AUTO CONTINUE", None, None, None, rmg_op),
-            ("09/02/2026 18:27:06", "AUTO PAUSE", None, None, None, rmg_op),
-            ("09/02/2026 18:27:09", "AUTO PAUSE REASON", None, None, "BINDER/GRANULATING AGENT ADDITION", rmg_op),
-            ("09/02/2026 18:29:08", "AUTO CONTINUE", None, None, None, rmg_op),
-            ("09/02/2026 18:30:16", "ACKNOWLEDGE", None, None, None, rmg_op),
-            ("09/02/2026 18:31:01", "AUTO START", None, None, None, rmg_op),
-            ("09/02/2026 18:39:13", "ACKNOWLEDGE", None, None, None, rmg_op),
-            ("09/02/2026 18:47:02", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:47:07", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:47:21", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:47:25", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:47:36", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:47:41", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:47:52", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:47:58", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:48:11", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:48:16", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:48:27", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:48:33", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:48:45", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:48:50", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:49:04", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:49:09", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:49:22", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:49:27", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:49:41", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:49:46", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:50:00", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:50:06", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:50:19", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:50:25", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:50:37", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:50:43", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:50:57", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:51:03", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:51:17", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:51:23", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:51:37", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:51:42", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:51:53", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:51:59", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:52:10", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:52:16", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:52:25", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:52:37", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:52:51", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 18:53:13", "AUTO UNLOAD STOP", None, None, "RACKING/SCRAPPING", rmg_op),
-            ("09/02/2026 18:54:41", "LID OPEN", None, None, None, rmg_op),
-            ("09/02/2026 19:01:00", "LID CLOSE", None, None, None, rmg_op),
-            ("09/02/2026 19:01:32", "ACKNOWLEDGE", None, None, None, rmg_op),
-            ("09/02/2026 19:03:06", "AUTO UNLOAD START", None, None, None, rmg_op),
-            ("09/02/2026 19:03:30", "AUTO UNLOAD STOP", None, None, "PROCESS OVER", rmg_op),
-            ("09/02/2026 19:03:39", "ACKNOWLEDGE", None, None, None, rmg_op),
-        ]
-        return [
-            {
-                "RecordID": f"AUD-RMG-{idx:02d}",
-                "DT": _to_iso(dt),
-                "DateTime": dt,
-                "TimeStamp": dt,
-                "Description": desc,
-                "OldValue": old_v or "-",
-                "NewValue": new_v or "-",
-                "Reason": reason or "-",
-                "UserName": user,
-                "EquipmentCode": dataset_id,
-                "EquipmentType": "RMG",
-            }
-            for idx, (dt, desc, old_v, new_v, reason, user) in enumerate(rmg_audits, 1)
-        ]
-
-    if family == "BLE":
-        ble_sup = "91525 (PB3 OCBC0222 Supervisor)"
-        ble_op = "25081 (PB3 OCBC0222 Operator)"
-        ble_audits = [
-            ("11/02/2026 09:04:55", "BATCH START", None, None, None, ble_sup),
-            ("11/02/2026 09:08:04", "CHARGE START", None, None, None, ble_op),
-            ("11/02/2026 10:15:13", "CHARGE STOP", None, None, None, ble_op),
-            ("11/02/2026 10:20:52", "BLEND START", None, None, None, ble_op),
-            ("11/02/2026 10:21:02", "BLEND START", None, None, None, ble_op),
-            ("11/02/2026 10:47:54", "CHARGE START", None, None, None, ble_op),
-            ("11/02/2026 10:52:03", "CHARGE STOP", None, None, None, ble_op),
-            ("11/02/2026 10:54:12", "BLEND START", None, None, None, ble_op),
-            ("11/02/2026 10:55:01", "BLEND START", None, None, None, ble_op),
-            ("11/02/2026 11:02:36", "BATCH END", None, None, None, ble_sup),
-        ]
-        return [
-            {
-                "RecordID": f"AUD-BLE-{idx:02d}",
-                "DT": _to_iso(dt),
-                "DateTime": dt,
-                "TimeStamp": dt,
-                "Description": desc,
-                "OldValue": old_v or "-",
-                "NewValue": new_v or "-",
-                "Reason": reason or "-",
-                "UserName": user,
-                "EquipmentCode": dataset_id,
-                "EquipmentType": "BLE",
-            }
-            for idx, (dt, desc, old_v, new_v, reason, user) in enumerate(ble_audits, 1)
-        ]
-
-    if family == "COAT":
-        coat_audits = [
-            ('23/02/2026 11:36:50', 'BATCH START', None, None, None, '98204 (PB3 COTC0226 Supervisor)'),
-            ('23/02/2026 11:37:49', 'RETRACTABLE ARM OUT', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:38:09', 'TABLET LOADING START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:39:17', 'EXHAUST DAMPER OPENING', '60.0', '40.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:53:24', 'CONTROL PANEL CONDENSATE SET', '80', '319', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:53:32', 'TABLET LOADING END', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:55:34', 'DE DUSTING START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:56:34', 'DE DUSTING OVER', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:56:44', 'DOSING', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:56:58', 'MANUAL MODE DOSING PUMP RPM', '25.0', '16.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:57:11', 'GUN VALIDATION', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 11:58:11', 'GUN VALIDATION', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:01:04', 'GUN VALIDATION', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:02:04', 'GUN VALIDATION', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:08:43', 'GUN VALIDATION', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:09:43', 'GUN VALIDATION', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:12:09', 'DOSING PUMP START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:12:12', 'DOSING PUMP STOP', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:12:16', 'DOSING PUMP STOP', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:12:33', 'RETRACTABLE ARM IN', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:13:14', 'MACHNE MODE AUTO', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:13:20', 'DOSING', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:13:23', 'COATING START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:14:53', 'EXHAUST DAMPER OPENING', '40.0', '100.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:14:57', 'INLET DAMPER OPENING', '95.0', '70.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:19:23', 'PRE JOG STARTED', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:29:23', 'PRE JOG OVER', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:35:07', 'CONDENSATE', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:43:08', 'CONDENSATE', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:46:24', 'AGITATOR SOLUTION', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:50:44', 'CONTROL PANEL CONDENSATE SET', '319', '60', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:55:39', 'CONTROL PANEL CONDENSATE SET', '60', '100', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:56:41', 'CONTROL PANEL CONDENSATE SET', '100', '10', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:56:46', 'DOSING', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 12:58:01', 'DOSING PUMP SET SPEED', '18.0', '17.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 13:37:13', 'PAN SPEED', '2.5', '3.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 13:55:17', 'PAN SPEED', '3.0', '3.5', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 14:40:28', 'PAN SPEED', '3.5', '4.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 15:30:37', 'DOSING PUMP SET SPEED', '17.0', '15.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 15:30:46', 'INLET DAMPER OPENING', '70.0', '60.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:01:42', 'PAN SPEED', '4.0', '5.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:01:50', 'DOSING PUMP SET SPEED', '15.0', '14.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:01:56', 'CONTROL PANEL CONDENSATE SET', '10', '1', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:02:08', 'CONTROL PANEL CONDENSATE SET', '1', '60', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:53:13', 'CONTROL PANEL CONDENSATE SET', '60', '10', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:53:23', 'PAN SPEED', '5.0', '4.5', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:53:28', 'DOSING PUMP SET SPEED', '14.0', '12.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:53:30', 'PAN SPEED', '4.5', '4.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:53:37', 'DOSING PUMP SET SPEED', '12.0', '11.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:54:13', 'DOSING PUMP SET SPEED', '11.0', '10.5', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:54:26', 'INLET DAMPER OPENING', '60.0', '50.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 16:55:00', 'PAN SPEED', '4.0', '3.5', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:26:04', 'DOSING', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:26:08', 'AUTO STOP', None, None, 'TABLET BUILD UP WEIGHT REACHED', '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:26:27', 'AGITATOR SOLUTION', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:28:03', 'POST JOG ON/OFF', 'OFF', 'ON', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:28:23', 'POST JOG STARTED', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:38:23', 'POST JOG OVER', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:38:45', 'POST JOG ON/OFF', 'ON', 'OFF', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:41:46', 'RETRACTABLE ARM OUT', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:42:03', 'MACHNE MODE MANUAL', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:42:12', 'EXHAUST DAMPER OPENING', '100.0', '50.0', None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 17:42:18', 'EXHAUST BLOWER START', None, None, None, '24159 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 18:10:49', 'PAN MOTOR START', None, None, None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 18:10:55', 'PAN MOTOR STOP', None, None, None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 18:46:08', 'EXHAUST BLOWER STOP', None, None, None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 18:46:19', 'UNLOADING START', None, None, None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 18:46:33', 'EXHAUST DAMPER OPENING', '50.0', '40.0', None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 18:46:41', 'MANUAL MODE PAN MOTOR RPM', '1.0', '2.0', None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 19:02:47', 'PAN PAUSE', None, None, None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 19:04:57', 'PAN CONTINUE', None, None, None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 19:15:56', 'UNLOADING END', None, None, None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 19:19:31', 'RETRACTABLE ARM IN', None, None, None, '28780 (PB3 COTC0226 Operator)'),
-            ('23/02/2026 19:53:08', 'BATCH END', None, None, None, '99728 (PB3 COTC0226 Supervisor)'),
-        ]
-        return [
-            {
-                "RecordID": f"AUD-COAT-{idx:02d}",
-                "DT": _to_iso(dt),
-                "DateTime": dt,
-                "TimeStamp": dt,
-                "Description": desc,
-                "OldValue": old_v or "-",
-                "NewValue": new_v or "-",
-                "Reason": reason or "-",
-                "UserName": user,
-                "EquipmentCode": dataset_id,
-                "EquipmentType": "COAT",
-            }
-            for idx, (dt, desc, old_v, new_v, reason, user) in enumerate(coat_audits, 1)
-        ]
-
-    # FBD
-    fbd_sup = "98204 (PB3 FBDC0220 Supervisor)"
-    fbd_op1 = "8961 (PB3 FBDC0220 Operator)"
-    fbd_op2 = "96599 (PB3 FBDC0220 Operator)"
-    fbd_audits = [
-        ("09/02/2026 18:44:45", "BATCH START", None, None, None, fbd_sup),
-        ("09/02/2026 18:46:00", "AUTO CHARGING START", None, None, None, fbd_op1),
-        ("09/02/2026 18:53:24", "AUTO CHARGING STOP", None, None, None, fbd_op1),
-        ("09/02/2026 19:01:56", "AUTO CHARGING START", None, None, None, fbd_op1),
-        ("09/02/2026 19:03:53", "AUTO CHARGING STOP", None, None, None, fbd_op1),
-        ("09/02/2026 19:30:01", "AUTO START", None, None, None, fbd_op1),
-        ("09/02/2026 19:35:01", "AUTO STOP", None, None, "RAKING", fbd_op1),
-        ("09/02/2026 19:35:56", "PC SEAL VENT", "ON", "OFF", None, fbd_op1),
-        ("09/02/2026 19:48:35", "PC SEAL VENT", "OFF", "ON", None, fbd_op1),
-        ("09/02/2026 19:48:39", "ACKNOWLEDGE", None, None, None, fbd_op1),
-        ("09/02/2026 19:48:45", "AUTO START", None, None, None, fbd_op1),
-        ("09/02/2026 19:55:02", "ACKNOWLEDGE", None, None, None, fbd_op1),
-        ("09/02/2026 19:55:05", "AUTO START", None, None, None, fbd_op1),
-        ("09/02/2026 20:47:20", "AUTO STOP", None, None, "RAKING", fbd_op1),
-        ("09/02/2026 20:48:34", "PC SEAL VENT", "ON", "OFF", None, fbd_op1),
-        ("09/02/2026 21:01:21", "PC SEAL VENT", "OFF", "ON", None, fbd_op1),
-        ("09/02/2026 21:01:26", "ACKNOWLEDGE", None, None, None, fbd_op1),
-        ("09/02/2026 21:01:28", "AUTO START", None, None, None, fbd_op1),
-        ("09/02/2026 21:07:44", "ACKNOWLEDGE", None, None, None, fbd_op1),
-        ("09/02/2026 21:07:45", "AUTO START", None, None, None, fbd_op1),
-        ("09/02/2026 21:49:31", "AUTO STOP", None, None, "RAKING", fbd_op1),
-        ("09/02/2026 21:50:39", "PC SEAL VENT", "ON", "OFF", None, fbd_op1),
-        ("09/02/2026 22:00:50", "PC SEAL VENT", "OFF", "ON", None, fbd_op1),
-        ("09/02/2026 22:00:52", "ACKNOWLEDGE", None, None, None, fbd_op1),
-        ("09/02/2026 22:01:01", "AUTO START", None, None, None, fbd_op1),
-        ("09/02/2026 22:06:08", "ACKNOWLEDGE", None, None, None, fbd_op2),
-        ("09/02/2026 22:06:09", "AUTO START", None, None, None, fbd_op2),
-        ("09/02/2026 22:07:30", "AUTO STOP", None, None, "LOD CHECK", fbd_op2),
-        ("09/02/2026 22:08:24", "PC SEAL VENT", "ON", "OFF", None, fbd_op2),
-        ("09/02/2026 22:34:33", "PC SEAL VENT", "OFF", "ON", None, fbd_op2),
-        ("09/02/2026 22:34:37", "ACKNOWLEDGE", None, None, None, fbd_op2),
-        ("09/02/2026 22:34:38", "AUTO START", None, None, None, fbd_op2),
-        ("09/02/2026 22:39:10", "ACKNOWLEDGE", None, None, None, fbd_op2),
-        ("09/02/2026 22:39:11", "AUTO START", None, None, None, fbd_op2),
-        ("09/02/2026 22:45:56", "ACKNOWLEDGE", None, None, None, fbd_op2),
-        ("09/02/2026 22:45:57", "AUTO START", None, None, None, fbd_op2),
-        ("09/02/2026 22:46:13", "AUTO STOP", None, None, "LOD CHECK", fbd_op2),
-        ("09/02/2026 22:46:54", "PC SEAL VENT", "ON", "OFF", None, fbd_op2),
-        ("09/02/2026 23:25:13", "PC SEAL VENT", "OFF", "ON", None, fbd_op2),
-        ("09/02/2026 23:25:18", "ACKNOWLEDGE", None, None, None, fbd_op2),
-        ("09/02/2026 23:26:01", "AUTO DISCHARGE START", None, None, None, fbd_op2),
-        ("09/02/2026 23:36:01", "AUTO DISCHARGE STOP", None, None, None, fbd_op2),
-        ("09/02/2026 23:37:03", "AUTO DISCHARGE START", None, None, None, fbd_op2),
-        ("09/02/2026 23:45:01", "AUTO DISCHARGE STOP", None, None, None, fbd_op2),
-        ("09/02/2026 23:47:01", "BATCH END", None, None, None, fbd_sup),
-    ]
+def build_mach_summary(eq_code: str):
+    ref = REFERENCE_DOC_DATA.get(eq_code, {})
+    eq = ref.get("equipmentDetails", {})
     return [
         {
-            "RecordID": f"AUD-FBD-{idx:02d}",
-            "DT": _to_iso(dt),
-            "DateTime": dt,
-            "TimeStamp": dt,
-            "Description": desc,
-            "OldValue": old_v or "-",
-            "NewValue": new_v or "-",
-            "Reason": reason or "-",
-            "UserName": user,
-            "EquipmentCode": dataset_id,
-            "EquipmentType": "FBD",
+            "Equipment Name": eq.get("equipmentName", "EQUIPMENT"),
+            "Equipment ID": eq_code,
+            "Make": eq.get("make", "MITSUBISHI"),
+            "Block": eq.get("block", "PB1"),
+            "Area": eq.get("area", "MODULE-B"),
         }
-        for idx, (dt, desc, old_v, new_v, reason, user) in enumerate(fbd_audits, 1)
+    ]
+
+
+def build_user_login(eq_code: str):
+    ref = REFERENCE_DOC_DATA.get(eq_code, {})
+    users = ref.get("userLoginLogout", [])
+    if users:
+        return users
+    # Consistent user mappings matching personnel spec
+    _default_users = {
+        "MB003": [
+            {"User Name": "96828 (PB1-RMG (MB003) Operator)",      "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+            {"User Name": "96365 (PB1-RMG (MB003) Supervisor)",    "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+        ],
+        "MB004": [
+            {"User Name": "11173 (PB1-Module-B (MB004) Operator)", "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+            {"User Name": "191555 (PB1-Module-B (MB004) Supervisor)","Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+        ],
+        "MB005": [
+            {"User Name": "11173 (PB1-Module-B-Blender-Operator)",  "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+            {"User Name": "Harish Chandra Mishra-191164(PB1-Module-B-Blender-Supervisor)", "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+        ],
+        "MB041": [
+            {"User Name": "29995 (PB1-Module-B-Operator)",          "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+            {"User Name": "191257 (PB1-Module-B-Supervisor)",       "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+        ],
+        "MB040": [
+            {"User Name": "10401 (PB1-Compression-Operator)",       "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+            {"User Name": "10402 (PB1-Compression-Supervisor)",     "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"},
+        ],
+    }
+    return _default_users.get(eq_code, [{"User Name": f"Operator ({eq_code})", "Date And Time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Description": "Login"}])
+
+
+def build_streaming_telemetry(eq_code: str, batch_no: str | None = None, lot_no: str | None = None, points_count: int = 1):
+    """Generate exactly ONE new real-time telemetry point at the current timestamp.
+
+    Uses persistent per-equipment state for smooth, continuous variation.
+    The scheduler calls this every 10 seconds; each call produces 1 new unique record.
+    """
+    family = EQUIPMENT_FAMILY_MAP.get(eq_code, "RMG")
+    ref = REFERENCE_DOC_DATA.get(eq_code, {})
+    b = ref.get("batchDetails", {})
+
+    _defaults = {
+        "MB003": ("AGO0026016", "01"),
+        "MB004": ("AGO0026016", "1B"),
+        "MB005": ("AGO0026015", "01"),
+        "MB041": ("PED26009",   "NA"),
+        "MB040": ("Pb1 Mb Compression", "01"),
+    }
+    defs = _defaults.get(eq_code, _defaults["MB003"])
+    b_no = batch_no or b.get("batchNumber", defs[0])
+    l_no = lot_no or b.get("lotNumber", defs[1])
+
+    # Operator mapping (consistent with personnel spec)
+    operator_map = {
+        "MB003": "96828 (PB1-RMG (MB003) Operator)",
+        "MB004": "11173 (PB1-Module-B (MB004) Operator)",
+        "MB005": "11173 (PB1-Module-B-Blender-Operator)",
+        "MB040": "10401 (PB1-Compression-Operator)",
+        "MB041": "29995 (PB1-Module-B-Operator)",
+    }
+    operator = operator_map.get(eq_code, "PB1 Operator")
+
+    # Advance and read persistent state
+    with _STATE_LOCK:
+        state = _get_equipment_state(eq_code)
+        _advance_equipment_state(state)
+        machine_state = state["machine_state"]
+        current_phase_phases = EQUIPMENT_PHASES.get(family, ["RUNNING"])
+        current_phase = current_phase_phases[state["phase_idx"]]
+
+    now = datetime.now()
+    time_iso = now.strftime("%Y-%m-%dT%H:%M:%S")
+    time_display = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    record: dict = {
+        "DT": time_iso,
+        "TIME": time_display,
+        "TimeStamp": time_iso,
+        "timestamp": time_iso,
+        "Batch_No": b_no,
+        "batch_no": b_no,
+        "BATCH_NO": b_no,
+        "Lot_No": l_no,
+        "lot_no": l_no,
+        "LOT_NO": l_no,
+        "Status": machine_state,
+        "status": machine_state,
+        "User_Name": operator,
+        "user_name": operator,
+        "EquipmentCode": eq_code,
+        "equipment_code": eq_code,
+        "EquipmentType": family,
+        "equipment_type": family,
+    }
+
+    if family == "RMG":
+        record.update({
+            "CURRENT (Amp)":        round(state["impeller_amp"], 2),
+            "Impeller_Current_Amp": round(state["impeller_amp"], 2),
+            "Chopper_Current_Amp":  round(state["chopper_amp"], 2),
+            "Pump_RPM":             state["pump_rpm"],
+            "STATUS":               current_phase.replace("_", " "),
+            "agAmps":               round(state["impeller_amp"], 2),
+            "chpAmps":              round(state["chopper_amp"], 2),
+            "pumpRpm":              state["pump_rpm"],
+        })
+    elif family == "FBD":
+        shaking_str = "SHAKING" if state["shaking"] else "DRYING"
+        record.update({
+            "INLET TEMPARATURE":  round(state["inlet_temp"], 1),
+            "EXHAUST TEMPARATURE": round(state["exhaust_temp"], 1),
+            "Inlet_Temp":          round(state["inlet_temp"], 1),
+            "Exhaust_Temp":        round(state["exhaust_temp"], 1),
+            "Shaking_State":       shaking_str,
+            "inletTemp":           round(state["inlet_temp"], 1),
+            "exhaustTemp":         round(state["exhaust_temp"], 1),
+            "STATUS":              shaking_str,
+        })
+    elif family == "BLE":
+        countdown_min = round(state["countdown_sec"] / 60.0, 1)
+        vacuum_str = "ON" if state["vacuum"] else "OFF"
+        blender_status_map = {
+            "BATCH_READY": "BATCH READY",
+            "MIXING_1": "MIXING 1 STARTED",
+            "MIXING_1_DONE": "MIXING 1 COMPLETED",
+            "MIXING_2": "MIXING 2 STARTED",
+            "BLENDING_OVER": "BLENDING OVER",
+        }
+        blender_status = blender_status_map.get(current_phase, "MIXING 1 STARTED")
+        record.update({
+            "BLENDING SPEED (RPM)":  round(state["blender_speed"], 2),
+            "Blender_Speed_RPM":     round(state["blender_speed"], 2),
+            "ACTUAL RPM":            6,
+            "actualRpm":             6,
+            "BLENDER STATUS":        blender_status,
+            "blenderStatus":         blender_status,
+            "Mixing_Countdown_Min":  countdown_min,
+            "mixingCountdown":       countdown_min,
+            "Vacuum_Status":         vacuum_str,
+            "vacuumStatus":          vacuum_str,
+            "Mixing_No":             state["mixing_no"],
+            "mixingNo":              state["mixing_no"],
+            "blenderSpeed":          round(state["blender_speed"], 2),
+            "Select_No_Mixings":     2,
+            "First_Mixing_Time_Min":    10,
+            "Second_Mixing_Time_Min":   5,
+            "STATUS":                blender_status,
+        })
+    elif family == "COAT":
+        record.update({
+            "INLET AIR TEMP (°C)":     round(state["inlet_temp"], 1),
+            "EXHAUST AIR TEMP (°C)":   round(state["exhaust_temp"], 1),
+            "BED TEMP (°C)":           round(state["bed_temp"], 1),
+            "DOSING PUMP SPEED (RPM)": round(state["dosing_rpm"], 1),
+            "PAN SPEED (RPM)":         round(state["pan_speed"], 2),
+            "CYCLE COUNTER":           state["cycle_counter"],
+            "Inlet_Air_Temp":          round(state["inlet_temp"], 1),
+            "Exhaust_Air_Temp":        round(state["exhaust_temp"], 1),
+            "Bed_Temp":                round(state["bed_temp"], 1),
+            "Dosing_Speed_RPM":        round(state["dosing_rpm"], 1),
+            "Pan_Speed_RPM":           round(state["pan_speed"], 2),
+            "Cycle_Counter":           state["cycle_counter"],
+            "inletAirTemp":            round(state["inlet_temp"], 1),
+            "exhaustAirTemp":          round(state["exhaust_temp"], 1),
+            "bedTemp":                 round(state["bed_temp"], 1),
+            "dosingSpeed":             round(state["dosing_rpm"], 1),
+            "panSpeed":                round(state["pan_speed"], 2),
+            "cycleCounter":            state["cycle_counter"],
+            "Coat_Status":             state["coat_status"],
+            "coatStatus":              state["coat_status"],
+            "STATUS":                  state["coat_status"],
+        })
+    elif family == "COMP":
+        record.update({
+            "Turret_RPM":            round(state["turret_rpm"], 1),
+            "Main_Force_kN":         round(state["main_force"], 2),
+            "Pre_Force_kN":          round(state["pre_force"], 2),
+            "Tablet_Count":          state["tablet_count"],
+            "turretRpm":             round(state["turret_rpm"], 1),
+            "mainCompressionForce":  round(state["main_force"], 2),
+            "preForce":              round(state["pre_force"], 2),
+            "tabletCount":           state["tablet_count"],
+            "STATUS":                machine_state,
+        })
+
+    # Return list with single record (ingestion processes list of records)
+    return [record]
+
+
+def build_parameter_settings(eq_code: str):
+    """Return recipe / parameter settings for the given equipment."""
+    ref = REFERENCE_DOC_DATA.get(eq_code, {})
+    settings = ref.get("parameterSettings", {})
+    # Wrap flat BLE params into a labelled group for API consistency
+    if settings and isinstance(settings, dict) and not any(isinstance(v, dict) for v in settings.values()):
+        return {"RECIPE PARAMETERS": settings}
+    return settings
+
+
+def build_operational_values(eq_code: str):
+    """Return min/max operational value summary (COAT equipment)."""
+    ref = REFERENCE_DOC_DATA.get(eq_code, {})
+    return ref.get("operationalValues", {})
+
+
+def _normalise_alarm(alarm: dict, eq_code: str, family: str) -> dict:
+    """Normalise alarm record keys for ingestion pipeline compatibility."""
+    now_str = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    return {
+        "MsgNumber":      alarm.get("MsgNumber") or alarm.get("msgNumber", 0),
+        "DT":             _to_iso(alarm.get("Occured Time") or alarm.get("occurredTime") or alarm.get("dt") or now_str),
+        "Alarm_Name":     alarm.get("Alarm Name") or alarm.get("alarmName", f"{family}: ALARM"),
+        "Occurred_Time":  alarm.get("Occured Time") or alarm.get("occurredTime") or now_str,
+        "Resolved_Time":  alarm.get("Resolved Time") or alarm.get("resolvedTime") or now_str,
+        "Duration":       alarm.get("Duration (HH:MM:SS)") or alarm.get("duration", "00:00:00"),
+        "MsgText":        alarm.get("MsgText") or alarm.get("msgText") or alarm.get("Alarm Name") or alarm.get("alarmName", ""),
+        "EquipmentCode":  eq_code,
+        "EquipmentType":  family,
+        "StateAfter":     alarm.get("StateAfter", 1),
+    }
+
+
+def build_alarm_data(eq_code: str, from_time: str, to_time: str):
+    family = EQUIPMENT_FAMILY_MAP.get(eq_code, "RMG")
+    ref = REFERENCE_DOC_DATA.get(eq_code, {})
+    alarms = ref.get("alarmSummary", [])
+    if alarms:
+        return [_normalise_alarm(a, eq_code, family) for a in alarms]
+
+    # No alarms in reference → return a benign status record
+    now_str = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    return [
+        {
+            "MsgNumber":     101,
+            "DT":            _to_iso(now_str),
+            "Alarm_Name":    f"{family}: SYSTEM OK / NO ACTIVE FAULTS",
+            "Occurred_Time": now_str,
+            "Resolved_Time": now_str,
+            "Duration":      "00:00:05",
+            "MsgText":       f"{family}: Status Normal",
+            "EquipmentCode": eq_code,
+            "EquipmentType": family,
+            "StateAfter":    1,
+        }
+    ]
+
+
+def _normalise_audit(audit: dict, seq: int, eq_code: str, family: str) -> dict:
+    """Normalise audit trail record keys for ingestion pipeline compatibility."""
+    dt_raw = audit.get("Date Time") or audit.get("dateTime") or audit.get("dt") or ""
+    return {
+        "RecordID":      audit.get("recordId") or f"AUD-{eq_code}-{seq:02d}",
+        "DT":            _to_iso(dt_raw),
+        "DateTime":      dt_raw,
+        "TimeStamp":     dt_raw,
+        "Description":   audit.get("Description") or audit.get("description", "-"),
+        "OldValue":      audit.get("Old Value") or audit.get("oldValue", "-"),
+        "NewValue":      audit.get("New Value") or audit.get("newValue", "-"),
+        "Reason":        audit.get("Reason") or audit.get("reason", "-"),
+        "UserName":      audit.get("User Name") or audit.get("userName") or f"Operator ({eq_code})",
+        "EquipmentCode": eq_code,
+        "EquipmentType": family,
+    }
+
+
+def build_audit_data(eq_code: str, from_time: str, to_time: str):
+    ref = REFERENCE_DOC_DATA.get(eq_code, {})
+    audits = ref.get("auditTrail", [])
+    family = EQUIPMENT_FAMILY_MAP.get(eq_code, "RMG")
+    if audits:
+        return [_normalise_audit(a, i + 1, eq_code, family) for i, a in enumerate(audits)]
+
+    now_str = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    return [
+        {
+            "RecordID":      f"AUD-{eq_code}-01",
+            "DT":            _to_iso(now_str),
+            "DateTime":      now_str,
+            "TimeStamp":     now_str,
+            "Description":   "BATCH RUNNING",
+            "OldValue":      "-",
+            "NewValue":      "-",
+            "Reason":        "-",
+            "UserName":      f"Operator ({eq_code})",
+            "EquipmentCode": eq_code,
+            "EquipmentType": family,
+        }
     ]
 
 
@@ -768,61 +763,69 @@ class MockDataServiceHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
-        if not parsed.path.startswith("/fwxapi/rest/v1/Dataset"):
+        valid_prefixes = (
+            "/fwxapi/rest/v1/Dataset",
+            "/Dataset",
+            "/api/v1/Dataset",
+        )
+        if not any(parsed.path.startswith(prefix) for prefix in valid_prefixes):
             self.send_response(404)
             self.end_headers()
             self.wfile.write(b'{"error": "Not Found"}')
             return
 
         query_params = parse_qs(parsed.query)
-        pointname = query_params.get("pointname", [""])[0]
+        pointname = (
+            query_params.get("pointname", [""])[0]
+            or query_params.get("pointName", [""])[0]
+            or query_params.get("point_name", [""])[0]
+        )
         if not pointname:
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(b'{"error": "pointname is required"}')
-            return
+            # Fallback check from path segments
+            path_parts = parsed.path.rstrip("/").split("/")
+            if path_parts and path_parts[-1] not in ("Dataset", "v1"):
+                pointname = f"db:HMI.{path_parts[-1]}"
 
         dataset_id, dataset_name, params = parse_pointname(pointname)
+        qp_asset = (query_params.get("AssetId", [""])[0] or query_params.get("assetId", [""])[0] or query_params.get("AssetID", [""])[0] or query_params.get("asset_id", [""])[0]).strip()
+        asset_id = qp_asset or params.get("AssetId") or params.get("AssetID") or None
+        eq_code = resolve_equipment_code(dataset_id, asset_id)
+
+        clean_dataset = dataset_name.upper().replace("_", "")
         payload: object = []
 
-        if dataset_name.upper() == "BATCHDETAILS":
-            payload = build_batch_details(dataset_id)
-        elif dataset_name.upper() == "PARAMETERSETTINGS":
-            payload = build_parameter_settings(
-                dataset_id,
-                params.get("BATCH_NO", "NL0026008"),
-                params.get("LOT_NO", "01 of 05"),
-            )
-        elif dataset_name.upper() == "BATCHDATA":
-            payload = build_batch_data(
-                dataset_id,
-                params.get("BATCH_NO", "NL0026008"),
-                params.get("LOT_NO", "01 of 05"),
-            )
-        elif dataset_name.upper() == "ALARMDATA":
-            payload = build_alarm_data(
-                dataset_id,
-                params.get("FROMTIME", ""),
-                params.get("TOTIME", ""),
-            )
-        elif dataset_name.upper() == "AUDITDATA":
-            payload = build_audit_data(
-                dataset_id,
-                params.get("FROMTIME", ""),
-                params.get("TOTIME", ""),
-            )
+        qp_batch = (query_params.get("BatchNo", [""])[0] or query_params.get("batchNo", [""])[0] or query_params.get("batch_no", [""])[0] or query_params.get("BATCH_NO", [""])[0]).strip()
+        qp_lot = (query_params.get("LotNo", [""])[0] or query_params.get("lotNo", [""])[0] or query_params.get("lot_no", [""])[0] or query_params.get("LOT_NO", [""])[0]).strip()
+        batch_no = qp_batch or params.get("BatchNo") or params.get("BATCH_NO") or params.get("batch_no") or None
+        lot_no = qp_lot or params.get("LotNo") or params.get("LOT_NO") or params.get("lot_no") or None
+
+        if clean_dataset in ("BATCHDETAILS", "BATCHINFO"):
+            payload = build_batch_info(eq_code)
+        elif clean_dataset in ("BATCHSUMMARY",):
+            payload = build_batch_summary(eq_code, batch_no, lot_no)
+        elif clean_dataset in ("MACHSUMMARY",):
+            payload = build_mach_summary(eq_code)
+        elif clean_dataset in ("LOGIN", "USERS"):
+            payload = build_user_login(eq_code)
+        elif clean_dataset in ("PARAMETERSETTINGS", "RECIPE", "MINMAX") or "RECIPE" in clean_dataset or "MINMAX" in clean_dataset:
+            payload = build_parameter_settings(eq_code)
+        elif clean_dataset in ("OPERATIONALVALUES", "OPVALUES"):
+            payload = build_operational_values(eq_code)
+        elif clean_dataset in ("ALARMDATA", "ALARMS", "ALARMSUMMARY"):
+            payload = build_alarm_data(eq_code, params.get("FROMTIME", ""), params.get("TOTIME", ""))
+        elif clean_dataset in ("AUDITDATA", "AUDITTRAIL", "AUDIT"):
+            payload = build_audit_data(eq_code, params.get("FROMTIME", ""), params.get("TOTIME", ""))
         else:
-            payload = build_batch_data(
-                dataset_id,
-                params.get("BATCH_NO", "NL0026008"),
-                params.get("LOT_NO", "01 of 05"),
-            )
+            # BATCHDATA, RMG_op_data, FBD_Op_Data, BLE_Op_Data, COAT_Op_Data, COMP_Op_Data, etc.
+            # Returns exactly 1 new record with advancing timestamp
+            payload = build_streaming_telemetry(eq_code, batch_no, lot_no, points_count=1)
 
         response_payload = {
             "status": "success",
             "pointname": pointname,
             "dataset_id": dataset_id,
             "dataset": dataset_name,
+            "equipmentCode": eq_code,
             "data": payload,
         }
 
