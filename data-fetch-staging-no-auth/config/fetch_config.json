@@ -4,6 +4,7 @@
     "continuous_fetch": false,
     "schedule_minutes": 20,
     "base_url": "https://u3-miebmr-srv-t",
+    "bearer_token": "PASTE_FRESH_BEARER_TOKEN_HERE",
     "dataset_path": "/fwxapi/rest/v1/Dataset",
     "request_timeout_seconds": 60,
     "max_batches_per_asset_per_cycle": 3,

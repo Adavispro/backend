@@ -9,7 +9,7 @@ This project contains two independent Python schedulers. The API scheduler fetch
 
 ## Configuration
 
-Edit `config/fetch_config.json` before running. Set `api_fetch.base_url` to the plant API host and `file_fetch.network_path` to the Compression share. A different config file can be selected with `ADAVIS_FETCH_CONFIG`. This version sends direct dataset requests without an Authorization header. It is suitable only when the plant API allows unauthenticated access; an HTTP 401 or 403 response means the endpoint requires authentication.
+Edit `config/fetch_config.json` before running. Set `api_fetch.base_url` to the reachable plant API host, then paste a fresh access token into `api_fetch.bearer_token`. Paste only the token value, without the word `Bearer`, spaces, or Markdown escape characters. This version sends `Authorization: Bearer <token>` on dataset requests and stops with a clear message when a JWT token has expired. It does not obtain or refresh tokens. Set `file_fetch.network_path` separately if using the Compression scheduler. A different config file can be selected with `ADAVIS_FETCH_CONFIG`.
 
 The API reference lists these assets: Blender `10012`, Coating `10021`, RMG `10094`, and FBD `10110`. Their documented `pointName` templates are in the JSON configuration and can be enabled or disabled individually. The reference's Blender labels appear reversed relative to the `Blend_Recipe` and `Blend_Op_Data` dataset names; the configuration follows the dataset names. The Coating sample URLs use different example batch numbers and lot values, so the scheduler substitutes each actual `BatchNo` and `LotNo` returned by `Batch_Info` rather than copying those examples. The reference includes alternate API hosts; select the reachable host with `base_url`.
 
@@ -41,8 +41,8 @@ Each runs one cycle by default. Set the relevant `continuous_fetch` flag to `tru
 
 ## Troubleshooting
 
-- If API calls return HTTP 401 or 403, this API requires authentication; use the OAuth-enabled project instead.
-- If the API host cannot be reached, check `base_url` against the supplied reference and confirm DNS, routing, and TLS trust with the site administrator.
+- If the scheduler reports that the token expired, paste a fresh bearer token into `api_fetch.bearer_token`. If the API returns HTTP 401 or 403 while the token is valid, confirm its permissions and the API host with the plant API team.
+- If the API host cannot be reached, the log identifies DNS, TLS, timeout, or connection refusal when available. On Windows, run `nslookup YOUR_API_HOST` and `powershell -Command "Test-NetConnection YOUR_API_HOST -Port 443"` using the host name from `base_url`. Confirm the live host, network access, and TLS trust with the site administrator.
 - If the file scheduler reports an unavailable path, mount or connect the Compression share and set `network_path` to that location.
 - If an API returns an unexpected JSON shape, inspect the original response and adjust the parser or configured dataset mapping to match the actual source. Do not infer missing fields.
 
