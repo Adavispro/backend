@@ -559,4 +559,37 @@ public class BatchPdfPersistenceTest {
         }
         reader.close();
     }
+
+    @Test
+    @DisplayName("Should successfully generate GxP PDF for all 5 target equipments (MB003, MB004, MB005, MB040, MB041)")
+    void testGeneratePdfForFiveTargetEquipments() throws Exception {
+        String[] equipments = {"MB003", "MB004", "MB005", "MB040", "MB041"};
+        String[] expectedTypeNames = {"Rapid Mixer Granulator", "Fluid Bed Dryer", "Octagonal Blender", "Compression Machine", "Auto Coater"};
+
+        for (int idx = 0; idx < equipments.length; idx++) {
+            String eq = equipments[idx];
+            String expectedType = expectedTypeNames[idx];
+
+            BatchPdfGeneratorService.PdfGenerationResult result = pdfGeneratorService.generateAndStoreBatchPdf(
+                    "BATCH-TARGET-01", "01", eq, "TNT-0001", "PLNT-0001", "QA-001", "APPROVER");
+
+            assertNotNull(result, "PDF result should not be null for " + eq);
+            assertNotNull(result.getPdfBytes(), "PDF bytes should not be null for " + eq);
+            assertTrue(result.getPdfBytes().length > 1000, "PDF should have substantial size for " + eq);
+
+            PdfReader reader = new PdfReader(result.getPdfBytes());
+            StringBuilder sb = new StringBuilder();
+            PdfTextExtractor extractor = new PdfTextExtractor(reader);
+            for (int i = 1; i <= reader.getNumberOfPages(); i++) {
+                sb.append(extractor.getTextFromPage(i)).append("\n");
+            }
+            reader.close();
+
+            String fullText = sb.toString();
+            assertTrue(fullText.toUpperCase().contains(expectedType.toUpperCase()),
+                    "PDF for " + eq + " should mention " + expectedType);
+            assertTrue(fullText.contains(eq),
+                    "PDF should contain equipment ID " + eq);
+        }
+    }
 }

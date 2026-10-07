@@ -1,0 +1,182 @@
+# ==============================================================================
+# IIoT Multi-Equipment Data Ingestion Configuration
+# Canonical Configuration for 5 Fixed Equipments (API + File Ingestion)
+# ==============================================================================
+
+environment: ${APP_ENVIRONMENT:-LOCAL}
+
+iiot:
+  ingestion:
+    # Execution mode: ONCE (local testing/dev) or CONTINUOUS (daemon scheduler)
+    executionMode: ${INGESTION_MODE:-CONTINUOUS}
+
+    # Ingestion schedule
+    schedule:
+      intervalMinutes: ${INGESTION_INTERVAL_MINUTES:-15}
+      intervalSeconds: ${INGESTION_INTERVAL_SECONDS:-10}  # Used for high-frequency streaming demo
+
+    # Historical / backfill date range
+    dateRange:
+      fromDate: ${INGESTION_FROM_DATE:-2026-08-15 06:00:00}
+      toDate: ${INGESTION_TO_DATE:-}
+
+    # Concurrency
+    concurrency:
+      maxParallelDatasets: ${INGESTION_MAX_PARALLEL:-5}
+
+    # REST API Configuration (for API-based equipments)
+    api:
+      enabled: true
+      baseUrl: ${IIOT_API_BASE_URL:-http://localhost:8000}
+      endpoint: ${IIOT_API_ENDPOINT:-/fwxapi/rest/v1/Dataset}
+      timeoutSeconds: ${IIOT_API_TIMEOUT_SECONDS:-30}
+      authentication:
+        type: NONE
+        token: ${IIOT_API_AUTH_TOKEN:-}
+        apiKey: ${IIOT_API_KEY:-}
+
+    # Database Configuration
+    database:
+      mongodb:
+        uri: ${MONGODB_URI:-mongodb://admin:Admin123!@localhost:37017/adavis_platform?authSource=admin}
+        databaseName: ${MONGODB_DATABASE:-adavis_platform}
+      redis:
+        host: ${REDIS_HOST:-localhost}
+        port: ${REDIS_PORT:-8379}
+        password: ${REDIS_PASSWORD:-Redis123!}
+        db: ${REDIS_DB:-0}
+
+    # Idempotency & Checkpoint Configuration
+    checkpoint:
+      enabled: true
+      collectionName: iiot_ingestion_checkpoint
+      registryCollectionName: iiot_ingested_events_registry
+      retryFailedBatches: true
+
+# ------------------------------------------------------------------------------
+# Fixed Asset / Equipment Configuration (5 Target Equipments)
+# ------------------------------------------------------------------------------
+equipment:
+  - equipmentId: ${EQUIPMENT_1_ID:-MB003}
+    equipmentCode: ${EQUIPMENT_1_CODE:-MB003}
+    equipmentName: "Rapid Mixer Granulator (MB003)"
+    equipmentType: ${EQUIPMENT_1_TYPE:-RMG}
+    assetId: ${EQUIPMENT_1_ASSET_ID:-10094}
+    sourceType: API
+    endpoint: ${EQUIPMENT_1_API_ENDPOINT:-}
+    sampleBatch: "AGO0026016"
+    sampleLot: "01"
+    sampleProduct: "LAMOTRIGINE (STGW2000)"
+
+  - equipmentId: ${EQUIPMENT_2_ID:-MB004}
+    equipmentCode: ${EQUIPMENT_2_CODE:-MB004}
+    equipmentName: "Fluid Bed Dryer (MB004)"
+    equipmentType: ${EQUIPMENT_2_TYPE:-FBD}
+    assetId: ${EQUIPMENT_2_ASSET_ID:-10110}
+    sourceType: API
+    endpoint: ${EQUIPMENT_2_API_ENDPOINT:-}
+    sampleBatch: "AGO0026016"
+    sampleLot: "1B"
+    sampleProduct: "LAMOTRIGINE (STGW2000)"
+
+  - equipmentId: ${EQUIPMENT_3_ID:-MB005}
+    equipmentCode: ${EQUIPMENT_3_CODE:-MB005}
+    equipmentName: "Octagonal Blender (MB005)"
+    equipmentType: ${EQUIPMENT_3_TYPE:-BLE}
+    assetId: ${EQUIPMENT_3_ASSET_ID:-10095}
+    sourceType: API
+    endpoint: ${EQUIPMENT_3_API_ENDPOINT:-}
+    sampleBatch: "AGO0026015"
+    sampleLot: "01"
+    sampleProduct: "LAMOTRIGINE (STGW2000)"
+
+  - equipmentId: ${EQUIPMENT_4_ID:-MB041}
+    equipmentCode: ${EQUIPMENT_4_CODE:-MB041}
+    equipmentName: "Auto Coater (MB041)"
+    equipmentType: ${EQUIPMENT_4_TYPE:-COAT}
+    assetId: ${EQUIPMENT_4_ASSET_ID:-10141}
+    sourceType: API
+    endpoint: ${EQUIPMENT_4_API_ENDPOINT:-}
+    sampleBatch: "PED26009"
+    sampleLot: "01"
+    sampleProduct: "PAROXETINE USP 40mg (STPA1D00)"
+
+  - equipmentId: ${COMPRESSION_EQUIPMENT_ID:-MB040}
+    equipmentCode: ${COMPRESSION_EQUIPMENT_CODE:-MB040}
+    equipmentName: "Compression Machine (MB040)"
+    equipmentType: COMPRESSION
+    assetId: ${COMPRESSION_ASSET_ID:-10040}
+    sourceType: EXCEL
+    sourcePath: ${COMPRESSION_SOURCE_PATH:-data/ingestion/compression}
+    sampleBatch: "ADNC26011"
+    sampleLot: "01"
+    sampleProduct: "Amisulpride 200mg (STFS7000)"
+
+# ------------------------------------------------------------------------------
+# Compression Equipment Mapping (Sejong Rotary Tablet Press)
+# ------------------------------------------------------------------------------
+compression:
+  source:
+    type: EXCEL
+    path: ${COMPRESSION_SOURCE_PATH:-data/ingestion/compression}
+    filePatterns: ["*.xls", "*.xlsx"]
+    # MDB Decision Gate: Analysis proved Excel production reports contain 100%
+    # of required data. MDB parsing is disabled to prevent unneeded native dependencies.
+    mdbRequired: false
+    mdbPath: ${COMPRESSION_MDB_PATH:-sample/SawcData.mdb}
+
+  mapping:
+    batchNumber: ${COMPRESSION_BATCH_COLUMN:-Lot No.}
+    lotNumber: ${COMPRESSION_LOT_COLUMN:-Lot No.}
+    productCode: ${COMPRESSION_PRODUCT_CODE_COLUMN:-Product Code}
+    productName: ${COMPRESSION_PRODUCT_NAME_COLUMN:-Product Name}
+    recipeName: ${COMPRESSION_RECIPE_COLUMN:-Recipe}
+    equipmentId: ${COMPRESSION_EQUIPMENT_COLUMN:-Machine Name}
+    timestamp: ${COMPRESSION_TIMESTAMP_COLUMN:-Date/Time}
+
+  parameters:
+    - sourceParameter: "Turret speed set"
+      parameterCode: "turretRpmSet"
+      parameterName: "TURRET SPEED SET"
+      displayName: "Turret Speed Set"
+      unit: "RPM"
+      defaultValue: 35.0
+    - sourceParameter: "Actual Turret Speed"
+      parameterCode: "turretRpm"
+      parameterName: "TURRET SPEED"
+      displayName: "Turret Speed"
+      unit: "RPM"
+    - sourceParameter: "Main Compression force Set"
+      parameterCode: "mainForceSet"
+      parameterName: "MAIN COMPRESSION FORCE SET"
+      displayName: "Main Force Set"
+      unit: "kN"
+      defaultValue: 24.5
+    - sourceParameter: "Main Compression force Actual"
+      parameterCode: "mainCompForce"
+      parameterName: "MAIN COMPRESSION FORCE"
+      displayName: "Main Compression Force"
+      unit: "kN"
+    - sourceParameter: "Pre Compression force Set"
+      parameterCode: "preForceSet"
+      parameterName: "PRE COMPRESSION FORCE SET"
+      displayName: "Pre Force Set"
+      unit: "kN"
+      defaultValue: 4.8
+    - sourceParameter: "Pre Compression force Actual"
+      parameterCode: "preCompForce"
+      parameterName: "PRE COMPRESSION FORCE"
+      displayName: "Pre Compression Force"
+      unit: "kN"
+    - sourceParameter: "Total Tablet Produce"
+      parameterCode: "tabletCount"
+      parameterName: "TABLET COUNT"
+      displayName: "Total Tablets Produced"
+      unit: "Nos"
+
+# ------------------------------------------------------------------------------
+# Production Report Configuration
+# ------------------------------------------------------------------------------
+productionReport:
+  dateColumn: ${PRODUCTION_REPORT_DATE_COLUMN:-Date/Time}
+  dateFormat: "%d/%m/%Y %H:%M:%S"

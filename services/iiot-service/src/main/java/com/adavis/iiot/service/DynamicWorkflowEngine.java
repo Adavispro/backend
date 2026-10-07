@@ -1495,9 +1495,10 @@ public class DynamicWorkflowEngine {
             String lNo = wi.getLotNo();
             String eqC = wi.getEquipmentCode();
             if (bNo != null && eqC != null) {
-                assignedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
-                if (lNo != null) {
+                if (lNo != null && !lNo.isBlank() && !"NA".equalsIgnoreCase(lNo)) {
                     assignedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + lNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
+                } else {
+                    assignedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
                 }
             }
         }
@@ -1511,9 +1512,10 @@ public class DynamicWorkflowEngine {
             String lNo = h.getLotNo();
             String eqC = h.getEquipmentCode();
             if (bNo != null && eqC != null) {
-                participatedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
-                if (lNo != null) {
+                if (lNo != null && !lNo.isBlank() && !"NA".equalsIgnoreCase(lNo)) {
                     participatedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + lNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
+                } else {
+                    participatedEntityKeys.add(bNo.toUpperCase(Locale.ROOT) + ":" + eqC.toUpperCase(Locale.ROOT));
                 }
             }
         }
@@ -1562,11 +1564,15 @@ public class DynamicWorkflowEngine {
                 String assignedTo = approval != null ? approval.getString("assignedTo") : null;
                 boolean isAssignedToUser = assignedTo != null && assignedTo.equalsIgnoreCase(userId);
 
-                String key1 = (batchNo != null && !equipmentCode.isBlank()) ? batchNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT) : "";
-                String key2 = (batchNo != null && lotNo != null && !equipmentCode.isBlank()) ? batchNo.toUpperCase(Locale.ROOT) + ":" + lotNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT) : "";
+                String specificKey = (batchNo != null && lotNo != null && !lotNo.isBlank() && !"NA".equalsIgnoreCase(lotNo) && !equipmentCode.isBlank())
+                        ? batchNo.toUpperCase(Locale.ROOT) + ":" + lotNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT) : "";
+                String genericKey = (batchNo != null && !equipmentCode.isBlank())
+                        ? batchNo.toUpperCase(Locale.ROOT) + ":" + equipmentCode.toUpperCase(Locale.ROOT) : "";
 
-                if (!isAssignedToUser && !key1.isEmpty()) {
-                    if (assignedEntityKeys.contains(key1) || (!key2.isEmpty() && assignedEntityKeys.contains(key2))) {
+                if (!isAssignedToUser) {
+                    if (!specificKey.isEmpty() && assignedEntityKeys.contains(specificKey)) {
+                        isAssignedToUser = true;
+                    } else if (specificKey.isEmpty() && !genericKey.isEmpty() && assignedEntityKeys.contains(genericKey)) {
                         isAssignedToUser = true;
                     }
                 }
@@ -1604,8 +1610,8 @@ public class DynamicWorkflowEngine {
                         || (additionalInfoBy != null && additionalInfoBy.equalsIgnoreCase(userId));
 
                 // (e) Action history recorded for this user
-                boolean hasHistoryAction = (!key1.isEmpty() && participatedEntityKeys.contains(key1))
-                        || (!key2.isEmpty() && participatedEntityKeys.contains(key2));
+                boolean hasHistoryAction = (!specificKey.isEmpty() && participatedEntityKeys.contains(specificKey))
+                        || (specificKey.isEmpty() && !genericKey.isEmpty() && participatedEntityKeys.contains(genericKey));
 
                 boolean isParticipant = isOperatorOfStage || isReviewerOfStage || isApproverOfStage || isOtherActor || hasHistoryAction;
 
@@ -2096,6 +2102,9 @@ public class DynamicWorkflowEngine {
 
         try {
             Query q = new Query(Criteria.where("batchNo").is(batchNo));
+            if (lotNo != null && !lotNo.isBlank() && !"NA".equalsIgnoreCase(lotNo)) {
+                q.addCriteria(Criteria.where("lotNo").is(lotNo));
+            }
             Document summary = mongoTemplate.findOne(q, Document.class, BATCH_SUMMARY_COLLECTION);
             if (summary != null) {
                 @SuppressWarnings("unchecked")
@@ -2177,6 +2186,9 @@ public class DynamicWorkflowEngine {
 
         try {
             Query q = new Query(Criteria.where("batchNo").is(batchNo));
+            if (lotNo != null && !lotNo.isBlank() && !"NA".equalsIgnoreCase(lotNo)) {
+                q.addCriteria(Criteria.where("lotNo").is(lotNo));
+            }
             Document summary = mongoTemplate.findOne(q, Document.class, BATCH_SUMMARY_COLLECTION);
             if (summary != null) {
                 summary.remove("assignedTo");

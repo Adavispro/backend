@@ -3,51 +3,53 @@
     "category": "Rapid Mixer Granulator",
     "equipmentDetails": {
       "equipmentName": "RAPID MIXER GRANULATOR",
-      "equipmentId": "RMGC0219",
-      "make": "SAAN",
-      "area": "PB3",
-      "block": "PB3"
+      "equipmentId": "MB003",
+      "assetId": "10094",
+      "make": "BECTOCHEM",
+      "model": "MITSUBISHI FX5U 32 MR",
+      "area": "MODULE-B",
+      "block": "PB1"
     },
     "batchDetails": {
-      "batchNumber": "NL0026008",
-      "lotNumber": "1",
-      "productName": "Finasterid",
-      "productCode": "STFS7000",
-      "recipeName": "STFS7000",
-      "batchSize": "900.000 Kg",
-      "startTime": "09/02/2026 16:04:17",
-      "endTime": "09/02/2026 19:05:40",
-      "batchDurationInHours": "03:01:23"
+      "batchNumber": "AGO0026016",
+      "lotNumber": "01",
+      "productName": "LAMOTRIGINE",
+      "productCode": "STGW2000",
+      "recipeName": "AGO",
+      "batchSize": "248.640 Kg",
+      "startTime": "30/09/2026 02:46:35",
+      "endTime": "30/09/2026 05:17:36",
+      "batchDurationInHours": "02:31:01"
     },
     "userLoginLogout": [
       {
-        "userName": "91525 (PB3 RMGC0219 Supervisor)",
-        "dateTime": "09/02/2026 16:04:21",
+        "userName": "96365 (PB1-RMG (MB003) Supervisor)",
+        "dateTime": "30/09/2026 02:46:37",
         "description": "Logout Sucessfully"
       },
       {
-        "userName": "8961 (PB3 RMGC0219 Operator)",
-        "dateTime": "09/02/2026 16:05:22",
+        "userName": "96828 (PB1-RMG (MB003) Operator)",
+        "dateTime": "30/09/2026 02:53:34",
         "description": "Login"
       },
       {
-        "userName": "8961 (PB3 RMGC0219 Operator)",
-        "dateTime": "09/02/2026 16:20:22",
-        "description": "Session Timeout"
-      },
-      {
-        "userName": "8961 (PB3 RMGC0219 Operator)",
-        "dateTime": "09/02/2026 17:50:15",
-        "description": "Login"
-      },
-      {
-        "userName": "8961 (PB3 RMGC0219 Operator)",
-        "dateTime": "09/02/2026 19:03:46",
+        "userName": "96828 (PB1-RMG (MB003) Operator)",
+        "dateTime": "30/09/2026 03:18:30",
         "description": "Logout Sucessfully"
       },
       {
-        "userName": "98204 (PB3 RMGC0219 Supervisor)",
-        "dateTime": "09/02/2026 19:05:32",
+        "userName": "96828 (PB1-RMG (MB003) Operator)",
+        "dateTime": "30/09/2026 03:22:15",
+        "description": "Login"
+      },
+      {
+        "userName": "96828 (PB1-RMG (MB003) Operator)",
+        "dateTime": "30/09/2026 05:15:20",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "191555 (PB1-RMG (MB003) Supervisor)",
+        "dateTime": "30/09/2026 05:16:10",
         "description": "Login"
       }
     ],
@@ -60,31 +62,31 @@
         "DRY CYCLE1 CHOPPER FAST SET (Sec)": 0
       },
       "wetCycle1": {
-        "WET CYCLE1 IMPELLER SLOW SET (Sec)": 180,
+        "WET CYCLE1 IMPELLER SLOW SET (Sec)": 150,
         "WET CYCLE1 IMPELLER FAST SET (Sec)": 0,
         "WET CYCLE1 CHOPPER DELAY (Sec)": 0,
         "WET CYCLE1 CHOPPER SLOW SET (Sec)": 0,
         "WET CYCLE1 CHOPPER FAST SET (Sec)": 0,
         "WET CYCLE1 PUMP1 ON DELAY (Sec)": 0,
-        "WET CYCLE1 PUMP1 SET (Sec)": 180,
-        "WET CYCLE1 PUMP1 RPM": 240
+        "WET CYCLE1 PUMP1 SET (Sec)": 150,
+        "WET CYCLE1 PUMP1 RPM": 60
       },
       "wetCycle2": {
-        "WET CYCLE2 IMPELLER SLOW SET (Sec)": 180,
+        "WET CYCLE2 IMPELLER SLOW SET (Sec)": 60,
         "WET CYCLE2 IMPELLER FAST SET (Sec)": 0,
         "WET CYCLE2 CHOPPER DELAY (Sec)": 0,
-        "WET CYCLE2 CHOPPER SLOW SET (Sec)": 180,
+        "WET CYCLE2 CHOPPER SLOW SET (Sec)": 60,
         "WET CYCLE2 CHOPPER FAST SET (Sec)": 0,
         "WET CYCLE2 PUMP1 ON DELAY (Sec)": 0,
         "WET CYCLE2 PUMP1 SET (Sec)": 0,
         "WET CYCLE2 PUMP1 RPM": 0
       },
       "wetCycle3": {
-        "WET CYCLE3 IMPELLER SLOW SET (Sec)": 480,
-        "WET CYCLE3 IMPELLER FAST SET (Sec)": 0,
+        "WET CYCLE3 IMPELLER SLOW SET (Sec)": 0,
+        "WET CYCLE3 IMPELLER FAST SET (Sec)": 30,
         "WET CYCLE3 CHOPPER DELAY (Sec)": 0,
-        "WET CYCLE3 CHOPPER SLOW SET (Sec)": 480,
-        "WET CYCLE3 CHOPPER FAST SET (Sec)": 0,
+        "WET CYCLE3 CHOPPER SLOW SET (Sec)": 0,
+        "WET CYCLE3 CHOPPER FAST SET (Sec)": 30,
         "WET CYCLE3 PUMP1 ON DELAY (Sec)": 0,
         "WET CYCLE3 PUMP1 SET (Sec)": 0,
         "WET CYCLE3 PUMP1 RPM": 0
@@ -94,1266 +96,173 @@
         "CHOPPER": "SLOW"
       }
     },
-    "operationalDetailValues": [
-      {
-        "time": "09/02/2026 18:02:40",
-        "status": "DRY CYCLE 1 IMPELLER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:12:40",
-        "status": "DRY CYCLE 1 IMPELLER SLOW STOP",
-        "currentAmp": null,
-        "durationSec": 600
-      },
-      {
-        "time": "09/02/2026 18:16:03",
-        "status": "WET CYCLE 1 IMPELLER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:16:03",
-        "status": "WET CYCLE 1 PUMP 1 START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:18:38",
-        "status": "WET CYCLE 1 IMPELLER SLOW STOP",
-        "currentAmp": 30.5,
-        "durationSec": 155
-      },
-      {
-        "time": "09/02/2026 18:18:38",
-        "status": "WET CYCLE 1 PUMP 1 STOP",
-        "currentAmp": null,
-        "durationSec": 155
-      },
-      {
-        "time": "09/02/2026 18:19:50",
-        "status": "WET CYCLE 1 IMPELLER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:19:50",
-        "status": "WET CYCLE 1 PUMP 1 START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:20:15",
-        "status": "WET CYCLE 1 IMPELLER SLOW STOP",
-        "currentAmp": 30.4,
-        "durationSec": 25
-      },
-      {
-        "time": "09/02/2026 18:20:15",
-        "status": "WET CYCLE 1 PUMP 1 STOP",
-        "currentAmp": null,
-        "durationSec": 25
-      },
-      {
-        "time": "09/02/2026 18:22:26",
-        "status": "WET CYCLE 2 IMPELLER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:22:26",
-        "status": "WET CYCLE 2 CHOPPER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:23:24",
-        "status": "WET CYCLE 2 IMPELLER SLOW STOP",
-        "currentAmp": 30.6,
-        "durationSec": 58
-      },
-      {
-        "time": "09/02/2026 18:23:24",
-        "status": "WET CYCLE 2 CHOPPER SLOW STOP",
-        "currentAmp": 6.5,
-        "durationSec": 58
-      },
-      {
-        "time": "09/02/2026 18:26:03",
-        "status": "WET CYCLE 2 IMPELLER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:26:03",
-        "status": "WET CYCLE 2 CHOPPER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:27:06",
-        "status": "WET CYCLE 2 IMPELLER SLOW STOP",
-        "currentAmp": 30.6,
-        "durationSec": 63
-      },
-      {
-        "time": "09/02/2026 18:27:06",
-        "status": "WET CYCLE 2 CHOPPER SLOW STOP",
-        "currentAmp": 6.5,
-        "durationSec": 63
-      },
-      {
-        "time": "09/02/2026 18:29:09",
-        "status": "WET CYCLE 2 IMPELLER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:29:09",
-        "status": "WET CYCLE 2 CHOPPER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:30:08",
-        "status": "WET CYCLE 2 IMPELLER SLOW STOP",
-        "currentAmp": 30.7,
-        "durationSec": 59
-      },
-      {
-        "time": "09/02/2026 18:30:08",
-        "status": "WET CYCLE 2 CHOPPER SLOW STOP",
-        "currentAmp": 6.5,
-        "durationSec": 59
-      },
-      {
-        "time": "09/02/2026 18:31:02",
-        "status": "WET CYCLE 3 IMPELLER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:31:02",
-        "status": "WET CYCLE 3 CHOPPER SLOW START",
-        "currentAmp": null,
-        "durationSec": null
-      },
-      {
-        "time": "09/02/2026 18:39:02",
-        "status": "WET CYCLE 3 IMPELLER SLOW STOP",
-        "currentAmp": 31.0,
-        "durationSec": 480
-      },
-      {
-        "time": "09/02/2026 18:39:02",
-        "status": "WET CYCLE 3 CHOPPER SLOW STOP",
-        "currentAmp": 6.6,
-        "durationSec": 480
-      }
-    ],
     "alarmSummary": [
       {
-        "alarmName": "DISCHARGE VALVE CLOSE FAIL",
-        "occurredTime": "09/02/2026 18:47:04",
-        "resolvedTime": "09/02/2026 19:01:32",
-        "duration": "00:14:28"
+        "alarm_name": "DISCHARGE VALVE CLOSE FAIL",
+        "occurred_time": "30/09/2026 03:47:04",
+        "resolved_time": "30/09/2026 04:01:32",
+        "duration": "00:14:28",
+        "severity": "CRITICAL",
+        "alarmCode": "ALM-101"
       },
       {
-        "alarmName": "LID OPENED",
-        "occurredTime": "09/02/2026 18:54:45",
-        "resolvedTime": "09/02/2026 19:01:23",
-        "duration": "00:06:38"
+        "alarm_name": "LID OPENED",
+        "occurred_time": "30/09/2026 04:14:45",
+        "resolved_time": "30/09/2026 04:21:23",
+        "duration": "00:06:38",
+        "severity": "WARNING",
+        "alarmCode": "ALM-102"
       },
       {
-        "alarmName": "DISCHARGE VALVE CLOSE FAIL",
-        "occurredTime": "09/02/2026 19:03:08",
-        "resolvedTime": "09/02/2026 19:03:39",
-        "duration": "00:00:31"
+        "alarm_name": "DISCHARGE VALVE CLOSE FAIL",
+        "occurred_time": "30/09/2026 05:03:08",
+        "resolved_time": "30/09/2026 05:03:39",
+        "duration": "00:00:31",
+        "severity": "CRITICAL",
+        "alarmCode": "ALM-103"
       }
     ],
     "auditTrail": [
       {
-        "dateTime": "09/02/2026 16:04:17",
-        "description": "BATCH START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "91525 (PB3 RMGC0219 Supervisor)"
-      },
-      {
-        "dateTime": "09/02/2026 16:05:36",
-        "description": "PTS START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 16:20:01",
-        "description": "PTS STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:02:39",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:15:28",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:16:02",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:18:38",
-        "description": "AUTO PAUSE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:18:41",
-        "description": "AUTO PAUSE REASON",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "BINDER/GRANULATING AGENT ADDITION",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:19:49",
-        "description": "AUTO CONTINUE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:20:23",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:22:25",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:23:24",
-        "description": "AUTO PAUSE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:23:27",
-        "description": "AUTO PAUSE REASON",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "BINDER/GRANULATING AGENT ADDITION",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:26:02",
-        "description": "AUTO CONTINUE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:27:06",
-        "description": "AUTO PAUSE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:27:09",
-        "description": "AUTO PAUSE REASON",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "BINDER/GRANULATING AGENT ADDITION",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:29:08",
-        "description": "AUTO CONTINUE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:30:16",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:31:01",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:39:13",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:47:02",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:47:07",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:47:21",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:47:25",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:47:36",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:47:41",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:47:52",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:47:58",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:48:11",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:48:16",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:48:27",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:48:33",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:48:45",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:48:50",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:49:04",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:49:09",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:49:22",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:49:27",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:49:41",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:49:46",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:50:00",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:50:06",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:50:19",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:50:25",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:50:37",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:50:43",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:50:57",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:51:03",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:51:17",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:51:23",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:51:37",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:51:42",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:51:53",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:51:59",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:52:10",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:52:16",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:52:25",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:52:37",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:52:51",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:53:13",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RACKING/SCRAPPING",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 18:54:41",
-        "description": "LID OPEN",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:01:00",
-        "description": "LID CLOSE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:01:32",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:03:06",
-        "description": "AUTO UNLOAD START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:03:30",
-        "description": "AUTO UNLOAD STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "PROCESS OVER",
-        "userName": "8961 (PB3 RMGC0219 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:03:39",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 RMGC0219 Operator)"
+        "Date Time": "30/09/2026 02:46:40",
+        "Description": "Auto Mode Selected",
+        "Old Value": "Manual",
+        "New Value": "Auto",
+        "Reason": "Batch Start",
+        "User Name": "96828 (PB1-RMG (MB003) Operator)"
+      },
+      {
+        "Date Time": "30/09/2026 02:50:10",
+        "Description": "Recipe Loaded: AGO",
+        "Old Value": "-",
+        "New Value": "AGO",
+        "Reason": "Recipe Execution",
+        "User Name": "96828 (PB1-RMG (MB003) Operator)"
+      },
+      {
+        "Date Time": "30/09/2026 03:15:00",
+        "Description": "Dry Mix Cycle Completed",
+        "Old Value": "Running",
+        "New Value": "Complete",
+        "Reason": "Process Completed",
+        "User Name": "96828 (PB1-RMG (MB003) Operator)"
+      },
+      {
+        "Date Time": "30/09/2026 04:30:00",
+        "Description": "Binder Addition Verified",
+        "Old Value": "-",
+        "New Value": "Done",
+        "Reason": "Quality Check",
+        "User Name": "96365 (PB1-RMG (MB003) Supervisor)"
+      },
+      {
+        "Date Time": "30/09/2026 05:10:00",
+        "Description": "Granulation Completed",
+        "Old Value": "Running",
+        "New Value": "Complete",
+        "Reason": "Stage End",
+        "User Name": "96828 (PB1-RMG (MB003) Operator)"
       }
-    ],
-    "signoff": {
-      "checkedBy": "Ram 09/02/26",
-      "reviewedBy": "09/02/26",
-      "printedBy": "Ramesh P-98204(PB3 RMGC0219 Supervisor)",
-      "printedOn": "09/02/2026 19:23:42"
-    }
+    ]
   },
   "FBD": {
     "category": "Fluid Bed Dryer",
     "equipmentDetails": {
       "equipmentName": "FLUID BED DRIER",
-      "equipmentId": "FBDC0220",
-      "make": "SAAN",
-      "area": "GRANULATION",
-      "block": "PB3"
+      "equipmentId": "MB004",
+      "assetId": "10110",
+      "make": "ALLIANCE",
+      "model": "MITSUBISHI Fx5U 32 MR",
+      "area": "MODULE-B",
+      "block": "PB1"
     },
     "batchDetails": {
-      "batchNumber": "NL0026008",
-      "lotNumber": "1",
-      "productName": "Mirtazapine Tablets USP 5 mg",
-      "productCode": "STFS7000",
-      "recipeName": "STFS7000",
-      "batchSize": "900.000 kg",
-      "startTime": "09/02/2026 18:44:45",
-      "endTime": "09/02/2026 23:47:01",
-      "batchDurationInHours": "05:02:16"
+      "batchNumber": "AGO0026016",
+      "lotNumber": "1B",
+      "productName": "LAMOTRIGINE",
+      "productCode": "STGW2000",
+      "recipeName": "AGO",
+      "batchSize": "248.640 Kg",
+      "startTime": "30/09/2026 05:34:49",
+      "endTime": "30/09/2026 07:46:43",
+      "batchDurationInHours": "02:11:54"
     },
     "userLoginLogout": [
       {
-        "userName": "98204 (PB3 FBDC0220 Supervisor)",
-        "dateTime": "09/02/2026 18:44:47",
+        "userName": "191555 (PB1-Module-B (MB004) Supervisor)",
+        "dateTime": "30/09/2026 05:34:55",
         "description": "Logout Sucessfully"
       },
       {
-        "userName": "8961 (PB3 FBDC0220 Operator)",
-        "dateTime": "09/02/2026 18:45:50",
+        "userName": "11173 (PB1-Module-B (MB004) Operator)",
+        "dateTime": "30/09/2026 05:44:24",
         "description": "Login"
       },
       {
-        "userName": "8961 (PB3 FBDC0220 Operator)",
-        "dateTime": "09/02/2026 22:01:42",
+        "userName": "11173 (PB1-Module-B (MB004) Operator)",
+        "dateTime": "30/09/2026 07:40:10",
         "description": "Logout Sucessfully"
       },
       {
-        "userName": "96599 (PB3 FBDC0220 Operator)",
-        "dateTime": "09/02/2026 22:02:01",
-        "description": "Login"
-      },
-      {
-        "userName": "96599 (PB3 FBDC0220 Operator)",
-        "dateTime": "09/02/2026 23:45:11",
-        "description": "Logout Sucessfully"
-      },
-      {
-        "userName": "98204 (PB3 FBDC0220 Supervisor)",
-        "dateTime": "09/02/2026 23:46:40",
+        "userName": "191164 (PB1-Module-B (MB004) Supervisor)",
+        "dateTime": "30/09/2026 07:42:00",
         "description": "Login"
       }
     ],
     "parameterSettings": {
-      "PROCESS TIME (MIN)": 300,
+      "PROCESS TIME (MIN)": 500,
       "AIR DRY TIME (MIN)": 5,
       "COOLING TIME (MIN)": 0,
       "SHAKE INTERVAL (MIN)": 10,
       "SHAKE DURATION (SEC)": 30,
-      "END SHAKE TIME (SEC)": 30,
-      "INLET TEMPERATURE (\u00b0C)": 60,
-      "INLET TEMPERATURE HIGH (\u00b0C)": 64,
-      "OUTLET TEMPERATURE (\u00b0C)": 48,
+      "END SHAKE TIME (SEC)": 60,
+      "INLET TEMPERATURE (C)": 60,
+      "EXHAUST TEMPERATURE (C)": 50,
+      "INLET ALARM TEMPERATURE (C)": 65,
       "PRINT INTERVAL (MIN)": 5
     },
-    "operationalValueSummary": {
-      "INLET TEMPERATURE (\u00b0C)": {
-        "min": 27,
-        "max": 64
-      },
-      "OUTLET TEMPERATURE (\u00b0C)": {
-        "min": 20,
-        "max": 37
-      }
-    },
-    "operationalDetailValues": [
-      {
-        "time": "09/02/2026 19:30:01",
-        "inletTemp": 27,
-        "outletTemp": 25
-      },
-      {
-        "time": "09/02/2026 19:35:01",
-        "inletTemp": 35,
-        "outletTemp": 20
-      },
-      {
-        "time": "09/02/2026 19:48:45",
-        "inletTemp": 29,
-        "outletTemp": 23
-      },
-      {
-        "time": "09/02/2026 19:50:45",
-        "inletTemp": 48,
-        "outletTemp": 20
-      },
-      {
-        "time": "09/02/2026 19:51:21",
-        "inletTemp": 64,
-        "outletTemp": 21
-      },
-      {
-        "time": "09/02/2026 19:55:05",
-        "inletTemp": 55,
-        "outletTemp": 22
-      },
-      {
-        "time": "09/02/2026 20:00:05",
-        "inletTemp": 56,
-        "outletTemp": 23
-      },
-      {
-        "time": "09/02/2026 20:05:05",
-        "inletTemp": 52,
-        "outletTemp": 23
-      },
-      {
-        "time": "09/02/2026 20:10:05",
-        "inletTemp": 55,
-        "outletTemp": 23
-      },
-      {
-        "time": "09/02/2026 20:15:05",
-        "inletTemp": 51,
-        "outletTemp": 23
-      },
-      {
-        "time": "09/02/2026 20:20:05",
-        "inletTemp": 56,
-        "outletTemp": 23
-      },
-      {
-        "time": "09/02/2026 20:25:05",
-        "inletTemp": 51,
-        "outletTemp": 23
-      },
-      {
-        "time": "09/02/2026 20:30:05",
-        "inletTemp": 55,
-        "outletTemp": 23
-      },
-      {
-        "time": "09/02/2026 20:35:05",
-        "inletTemp": 52,
-        "outletTemp": 23
-      },
-      {
-        "time": "09/02/2026 22:40:11",
-        "inletTemp": 60,
-        "outletTemp": 30
-      },
-      {
-        "time": "09/02/2026 22:45:11",
-        "inletTemp": 63,
-        "outletTemp": 37
-      },
-      {
-        "time": "09/02/2026 22:45:11",
-        "inletTemp": 64,
-        "outletTemp": 37
-      },
-      {
-        "time": "09/02/2026 22:45:57",
-        "inletTemp": 63,
-        "outletTemp": 37
-      },
-      {
-        "time": "09/02/2026 22:46:13",
-        "inletTemp": 63,
-        "outletTemp": 37
-      }
-    ],
     "alarmSummary": [
       {
-        "alarmName": "PC AIR PRESSURE LOW",
-        "occurredTime": "08/02/2026 18:43:46",
-        "resolvedTime": "-",
-        "duration": "-"
+        "alarm_name": "PC AIR PRESSURE LOW",
+        "occurred_time": "30/09/2026 06:12:46",
+        "resolved_time": "30/09/2026 06:14:10",
+        "duration": "00:01:24",
+        "severity": "WARNING",
+        "alarmCode": "ALM-201"
       },
       {
-        "alarmName": "EARTH FAULT",
-        "occurredTime": "08/02/2026 18:44:55",
-        "resolvedTime": "-",
-        "duration": "-"
+        "alarm_name": "EARTH FAULT",
+        "occurred_time": "30/09/2026 06:44:55",
+        "resolved_time": "30/09/2026 06:45:15",
+        "duration": "00:00:20",
+        "severity": "CRITICAL",
+        "alarmCode": "ALM-202"
       }
     ],
     "auditTrail": [
       {
-        "dateTime": "09/02/2026 18:44:45",
-        "description": "BATCH START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "98204 (PB3 FBDC0220 Supervisor)"
+        "Date Time": "30/09/2026 05:35:10",
+        "Description": "Drying Cycle Initialized",
+        "Old Value": "Idle",
+        "New Value": "Preheating",
+        "Reason": "Batch Start",
+        "User Name": "11173 (PB1-Module-B (MB004) Operator)"
       },
       {
-        "dateTime": "09/02/2026 18:46:00",
-        "description": "AUTO CHARGING START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
+        "Date Time": "30/09/2026 06:00:00",
+        "Description": "Drying Cycle In Progress",
+        "Old Value": "-",
+        "New Value": "Drying",
+        "Reason": "Automated Phase",
+        "User Name": "11173 (PB1-Module-B (MB004) Operator)"
       },
       {
-        "dateTime": "09/02/2026 18:53:24",
-        "description": "AUTO CHARGING STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:01:56",
-        "description": "AUTO CHARGING START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:03:53",
-        "description": "AUTO CHARGING STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:30:01",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:35:01",
-        "description": "AUTO STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RAKING",
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:35:56",
-        "description": "PC SEAL VENT",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:48:35",
-        "description": "PC SEAL VENT",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:48:39",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:48:45",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:55:02",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 19:55:05",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 20:47:20",
-        "description": "AUTO STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RAKING",
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 20:48:34",
-        "description": "PC SEAL VENT",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 21:01:21",
-        "description": "PC SEAL VENT",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 21:01:26",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 21:01:28",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 21:07:44",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 21:07:45",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 21:49:31",
-        "description": "AUTO STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "RAKING",
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 21:50:39",
-        "description": "PC SEAL VENT",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:00:50",
-        "description": "PC SEAL VENT",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:00:52",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:01:01",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:06:08",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:06:09",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:07:30",
-        "description": "AUTO STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "LOD CHECK",
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:08:24",
-        "description": "PC SEAL VENT",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:34:33",
-        "description": "PC SEAL VENT",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:34:37",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:34:38",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:39:10",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:39:11",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:45:56",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:45:57",
-        "description": "AUTO START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:46:13",
-        "description": "AUTO STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "LOD CHECK",
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 22:46:54",
-        "description": "PC SEAL VENT",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 23:25:13",
-        "description": "PC SEAL VENT",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 23:25:18",
-        "description": "ACKNOWLEDGE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 23:26:01",
-        "description": "AUTO DISCHARGE START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 23:36:01",
-        "description": "AUTO DISCHARGE STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 23:37:03",
-        "description": "AUTO DISCHARGE START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 23:45:01",
-        "description": "AUTO DISCHARGE STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "96599 (PB3 FBDC0220 Operator)"
-      },
-      {
-        "dateTime": "09/02/2026 23:47:01",
-        "description": "BATCH END",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "98204 (PB3 FBDC0220 Supervisor)"
+        "Date Time": "30/09/2026 07:30:00",
+        "Description": "Drying Cycle Complete",
+        "Old Value": "Drying",
+        "New Value": "Cooling",
+        "Reason": "Process End",
+        "User Name": "191555 (PB1-Module-B (MB004) Supervisor)"
       }
     ]
   },
@@ -1361,157 +270,82 @@
     "category": "Octagonal Blender",
     "equipmentDetails": {
       "equipmentName": "OCTAGONAL BLENDER",
-      "equipmentId": "OCBC0222",
-      "make": "SAAN",
-      "area": "BLENDER2",
-      "block": "PB3"
+      "equipmentId": "MB005",
+      "assetId": "10095",
+      "make": "BECTOCHEM",
+      "model": "MITSUBISHI Fx3U 32 MR",
+      "area": "MODULE-B",
+      "block": "PB1"
     },
     "batchDetails": {
-      "batchNumber": "NL0026008",
-      "lotNumber": "01 of 05",
-      "productName": "Mirtazapine Tablets USP 5 mg",
-      "productCode": "STFS7000",
-      "recipeName": "STFS7000",
-      "batchSize": "900.000 Kg",
-      "startTime": "11/02/2026 09:04:55",
-      "endTime": "11/02/2026 11:02:36",
-      "batchDurationInHours": "01:57:41"
+      "batchNumber": "AGO0026015",
+      "lotNumber": "01",
+      "productName": "LAMOTRIGINE",
+      "productCode": "STGW2000",
+      "recipeName": "AGO0026015",
+      "batchSize": "248.640 Kg",
+      "startTime": "29/09/2026 23:27:38",
+      "endTime": "30/09/2026 00:48:20",
+      "batchDurationInHours": "01:20:42"
     },
     "userLoginLogout": [
       {
-        "userName": "91525 (PB3 OCBC0222 Supervisor)",
-        "dateTime": "11/02/2026 09:05:19",
+        "userName": "96365 (PB1-Module-B-Blender-Supervisor)",
+        "dateTime": "29/09/2026 23:27:41",
         "description": "Logout Sucessfully"
       },
       {
-        "userName": "25081 (PB3 OCBC0222 Operator)",
-        "dateTime": "11/02/2026 09:05:40",
+        "userName": "11173 (PB1-Module-B-Blender-Operator)",
+        "dateTime": "29/09/2026 23:29:56",
         "description": "Login"
       },
       {
-        "userName": "25081 (PB3 OCBC0222 Operator)",
-        "dateTime": "11/02/2026 11:02:10",
+        "userName": "11173 (PB1-Module-B-Blender-Operator)",
+        "dateTime": "30/09/2026 00:33:43",
         "description": "Logout Sucessfully"
       },
       {
-        "userName": "91525 (PB3 OCBC0222 Supervisor)",
-        "dateTime": "11/02/2026 11:02:31",
+        "userName": "191164 (PB1-Module-B-Blender-Supervisor)",
+        "dateTime": "30/09/2026 00:48:04",
         "description": "Login"
       }
     ],
     "parameterSettings": {
       "SELECT NUMBER OF MIXINGS": 2,
-      "FIRST MIXING TIME (MIN)": 15,
+      "FIRST MIXING TIME (MIN)": 10,
       "SECOND MIXING TIME (MIN)": 5,
       "THIRD MIXING TIME (MIN)": 0,
       "FOURTH MIXING TIME (MIN)": 0,
       "BLENDING SPEED (RPM)": 5,
-      "VACUUM ON TIME (MIN)": 100,
-      "PURGE ON TIME (Sec)": 5
+      "VACUUM ON TIME (MIN)": 1,
+      "PURGE ON TIME (Sec)": 0
     },
-    "operationalDetailValues": [
+    "alarmSummary": [
       {
-        "time": "11/02/2026 10:21:02",
-        "blenderStatus": "MIXING 1 STARTED",
-        "actualRpm": 5
-      },
-      {
-        "time": "11/02/2026 10:36:02",
-        "blenderStatus": "MIXING 1 COMPLETED",
-        "actualRpm": 5
-      },
-      {
-        "time": "11/02/2026 10:55:01",
-        "blenderStatus": "MIXING 2 STARTED",
-        "actualRpm": 5
-      },
-      {
-        "time": "11/02/2026 11:00:01",
-        "blenderStatus": "BLENDING OVER",
-        "actualRpm": 5
+        "alarm_name": "BLENDER GUARD OPEN",
+        "occurred_time": "30/09/2026 00:15:10",
+        "resolved_time": "30/09/2026 00:15:35",
+        "duration": "00:00:25",
+        "severity": "WARNING",
+        "alarmCode": "ALM-401"
       }
     ],
-    "alarmSummary": [],
     "auditTrail": [
       {
-        "dateTime": "11/02/2026 09:04:55",
-        "description": "BATCH START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "91525 (PB3 OCBC0222 Supervisor)"
+        "Date Time": "29/09/2026 23:30:00",
+        "Description": "Blender Auto Cycle Start",
+        "Old Value": "Stop",
+        "New Value": "Run",
+        "Reason": "Cycle Start",
+        "User Name": "11173 (PB1-Module-B-Blender-Operator)"
       },
       {
-        "dateTime": "11/02/2026 09:08:04",
-        "description": "CHARGE START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "25081 (PB3 OCBC0222 Operator)"
-      },
-      {
-        "dateTime": "11/02/2026 10:15:13",
-        "description": "CHARGE STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "25081 (PB3 OCBC0222 Operator)"
-      },
-      {
-        "dateTime": "11/02/2026 10:20:52",
-        "description": "BLEND START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "25081 (PB3 OCBC0222 Operator)"
-      },
-      {
-        "dateTime": "11/02/2026 10:21:02",
-        "description": "BLEND START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "25081 (PB3 OCBC0222 Operator)"
-      },
-      {
-        "dateTime": "11/02/2026 10:47:54",
-        "description": "CHARGE START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "25081 (PB3 OCBC0222 Operator)"
-      },
-      {
-        "dateTime": "11/02/2026 10:52:03",
-        "description": "CHARGE STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "25081 (PB3 OCBC0222 Operator)"
-      },
-      {
-        "dateTime": "11/02/2026 10:54:12",
-        "description": "BLEND START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "25081 (PB3 OCBC0222 Operator)"
-      },
-      {
-        "dateTime": "11/02/2026 10:55:01",
-        "description": "BLEND START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "25081 (PB3 OCBC0222 Operator)"
-      },
-      {
-        "dateTime": "11/02/2026 11:02:36",
-        "description": "BATCH END",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "91525 (PB3 OCBC0222 Supervisor)"
+        "Date Time": "30/09/2026 00:40:00",
+        "Description": "Blending Stage Complete",
+        "Old Value": "Run",
+        "New Value": "Stop",
+        "Reason": "Timer Elapsed",
+        "User Name": "191164 (PB1-Module-B-Blender-Supervisor)"
       }
     ]
   },
@@ -1519,936 +353,677 @@
     "category": "Auto Coater",
     "equipmentDetails": {
       "equipmentName": "AUTO COATER",
-      "equipmentId": "COATC0223",
-      "make": "SAAN",
-      "area": "COATING",
-      "block": "PB3"
+      "equipmentId": "MB041",
+      "assetId": "10141",
+      "make": "GANSONS",
+      "model": "MITSUBISHI Fx3U 32 MR",
+      "area": "COATING MODULE-B",
+      "block": "PB1"
     },
     "batchDetails": {
-      "batchNumber": "NL0026008",
-      "lotNumber": "01 of 05",
-      "productName": "Mirtazapine Tablets USP 5 mg",
-      "productCode": "STFS7000",
-      "recipeName": "STFS7000",
-      "batchSize": "900.000 Kg",
-      "startTime": "12/02/2026 08:30:00",
-      "endTime": "12/02/2026 12:45:30",
-      "batchDurationInHours": "04:15:30"
+      "batchNumber": "PED26009",
+      "lotNumber": "01",
+      "productName": "PAROXETINE USP 40 mg",
+      "productCode": "STPA1D00",
+      "recipeName": "PAROXE40",
+      "batchSize": "625000 Tablets",
+      "startTime": "20/09/2026 16:45:03",
+      "endTime": "21/09/2026 00:36:38",
+      "batchDurationInHours": "07:51:35"
     },
     "userLoginLogout": [
       {
-        "userName": "91525 (PB3 COATC0223 Supervisor)",
-        "dateTime": "12/02/2026 08:30:00",
+        "userName": "191257 (PB1-Module-B-Supervisor)",
+        "dateTime": "20/09/2026 16:45:12",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "29995 (PB1-Module-B-Operator)",
+        "dateTime": "20/09/2026 16:47:01",
         "description": "Login"
       },
       {
-        "userName": "8961 (PB3 COATC0223 Operator)",
-        "dateTime": "12/02/2026 08:31:15",
+        "userName": "29995 (PB1-Module-B-Operator)",
+        "dateTime": "21/09/2026 00:25:30",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "191164 (PB1-Module-B-Supervisor)",
+        "dateTime": "21/09/2026 00:30:15",
         "description": "Login"
-      },
-      {
-        "userName": "8961 (PB3 COATC0223 Operator)",
-        "dateTime": "12/02/2026 12:40:00",
-        "description": "Logout Successfully"
-      },
-      {
-        "userName": "91525 (PB3 COATC0223 Supervisor)",
-        "dateTime": "12/02/2026 12:45:30",
-        "description": "Logout Successfully"
       }
     ],
     "parameterSettings": {
-      "PRE_HEATING": {
-        "INLET AIR TEMP SET (\u00b0C)": 65,
-        "BED TEMP SET (\u00b0C)": 42,
-        "PAN SPEED SET (RPM)": 3,
-        "DRYING TIME (MIN)": 15
-      },
-      "SPRAYING_CYCLE": {
-        "INLET AIR TEMP SET (\u00b0C)": 65,
-        "BED TEMP SET (\u00b0C)": 44,
-        "PAN SPEED SET (RPM)": 8,
-        "SPRAY RATE SET (G/MIN)": 120,
-        "ATOMIZING AIR PRESSURE (BAR)": 2.5,
-        "PATTERN AIR PRESSURE (BAR)": 2.0,
-        "PROCESS TIME (MIN)": 180
-      },
-      "POST_DRYING": {
-        "INLET AIR TEMP SET (\u00b0C)": 50,
-        "BED TEMP SET (\u00b0C)": 40,
-        "PAN SPEED SET (RPM)": 3,
-        "DRYING TIME (MIN)": 30
-      }
+      "INLET AIR TEMP SET (C)": 60,
+      "BED TEMP SET (C)": 44,
+      "PAN SPEED SET (RPM)": 2,
+      "SPRAY RATE SET (G/MIN)": 120,
+      "ATOMIZING AIR PRESSURE (BAR)": 2.5,
+      "PATTERN AIR PRESSURE (BAR)": 2.0,
+      "PROCESS TIME (MIN)": 450
     },
-    "operationalValueSummary": {
-      "INLET AIR TEMP (\u00b0C) MIN": 48,
-      "INLET AIR TEMP (\u00b0C) MAX": 66,
-      "BED TEMP (\u00b0C) MIN": 38,
-      "BED TEMP (\u00b0C) MAX": 46,
-      "PAN SPEED (RPM) MIN": 3,
-      "PAN SPEED (RPM) MAX": 8,
-      "SPRAY RATE (G/MIN) MIN": 0,
-      "SPRAY RATE (G/MIN) MAX": 125
-    },
-    "operationalDetailValues": [
-      {
-        "time": "12/02/2026 08:35:00",
-        "status": "PRE-HEATING STARTED",
-        "inletTemp": 52.0,
-        "bedTemp": 38.0,
-        "panSpeed": 3.0,
-        "sprayRate": 0.0,
-        "atomAirPress": 0.0
-      },
-      {
-        "time": "12/02/2026 08:50:00",
-        "status": "PRE-HEATING COMPLETED",
-        "inletTemp": 65.0,
-        "bedTemp": 42.0,
-        "panSpeed": 3.0,
-        "sprayRate": 0.0,
-        "atomAirPress": 0.0
-      },
-      {
-        "time": "12/02/2026 08:55:00",
-        "status": "SPRAYING CYCLE 1 START",
-        "inletTemp": 65.0,
-        "bedTemp": 43.5,
-        "panSpeed": 8.0,
-        "sprayRate": 118.0,
-        "atomAirPress": 2.5
-      },
-      {
-        "time": "12/02/2026 09:55:00",
-        "status": "SPRAYING RUNNING",
-        "inletTemp": 65.5,
-        "bedTemp": 44.0,
-        "panSpeed": 8.0,
-        "sprayRate": 120.0,
-        "atomAirPress": 2.5
-      },
-      {
-        "time": "12/02/2026 11:55:00",
-        "status": "SPRAYING COMPLETED",
-        "inletTemp": 64.8,
-        "bedTemp": 44.2,
-        "panSpeed": 8.0,
-        "sprayRate": 120.0,
-        "atomAirPress": 2.5
-      },
-      {
-        "time": "12/02/2026 12:00:00",
-        "status": "POST DRYING START",
-        "inletTemp": 50.0,
-        "bedTemp": 41.0,
-        "panSpeed": 3.0,
-        "sprayRate": 0.0,
-        "atomAirPress": 0.0
-      },
-      {
-        "time": "12/02/2026 12:30:00",
-        "status": "POST DRYING COMPLETED",
-        "inletTemp": 48.0,
-        "bedTemp": 38.5,
-        "panSpeed": 3.0,
-        "sprayRate": 0.0,
-        "atomAirPress": 0.0
-      }
-    ],
     "alarmSummary": [
       {
-        "alarmName": "INLET AIR TEMP HIGH",
-        "occurredTime": "23/02/2026 12:14:46",
-        "resolvedTime": "23/02/2026 12:14:58",
-        "duration": "00:00:12"
+        "alarm_name": "INLET AIR TEMP HIGH",
+        "occurred_time": "20/09/2026 19:14:46",
+        "resolved_time": "20/09/2026 19:14:58",
+        "duration": "00:00:12",
+        "severity": "CRITICAL",
+        "alarmCode": "ALM-301"
       }
     ],
     "auditTrail": [
       {
-        "dateTime": "23/02/2026 11:36:50",
-        "description": "BATCH START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "98204 (PB3 COTC0226 Supervisor)"
-      },
-      {
-        "dateTime": "23/02/2026 11:37:49",
-        "description": "RETRACTABLE ARM OUT",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:38:09",
-        "description": "TABLET LOADING START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:39:17",
-        "description": "EXHAUST DAMPER OPENING",
-        "oldValue": "60.0",
-        "newValue": "40.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:53:24",
-        "description": "CONTROL PANEL CONDENSATE SET",
-        "oldValue": "80",
-        "newValue": "319",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:53:32",
-        "description": "TABLET LOADING END",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:55:34",
-        "description": "DE DUSTING START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:56:34",
-        "description": "DE DUSTING OVER",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:56:44",
-        "description": "DOSING",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:56:58",
-        "description": "MANUAL MODE DOSING PUMP RPM",
-        "oldValue": "25.0",
-        "newValue": "16.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:57:11",
-        "description": "GUN VALIDATION",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 11:58:11",
-        "description": "GUN VALIDATION",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:01:04",
-        "description": "GUN VALIDATION",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:02:04",
-        "description": "GUN VALIDATION",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:08:43",
-        "description": "GUN VALIDATION",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:09:43",
-        "description": "GUN VALIDATION",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:12:09",
-        "description": "DOSING PUMP START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:12:12",
-        "description": "DOSING PUMP STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:12:16",
-        "description": "DOSING PUMP STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:12:33",
-        "description": "RETRACTABLE ARM IN",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:13:14",
-        "description": "MACHNE MODE AUTO",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:13:20",
-        "description": "DOSING",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:13:23",
-        "description": "COATING START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:14:53",
-        "description": "EXHAUST DAMPER OPENING",
-        "oldValue": "40.0",
-        "newValue": "100.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:14:57",
-        "description": "INLET DAMPER OPENING",
-        "oldValue": "95.0",
-        "newValue": "70.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:19:23",
-        "description": "PRE JOG STARTED",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:29:23",
-        "description": "PRE JOG OVER",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:35:07",
-        "description": "CONDENSATE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:43:08",
-        "description": "CONDENSATE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:46:24",
-        "description": "AGITATOR SOLUTION",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:50:44",
-        "description": "CONTROL PANEL CONDENSATE SET",
-        "oldValue": "319",
-        "newValue": "60",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:55:39",
-        "description": "CONTROL PANEL CONDENSATE SET",
-        "oldValue": "60",
-        "newValue": "100",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:56:41",
-        "description": "CONTROL PANEL CONDENSATE SET",
-        "oldValue": "100",
-        "newValue": "10",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:56:46",
-        "description": "DOSING",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 12:58:01",
-        "description": "DOSING PUMP SET SPEED",
-        "oldValue": "18.0",
-        "newValue": "17.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 13:37:13",
-        "description": "PAN SPEED",
-        "oldValue": "2.5",
-        "newValue": "3.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 13:55:17",
-        "description": "PAN SPEED",
-        "oldValue": "3.0",
-        "newValue": "3.5",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 14:40:28",
-        "description": "PAN SPEED",
-        "oldValue": "3.5",
-        "newValue": "4.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 15:30:37",
-        "description": "DOSING PUMP SET SPEED",
-        "oldValue": "17.0",
-        "newValue": "15.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 15:30:46",
-        "description": "INLET DAMPER OPENING",
-        "oldValue": "70.0",
-        "newValue": "60.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:01:42",
-        "description": "PAN SPEED",
-        "oldValue": "4.0",
-        "newValue": "5.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:01:50",
-        "description": "DOSING PUMP SET SPEED",
-        "oldValue": "15.0",
-        "newValue": "14.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:01:56",
-        "description": "CONTROL PANEL CONDENSATE SET",
-        "oldValue": "10",
-        "newValue": "1",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:02:08",
-        "description": "CONTROL PANEL CONDENSATE SET",
-        "oldValue": "1",
-        "newValue": "60",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:53:13",
-        "description": "CONTROL PANEL CONDENSATE SET",
-        "oldValue": "60",
-        "newValue": "10",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:53:23",
-        "description": "PAN SPEED",
-        "oldValue": "5.0",
-        "newValue": "4.5",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:53:28",
-        "description": "DOSING PUMP SET SPEED",
-        "oldValue": "14.0",
-        "newValue": "12.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:53:30",
-        "description": "PAN SPEED",
-        "oldValue": "4.5",
-        "newValue": "4.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:53:37",
-        "description": "DOSING PUMP SET SPEED",
-        "oldValue": "12.0",
-        "newValue": "11.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:54:13",
-        "description": "DOSING PUMP SET SPEED",
-        "oldValue": "11.0",
-        "newValue": "10.5",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:54:26",
-        "description": "INLET DAMPER OPENING",
-        "oldValue": "60.0",
-        "newValue": "50.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 16:55:00",
-        "description": "PAN SPEED",
-        "oldValue": "4.0",
-        "newValue": "3.5",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:26:04",
-        "description": "DOSING",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:26:08",
-        "description": "AUTO STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": "TABLET BUILD UP WEIGHT REACHED",
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:26:27",
-        "description": "AGITATOR SOLUTION",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:28:03",
-        "description": "POST JOG ON/OFF",
-        "oldValue": "OFF",
-        "newValue": "ON",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:28:23",
-        "description": "POST JOG STARTED",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:38:23",
-        "description": "POST JOG OVER",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:38:45",
-        "description": "POST JOG ON/OFF",
-        "oldValue": "ON",
-        "newValue": "OFF",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:41:46",
-        "description": "RETRACTABLE ARM OUT",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:42:03",
-        "description": "MACHNE MODE MANUAL",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:42:12",
-        "description": "EXHAUST DAMPER OPENING",
-        "oldValue": "100.0",
-        "newValue": "50.0",
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 17:42:18",
-        "description": "EXHAUST BLOWER START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "24159 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 18:10:49",
-        "description": "PAN MOTOR START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 18:10:55",
-        "description": "PAN MOTOR STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 18:46:08",
-        "description": "EXHAUST BLOWER STOP",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 18:46:19",
-        "description": "UNLOADING START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 18:46:33",
-        "description": "EXHAUST DAMPER OPENING",
-        "oldValue": "50.0",
-        "newValue": "40.0",
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 18:46:41",
-        "description": "MANUAL MODE PAN MOTOR RPM",
-        "oldValue": "1.0",
-        "newValue": "2.0",
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 19:02:47",
-        "description": "PAN PAUSE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 19:04:57",
-        "description": "PAN CONTINUE",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 19:15:56",
-        "description": "UNLOADING END",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 19:19:31",
-        "description": "RETRACTABLE ARM IN",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "28780 (PB3 COTC0226 Operator)"
-      },
-      {
-        "dateTime": "23/02/2026 19:53:08",
-        "description": "BATCH END",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "99728 (PB3 COTC0226 Supervisor)"
+        "Date Time": "20/09/2026 16:48:00",
+        "Description": "Coating Spray Started",
+        "Old Value": "Preheating",
+        "New Value": "Spraying",
+        "Reason": "Bed Temp Reached",
+        "User Name": "29995 (PB1-Module-B-Operator)"
+      },
+      {
+        "Date Time": "21/09/2026 00:20:00",
+        "Description": "Coating Spray Completed",
+        "Old Value": "Spraying",
+        "New Value": "Drying",
+        "Reason": "Suspension Depleted",
+        "User Name": "191257 (PB1-Module-B-Supervisor)"
       }
     ]
   },
-  "CIP": {
-    "category": "Clean-In-Place",
+  "COMP": {
+    "category": "Compression Machine",
     "equipmentDetails": {
-      "equipmentName": "CLEAN IN PLACE SYSTEM",
-      "equipmentId": "CIPC0224",
-      "make": "SAAN",
-      "area": "WASHING",
-      "block": "PB3"
+      "equipmentName": "Compression Machine (SEJONG 49D)",
+      "equipmentId": "MB040",
+      "assetId": "10040",
+      "make": "SEJONG",
+      "model": "OMRON Sysmac CJ1G CPU 44H",
+      "area": "MODULE-B",
+      "block": "PB1"
     },
     "batchDetails": {
-      "batchNumber": "CIP0026009",
-      "lotNumber": "01 of 01",
-      "productName": "CIP Cleaning Validation Cycle",
-      "productCode": "CIP_STD_01",
-      "recipeName": "CIP_STD_01",
-      "batchSize": "1200.000 L",
-      "startTime": "13/02/2026 06:00:00",
-      "endTime": "13/02/2026 08:30:00",
-      "batchDurationInHours": "02:30:00"
+      "batchNumber": "ADNC26011",
+      "lotNumber": "01",
+      "productName": "Amisulpride 200mg",
+      "productCode": "STFS7000",
+      "recipeName": "SEJONG-49D",
+      "batchSize": "500000 Tabs",
+      "startTime": "01/09/2026 08:00:00",
+      "endTime": "01/09/2026 12:15:00",
+      "batchDurationInHours": "04:15:00"
     },
     "userLoginLogout": [
       {
-        "userName": "91525 (PB3 CIPC0224 Supervisor)",
-        "dateTime": "13/02/2026 06:00:00",
+        "userName": "10402 (PB1-Compression-Supervisor)",
+        "dateTime": "01/09/2026 07:55:00",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "10401 (PB1-Compression-Operator)",
+        "dateTime": "01/09/2026 08:02:10",
         "description": "Login"
       },
       {
-        "userName": "8961 (PB3 CIPC0224 Operator)",
-        "dateTime": "13/02/2026 06:01:00",
+        "userName": "10401 (PB1-Compression-Operator)",
+        "dateTime": "01/09/2026 12:05:00",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "10402 (PB1-Compression-Supervisor)",
+        "dateTime": "01/09/2026 12:10:00",
         "description": "Login"
-      },
-      {
-        "userName": "8961 (PB3 CIPC0224 Operator)",
-        "dateTime": "13/02/2026 08:25:00",
-        "description": "Logout Successfully"
-      },
-      {
-        "userName": "91525 (PB3 CIPC0224 Supervisor)",
-        "dateTime": "13/02/2026 08:30:00",
-        "description": "Logout Successfully"
       }
     ],
     "parameterSettings": {
-      "PRE_RINSE": {
-        "PRE-RINSE TIME (MIN)": 15,
-        "WATER TEMPERATURE (\u00b0C)": 25,
-        "SUPPLY FLOW RATE (LPM)": 150
-      },
-      "DETERGENT_WASH": {
-        "WASH TIME (MIN)": 30,
-        "WASH TEMPERATURE (\u00b0C)": 75,
-        "DETERGENT CONCENTRATION (%)": 2.0,
-        "RECIRCULATION PRESSURE (BAR)": 3.0
-      },
-      "FINAL_RINSE_AND_DRY": {
-        "FINAL RINSE TIME (MIN)": 20,
-        "WATER CONDUCTIVITY LIMIT (\u00b5S/cm)": 1.3,
-        "AIR BLOW DRY TIME (MIN)": 15
-      }
+      "TURRET SPEED SET (RPM)": 30,
+      "FEEDER SPEED SET (RPM)": 13,
+      "TARGET QUANTITY (TABS)": 500000,
+      "MAIN COMPRESSION FORCE SET (KN)": 19.5,
+      "PRE COMPRESSION FORCE SET (KN)": 2.3,
+      "AIR PRESSURE LOW LIMIT (KPA)": 400,
+      "HYDRAULIC PRESSURE (MPA)": 7.5
     },
-    "operationalValueSummary": {
-      "WASH TEMPERATURE (\u00b0C) MIN": 24,
-      "WASH TEMPERATURE (\u00b0C) MAX": 78,
-      "SUPPLY FLOW RATE (LPM) MIN": 0,
-      "SUPPLY FLOW RATE (LPM) MAX": 160,
-      "SUPPLY PRESSURE (BAR) MIN": 0,
-      "SUPPLY PRESSURE (BAR) MAX": 3.5,
-      "FINAL RINSE CONDUCTIVITY (\u00b5S/cm)": 0.85
-    },
-    "operationalDetailValues": [
-      {
-        "time": "13/02/2026 06:05:00",
-        "status": "PRE-RINSE START",
-        "washTemp": 25.0,
-        "flowRate": 150.0,
-        "pressure": 2.5,
-        "conductivity": 15.0
-      },
-      {
-        "time": "13/02/2026 06:20:00",
-        "status": "PRE-RINSE COMPLETED",
-        "washTemp": 26.0,
-        "flowRate": 152.0,
-        "pressure": 2.5,
-        "conductivity": 8.0
-      },
-      {
-        "time": "13/02/2026 06:25:00",
-        "status": "DETERGENT WASH START",
-        "washTemp": 75.0,
-        "flowRate": 140.0,
-        "pressure": 3.0,
-        "conductivity": 450.0
-      },
-      {
-        "time": "13/02/2026 06:55:00",
-        "status": "DETERGENT WASH COMPLETED",
-        "washTemp": 76.5,
-        "flowRate": 142.0,
-        "pressure": 3.0,
-        "conductivity": 460.0
-      },
-      {
-        "time": "13/02/2026 07:00:00",
-        "status": "INTERMEDIATE RINSE START",
-        "washTemp": 45.0,
-        "flowRate": 150.0,
-        "pressure": 2.8,
-        "conductivity": 55.0
-      },
-      {
-        "time": "13/02/2026 07:30:00",
-        "status": "FINAL WFI RINSE START",
-        "washTemp": 80.0,
-        "flowRate": 150.0,
-        "pressure": 2.8,
-        "conductivity": 0.85
-      },
-      {
-        "time": "13/02/2026 08:00:00",
-        "status": "AIR BLOW DRY START",
-        "washTemp": 60.0,
-        "flowRate": 0.0,
-        "pressure": 1.5,
-        "conductivity": 0.85
-      },
-      {
-        "time": "13/02/2026 08:25:00",
-        "status": "CIP CYCLE COMPLETED",
-        "washTemp": 30.0,
-        "flowRate": 0.0,
-        "pressure": 0.0,
-        "conductivity": 0.85
-      }
-    ],
     "alarmSummary": [
       {
-        "alarmName": "DETERGENT DOSING FLOW LOW",
-        "occurredTime": "13/02/2026 06:28:10",
-        "resolvedTime": "13/02/2026 06:30:00",
-        "duration": "00:01:50"
+        "alarm_name": "Low Air Pressure",
+        "occurred_time": "01/09/2026 09:15:00",
+        "resolved_time": "01/09/2026 09:16:30",
+        "duration": "00:01:30",
+        "severity": "WARNING",
+        "alarmCode": "ALM-501"
       }
     ],
     "auditTrail": [
       {
-        "dateTime": "13/02/2026 06:00:00",
-        "description": "CIP CYCLE START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "91525 (PB3 CIPC0224 Supervisor)"
+        "Date Time": "01/09/2026 08:05:00",
+        "Description": "Press Auto Run Initiated",
+        "Old Value": "Idle",
+        "New Value": "Run",
+        "Reason": "Production Batch Started",
+        "User Name": "10401 (PB1-Compression-Operator)"
       },
       {
-        "dateTime": "13/02/2026 06:05:00",
-        "description": "PRE-RINSE START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 CIPC0224 Operator)"
+        "Date Time": "01/09/2026 12:00:00",
+        "Description": "Target Count Reached",
+        "Old Value": "Run",
+        "New Value": "Stop",
+        "Reason": "Batch Completed",
+        "User Name": "10402 (PB1-Compression-Supervisor)"
+      }
+    ]
+  },
+  "MB003": {
+    "category": "Rapid Mixer Granulator",
+    "equipmentDetails": {
+      "equipmentName": "RAPID MIXER GRANULATOR",
+      "equipmentId": "MB003",
+      "assetId": "10094",
+      "make": "BECTOCHEM",
+      "model": "MITSUBISHI FX5U 32 MR",
+      "area": "MODULE-B",
+      "block": "PB1"
+    },
+    "batchDetails": {
+      "batchNumber": "AGO0026016",
+      "lotNumber": "01",
+      "productName": "LAMOTRIGINE",
+      "productCode": "STGW2000",
+      "recipeName": "AGO",
+      "batchSize": "248.640 Kg",
+      "startTime": "30/09/2026 02:46:35",
+      "endTime": "30/09/2026 05:17:36",
+      "batchDurationInHours": "02:31:01"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "96365 (PB1-RMG (MB003) Supervisor)",
+        "dateTime": "30/09/2026 02:46:37",
+        "description": "Logout Sucessfully"
       },
       {
-        "dateTime": "13/02/2026 06:25:00",
-        "description": "DETERGENT WASH START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 CIPC0224 Operator)"
+        "userName": "96828 (PB1-RMG (MB003) Operator)",
+        "dateTime": "30/09/2026 02:53:34",
+        "description": "Login"
       },
       {
-        "dateTime": "13/02/2026 07:30:00",
-        "description": "FINAL RINSE START",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "8961 (PB3 CIPC0224 Operator)"
+        "userName": "96828 (PB1-RMG (MB003) Operator)",
+        "dateTime": "30/09/2026 03:18:30",
+        "description": "Logout Sucessfully"
       },
       {
-        "dateTime": "13/02/2026 08:00:00",
-        "description": "FINAL RINSE PASS (0.85 \u00b5S/cm)",
-        "oldValue": null,
-        "newValue": "PASS",
-        "reason": "CONDUCTIVITY ACCEPTABLE",
-        "userName": "8961 (PB3 CIPC0224 Operator)"
+        "userName": "96828 (PB1-RMG (MB003) Operator)",
+        "dateTime": "30/09/2026 03:22:15",
+        "description": "Login"
       },
       {
-        "dateTime": "13/02/2026 08:30:00",
-        "description": "CIP CYCLE END",
-        "oldValue": null,
-        "newValue": null,
-        "reason": null,
-        "userName": "91525 (PB3 CIPC0224 Supervisor)"
+        "userName": "96828 (PB1-RMG (MB003) Operator)",
+        "dateTime": "30/09/2026 05:15:20",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "191555 (PB1-RMG (MB003) Supervisor)",
+        "dateTime": "30/09/2026 05:16:10",
+        "description": "Login"
+      }
+    ],
+    "parameterSettings": {
+      "dryCycle1": {
+        "DRY CYCLE1 IMPELLER SLOW SET (Sec)": 600,
+        "DRY CYCLE1 IMPELLER FAST SET (Sec)": 0,
+        "DRY CYCLE1 CHOPPER DELAY (Sec)": 0,
+        "DRY CYCLE1 CHOPPER SLOW SET (Sec)": 0,
+        "DRY CYCLE1 CHOPPER FAST SET (Sec)": 0
+      },
+      "wetCycle1": {
+        "WET CYCLE1 IMPELLER SLOW SET (Sec)": 150,
+        "WET CYCLE1 IMPELLER FAST SET (Sec)": 0,
+        "WET CYCLE1 CHOPPER DELAY (Sec)": 0,
+        "WET CYCLE1 CHOPPER SLOW SET (Sec)": 0,
+        "WET CYCLE1 CHOPPER FAST SET (Sec)": 0,
+        "WET CYCLE1 PUMP1 ON DELAY (Sec)": 0,
+        "WET CYCLE1 PUMP1 SET (Sec)": 150,
+        "WET CYCLE1 PUMP1 RPM": 60
+      },
+      "wetCycle2": {
+        "WET CYCLE2 IMPELLER SLOW SET (Sec)": 60,
+        "WET CYCLE2 IMPELLER FAST SET (Sec)": 0,
+        "WET CYCLE2 CHOPPER DELAY (Sec)": 0,
+        "WET CYCLE2 CHOPPER SLOW SET (Sec)": 60,
+        "WET CYCLE2 CHOPPER FAST SET (Sec)": 0,
+        "WET CYCLE2 PUMP1 ON DELAY (Sec)": 0,
+        "WET CYCLE2 PUMP1 SET (Sec)": 0,
+        "WET CYCLE2 PUMP1 RPM": 0
+      },
+      "wetCycle3": {
+        "WET CYCLE3 IMPELLER SLOW SET (Sec)": 0,
+        "WET CYCLE3 IMPELLER FAST SET (Sec)": 30,
+        "WET CYCLE3 CHOPPER DELAY (Sec)": 0,
+        "WET CYCLE3 CHOPPER SLOW SET (Sec)": 0,
+        "WET CYCLE3 CHOPPER FAST SET (Sec)": 30,
+        "WET CYCLE3 PUMP1 ON DELAY (Sec)": 0,
+        "WET CYCLE3 PUMP1 SET (Sec)": 0,
+        "WET CYCLE3 PUMP1 RPM": 0
+      },
+      "unloadingParameters": {
+        "IMPELLER": "SLOW",
+        "CHOPPER": "SLOW"
+      }
+    },
+    "alarmSummary": [
+      {
+        "alarm_name": "DISCHARGE VALVE CLOSE FAIL",
+        "occurred_time": "30/09/2026 03:47:04",
+        "resolved_time": "30/09/2026 04:01:32",
+        "duration": "00:14:28",
+        "severity": "CRITICAL",
+        "alarmCode": "ALM-101"
+      },
+      {
+        "alarm_name": "LID OPENED",
+        "occurred_time": "30/09/2026 04:14:45",
+        "resolved_time": "30/09/2026 04:21:23",
+        "duration": "00:06:38",
+        "severity": "WARNING",
+        "alarmCode": "ALM-102"
+      },
+      {
+        "alarm_name": "DISCHARGE VALVE CLOSE FAIL",
+        "occurred_time": "30/09/2026 05:03:08",
+        "resolved_time": "30/09/2026 05:03:39",
+        "duration": "00:00:31",
+        "severity": "CRITICAL",
+        "alarmCode": "ALM-103"
+      }
+    ],
+    "auditTrail": [
+      {
+        "Date Time": "30/09/2026 02:46:40",
+        "Description": "Auto Mode Selected",
+        "Old Value": "Manual",
+        "New Value": "Auto",
+        "Reason": "Batch Start",
+        "User Name": "96828 (PB1-RMG (MB003) Operator)"
+      },
+      {
+        "Date Time": "30/09/2026 02:50:10",
+        "Description": "Recipe Loaded: AGO",
+        "Old Value": "-",
+        "New Value": "AGO",
+        "Reason": "Recipe Execution",
+        "User Name": "96828 (PB1-RMG (MB003) Operator)"
+      },
+      {
+        "Date Time": "30/09/2026 03:15:00",
+        "Description": "Dry Mix Cycle Completed",
+        "Old Value": "Running",
+        "New Value": "Complete",
+        "Reason": "Process Completed",
+        "User Name": "96828 (PB1-RMG (MB003) Operator)"
+      },
+      {
+        "Date Time": "30/09/2026 04:30:00",
+        "Description": "Binder Addition Verified",
+        "Old Value": "-",
+        "New Value": "Done",
+        "Reason": "Quality Check",
+        "User Name": "96365 (PB1-RMG (MB003) Supervisor)"
+      },
+      {
+        "Date Time": "30/09/2026 05:10:00",
+        "Description": "Granulation Completed",
+        "Old Value": "Running",
+        "New Value": "Complete",
+        "Reason": "Stage End",
+        "User Name": "96828 (PB1-RMG (MB003) Operator)"
+      }
+    ]
+  },
+  "MB004": {
+    "category": "Fluid Bed Dryer",
+    "equipmentDetails": {
+      "equipmentName": "FLUID BED DRIER",
+      "equipmentId": "MB004",
+      "assetId": "10110",
+      "make": "ALLIANCE",
+      "model": "MITSUBISHI Fx5U 32 MR",
+      "area": "MODULE-B",
+      "block": "PB1"
+    },
+    "batchDetails": {
+      "batchNumber": "AGO0026016",
+      "lotNumber": "1B",
+      "productName": "LAMOTRIGINE",
+      "productCode": "STGW2000",
+      "recipeName": "AGO",
+      "batchSize": "248.640 Kg",
+      "startTime": "30/09/2026 05:34:49",
+      "endTime": "30/09/2026 07:46:43",
+      "batchDurationInHours": "02:11:54"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "191555 (PB1-Module-B (MB004) Supervisor)",
+        "dateTime": "30/09/2026 05:34:55",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "11173 (PB1-Module-B (MB004) Operator)",
+        "dateTime": "30/09/2026 05:44:24",
+        "description": "Login"
+      },
+      {
+        "userName": "11173 (PB1-Module-B (MB004) Operator)",
+        "dateTime": "30/09/2026 07:40:10",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "191164 (PB1-Module-B (MB004) Supervisor)",
+        "dateTime": "30/09/2026 07:42:00",
+        "description": "Login"
+      }
+    ],
+    "parameterSettings": {
+      "PROCESS TIME (MIN)": 500,
+      "AIR DRY TIME (MIN)": 5,
+      "COOLING TIME (MIN)": 0,
+      "SHAKE INTERVAL (MIN)": 10,
+      "SHAKE DURATION (SEC)": 30,
+      "END SHAKE TIME (SEC)": 60,
+      "INLET TEMPERATURE (C)": 60,
+      "EXHAUST TEMPERATURE (C)": 50,
+      "INLET ALARM TEMPERATURE (C)": 65,
+      "PRINT INTERVAL (MIN)": 5
+    },
+    "alarmSummary": [
+      {
+        "alarm_name": "PC AIR PRESSURE LOW",
+        "occurred_time": "30/09/2026 06:12:46",
+        "resolved_time": "30/09/2026 06:14:10",
+        "duration": "00:01:24",
+        "severity": "WARNING",
+        "alarmCode": "ALM-201"
+      },
+      {
+        "alarm_name": "EARTH FAULT",
+        "occurred_time": "30/09/2026 06:44:55",
+        "resolved_time": "30/09/2026 06:45:15",
+        "duration": "00:00:20",
+        "severity": "CRITICAL",
+        "alarmCode": "ALM-202"
+      }
+    ],
+    "auditTrail": [
+      {
+        "Date Time": "30/09/2026 05:35:10",
+        "Description": "Drying Cycle Initialized",
+        "Old Value": "Idle",
+        "New Value": "Preheating",
+        "Reason": "Batch Start",
+        "User Name": "11173 (PB1-Module-B (MB004) Operator)"
+      },
+      {
+        "Date Time": "30/09/2026 06:00:00",
+        "Description": "Drying Cycle In Progress",
+        "Old Value": "-",
+        "New Value": "Drying",
+        "Reason": "Automated Phase",
+        "User Name": "11173 (PB1-Module-B (MB004) Operator)"
+      },
+      {
+        "Date Time": "30/09/2026 07:30:00",
+        "Description": "Drying Cycle Complete",
+        "Old Value": "Drying",
+        "New Value": "Cooling",
+        "Reason": "Process End",
+        "User Name": "191555 (PB1-Module-B (MB004) Supervisor)"
+      }
+    ]
+  },
+  "MB005": {
+    "category": "Octagonal Blender",
+    "equipmentDetails": {
+      "equipmentName": "OCTAGONAL BLENDER",
+      "equipmentId": "MB005",
+      "assetId": "10095",
+      "make": "BECTOCHEM",
+      "model": "MITSUBISHI Fx3U 32 MR",
+      "area": "MODULE-B",
+      "block": "PB1"
+    },
+    "batchDetails": {
+      "batchNumber": "AGO0026015",
+      "lotNumber": "01",
+      "productName": "LAMOTRIGINE",
+      "productCode": "STGW2000",
+      "recipeName": "AGO0026015",
+      "batchSize": "248.640 Kg",
+      "startTime": "29/09/2026 23:27:38",
+      "endTime": "30/09/2026 00:48:20",
+      "batchDurationInHours": "01:20:42"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "96365 (PB1-Module-B-Blender-Supervisor)",
+        "dateTime": "29/09/2026 23:27:41",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "11173 (PB1-Module-B-Blender-Operator)",
+        "dateTime": "29/09/2026 23:29:56",
+        "description": "Login"
+      },
+      {
+        "userName": "11173 (PB1-Module-B-Blender-Operator)",
+        "dateTime": "30/09/2026 00:33:43",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "191164 (PB1-Module-B-Blender-Supervisor)",
+        "dateTime": "30/09/2026 00:48:04",
+        "description": "Login"
+      }
+    ],
+    "parameterSettings": {
+      "SELECT NUMBER OF MIXINGS": 2,
+      "FIRST MIXING TIME (MIN)": 10,
+      "SECOND MIXING TIME (MIN)": 5,
+      "THIRD MIXING TIME (MIN)": 0,
+      "FOURTH MIXING TIME (MIN)": 0,
+      "BLENDING SPEED (RPM)": 5,
+      "VACUUM ON TIME (MIN)": 1,
+      "PURGE ON TIME (Sec)": 0
+    },
+    "alarmSummary": [
+      {
+        "alarm_name": "BLENDER GUARD OPEN",
+        "occurred_time": "30/09/2026 00:15:10",
+        "resolved_time": "30/09/2026 00:15:35",
+        "duration": "00:00:25",
+        "severity": "WARNING",
+        "alarmCode": "ALM-401"
+      }
+    ],
+    "auditTrail": [
+      {
+        "Date Time": "29/09/2026 23:30:00",
+        "Description": "Blender Auto Cycle Start",
+        "Old Value": "Stop",
+        "New Value": "Run",
+        "Reason": "Cycle Start",
+        "User Name": "11173 (PB1-Module-B-Blender-Operator)"
+      },
+      {
+        "Date Time": "30/09/2026 00:40:00",
+        "Description": "Blending Stage Complete",
+        "Old Value": "Run",
+        "New Value": "Stop",
+        "Reason": "Timer Elapsed",
+        "User Name": "191164 (PB1-Module-B-Blender-Supervisor)"
+      }
+    ]
+  },
+  "MB041": {
+    "category": "Auto Coater",
+    "equipmentDetails": {
+      "equipmentName": "AUTO COATER",
+      "equipmentId": "MB041",
+      "assetId": "10141",
+      "make": "GANSONS",
+      "model": "MITSUBISHI Fx3U 32 MR",
+      "area": "COATING MODULE-B",
+      "block": "PB1"
+    },
+    "batchDetails": {
+      "batchNumber": "PED26009",
+      "lotNumber": "01",
+      "productName": "PAROXETINE USP 40 mg",
+      "productCode": "STPA1D00",
+      "recipeName": "PAROXE40",
+      "batchSize": "625000 Tablets",
+      "startTime": "20/09/2026 16:45:03",
+      "endTime": "21/09/2026 00:36:38",
+      "batchDurationInHours": "07:51:35"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "191257 (PB1-Module-B-Supervisor)",
+        "dateTime": "20/09/2026 16:45:12",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "29995 (PB1-Module-B-Operator)",
+        "dateTime": "20/09/2026 16:47:01",
+        "description": "Login"
+      },
+      {
+        "userName": "29995 (PB1-Module-B-Operator)",
+        "dateTime": "21/09/2026 00:25:30",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "191164 (PB1-Module-B-Supervisor)",
+        "dateTime": "21/09/2026 00:30:15",
+        "description": "Login"
+      }
+    ],
+    "parameterSettings": {
+      "INLET AIR TEMP SET (C)": 60,
+      "BED TEMP SET (C)": 44,
+      "PAN SPEED SET (RPM)": 2,
+      "SPRAY RATE SET (G/MIN)": 120,
+      "ATOMIZING AIR PRESSURE (BAR)": 2.5,
+      "PATTERN AIR PRESSURE (BAR)": 2.0,
+      "PROCESS TIME (MIN)": 450
+    },
+    "alarmSummary": [
+      {
+        "alarm_name": "INLET AIR TEMP HIGH",
+        "occurred_time": "20/09/2026 19:14:46",
+        "resolved_time": "20/09/2026 19:14:58",
+        "duration": "00:00:12",
+        "severity": "CRITICAL",
+        "alarmCode": "ALM-301"
+      }
+    ],
+    "auditTrail": [
+      {
+        "Date Time": "20/09/2026 16:48:00",
+        "Description": "Coating Spray Started",
+        "Old Value": "Preheating",
+        "New Value": "Spraying",
+        "Reason": "Bed Temp Reached",
+        "User Name": "29995 (PB1-Module-B-Operator)"
+      },
+      {
+        "Date Time": "21/09/2026 00:20:00",
+        "Description": "Coating Spray Completed",
+        "Old Value": "Spraying",
+        "New Value": "Drying",
+        "Reason": "Suspension Depleted",
+        "User Name": "191257 (PB1-Module-B-Supervisor)"
+      }
+    ]
+  },
+  "MB040": {
+    "category": "Compression Machine",
+    "equipmentDetails": {
+      "equipmentName": "Compression Machine (SEJONG 49D)",
+      "equipmentId": "MB040",
+      "assetId": "10040",
+      "make": "SEJONG",
+      "model": "OMRON Sysmac CJ1G CPU 44H",
+      "area": "MODULE-B",
+      "block": "PB1"
+    },
+    "batchDetails": {
+      "batchNumber": "ADNC26011",
+      "lotNumber": "01",
+      "productName": "Amisulpride 200mg",
+      "productCode": "STFS7000",
+      "recipeName": "SEJONG-49D",
+      "batchSize": "500000 Tabs",
+      "startTime": "01/09/2026 08:00:00",
+      "endTime": "01/09/2026 12:15:00",
+      "batchDurationInHours": "04:15:00"
+    },
+    "userLoginLogout": [
+      {
+        "userName": "10402 (PB1-Compression-Supervisor)",
+        "dateTime": "01/09/2026 07:55:00",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "10401 (PB1-Compression-Operator)",
+        "dateTime": "01/09/2026 08:02:10",
+        "description": "Login"
+      },
+      {
+        "userName": "10401 (PB1-Compression-Operator)",
+        "dateTime": "01/09/2026 12:05:00",
+        "description": "Logout Sucessfully"
+      },
+      {
+        "userName": "10402 (PB1-Compression-Supervisor)",
+        "dateTime": "01/09/2026 12:10:00",
+        "description": "Login"
+      }
+    ],
+    "parameterSettings": {
+      "TURRET SPEED SET (RPM)": 30,
+      "FEEDER SPEED SET (RPM)": 13,
+      "TARGET QUANTITY (TABS)": 500000,
+      "MAIN COMPRESSION FORCE SET (KN)": 19.5,
+      "PRE COMPRESSION FORCE SET (KN)": 2.3,
+      "AIR PRESSURE LOW LIMIT (KPA)": 400,
+      "HYDRAULIC PRESSURE (MPA)": 7.5
+    },
+    "alarmSummary": [
+      {
+        "alarm_name": "Low Air Pressure",
+        "occurred_time": "01/09/2026 09:15:00",
+        "resolved_time": "01/09/2026 09:16:30",
+        "duration": "00:01:30",
+        "severity": "WARNING",
+        "alarmCode": "ALM-501"
+      }
+    ],
+    "auditTrail": [
+      {
+        "Date Time": "01/09/2026 08:05:00",
+        "Description": "Press Auto Run Initiated",
+        "Old Value": "Idle",
+        "New Value": "Run",
+        "Reason": "Production Batch Started",
+        "User Name": "10401 (PB1-Compression-Operator)"
+      },
+      {
+        "Date Time": "01/09/2026 12:00:00",
+        "Description": "Target Count Reached",
+        "Old Value": "Run",
+        "New Value": "Stop",
+        "Reason": "Batch Completed",
+        "User Name": "10402 (PB1-Compression-Supervisor)"
       }
     ]
   }
