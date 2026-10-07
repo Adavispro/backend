@@ -14,6 +14,10 @@ class APIClient:
     def __init__(self, config):
         self.config = config
         self.timeout = int(config["request_timeout_seconds"])
+        self.ssl_context = ssl.create_default_context()
+        if not config.get("verify_tls", False):
+            self.ssl_context.check_hostname = False
+            self.ssl_context.verify_mode = ssl.CERT_NONE
         self.token = config.get("bearer_token", "").strip()
         if not self.token or self.token.startswith("PASTE_"):
             raise ValueError("Set api_fetch.bearer_token in config/fetch_config.json")
@@ -50,7 +54,7 @@ class APIClient:
             "Authorization": f"Bearer {self.token}",
         })
         try:
-            with urlopen(request, timeout=self.timeout) as response:
+            with urlopen(request, timeout=self.timeout, context=self.ssl_context) as response:
                 return response.read()
         except HTTPError as error:
             if error.code in (401, 403):

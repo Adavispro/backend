@@ -11,6 +11,8 @@ This project contains two independent Python schedulers. The API scheduler fetch
 
 Edit `config/fetch_config.json` before running. Set `api_fetch.base_url` to the reachable plant API host, then paste a fresh access token into `api_fetch.bearer_token`. Paste only the token value, without the word `Bearer`, spaces, or Markdown escape characters. This version sends `Authorization: Bearer <token>` on dataset requests and stops with a clear message when a JWT token has expired. It does not obtain or refresh tokens. Set `file_fetch.network_path` separately if using the Compression scheduler. A different config file can be selected with `ADAVIS_FETCH_CONFIG`.
 
+`api_fetch.verify_tls` is set to `false` to bypass the plant certificate verification error. This disables certificate and hostname validation while sending the bearer token. Change it to `true` after the plant CA certificate is trusted on this computer.
+
 The API reference lists these assets: Blender `10012`, Coating `10021`, RMG `10094`, and FBD `10110`. Their documented `pointName` templates are in the JSON configuration and can be enabled or disabled individually. The reference's Blender labels appear reversed relative to the `Blend_Recipe` and `Blend_Op_Data` dataset names; the configuration follows the dataset names. The Coating sample URLs use different example batch numbers and lot values, so the scheduler substitutes each actual `BatchNo` and `LotNo` returned by `Batch_Info` rather than copying those examples. The reference includes alternate API hosts; select the reachable host with `base_url`.
 
 ## Run
