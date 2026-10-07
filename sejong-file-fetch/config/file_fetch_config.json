@@ -1,0 +1,18 @@
+{
+  "source_path": "D:\\ADAVIS\\Sejong Data\\pb1 Compression Backup",
+  "date_mode": "EXACT",
+  "date": "2026-09-05",
+  "start_date": "2026-09-05",
+  "end_date": "2026-09-05",
+  "include_extensions": [".xls", ".xlsx", ".xlsm", ".mdb", ".accdb", ".fdb"],
+  "include_root_databases": true,
+  "extract_mdb_tables": true,
+  "extract_spreadsheets": true,
+  "max_cells_per_sheet": 50000,
+  "staging_folder": "./staging",
+  "max_files_per_cycle": 500,
+  "retry_count": 3,
+  "retry_delay_seconds": 5,
+  "continuous_fetch": false,
+  "schedule_minutes": 20
+}
