@@ -1,0 +1,72 @@
+{
+  "api_fetch": {
+    "enabled": true,
+    "continuous_fetch": false,
+    "schedule_minutes": 20,
+    "base_url": "https://u3-miebmr-srv-t",
+    "dataset_path": "/fwxapi/rest/v1/Dataset",
+    "request_timeout_seconds": 60,
+    "max_batches_per_asset_per_cycle": 3,
+    "raw_response_folder": "./staging/api_raw",
+    "metadata_folder": "./staging/metadata",
+    "save_raw_data": true,
+    "deduplicate": true,
+    "process_live_batches": true,
+    "log_skipped_records": true,
+    "batch_list_point": "db:HMI.Batch_Info<@AssetId={asset_id}, @Batch_No=''>",
+    "common_batch_datasets": [
+      {"name": "batch_summary", "point": "db:HMI.Batch_summary<@AssetId={asset_id}, @BatchNo='{batch_no}', @LotNo='{lot_no}'>"},
+      {"name": "machine_summary", "point": "db:HMI.Mach_summary<@AssetId={asset_id}, @BatchNo='{batch_no}', @LotNo='{lot_no}'>"},
+      {"name": "login_logout", "point": "db:HMI.Login<@AssetId={asset_id}, @BatchNo='{batch_no}', @LotNo='{lot_no}'>"},
+      {"name": "users", "point": "db:HMI.Users<@AssetId={asset_id}, @BatchNo='{batch_no}', @LotNo='{lot_no}'>"},
+      {"name": "alarms", "point": "db:HMI.Alarms<@AssetId={asset_id}, @BatchNo='{batch_no}', @LotNo='{lot_no}'>"},
+      {"name": "audit_trail", "point": "db:HMI.Audit_Trail<@AssetId={asset_id}, @BatchNo='{batch_no}', @LotNo='{lot_no}'>"}
+    ],
+    "assets": [
+      {
+        "asset_id": "10094", "name": "RMG", "enabled": true,
+        "datasets": [
+          {"name": "rmg_operational_data", "point": "db:HMI.RMG_op_data<@AssetId='{asset_id}', @BatchNo='{batch_no}', @LotNo='{lot_no}'>"},
+          {"name": "rmg_recipe", "point": "db:HMI.RMG_recipe<@AssetId='{asset_id}', @BatchNo='{batch_no}', @LotNo='{lot_no}'>"}
+        ]
+      },
+      {
+        "asset_id": "10110", "name": "FBD", "enabled": true,
+        "datasets": [
+          {"name": "fbd_operational_data", "point": "db:HMI.FBD_Op_Data<@AssetId='{asset_id}', @BatchNo='{batch_no}', @LotNo='{lot_no}'>"},
+          {"name": "fbd_recipe", "point": "db:HMI.FBD_Recipe<@AssetId='{asset_id}', @BatchNo='{batch_no}', @LotNo='{lot_no}'>"},
+          {"name": "fbd_min_max", "point": "db:HMI.FBD_Min_Max<@AssetId='{asset_id}', @BatchNo='{batch_no}', @LotNo='{lot_no}'>"}
+        ]
+      },
+      {
+        "asset_id": "10021", "name": "Coating", "enabled": true,
+        "datasets": [
+          {"name": "coat_operational_data", "point": "db:HMI.Coat_Op_Data<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='{asset_id}'>"},
+          {"name": "coat_recipe", "point": "db:HMI.Coat_Recipe<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='{asset_id}'>"},
+          {"name": "coat_min_max", "point": "db:HMI.Coat_Min_Max<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='{asset_id}'>"}
+        ]
+      },
+      {
+        "asset_id": "10012", "name": "Blender", "enabled": true,
+        "datasets": [
+          {"name": "blend_recipe", "point": "db:HMI.Blend_Recipe<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='{asset_id}'>"},
+          {"name": "blend_operational_data", "point": "db:HMI.Blend_Op_Data<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='{asset_id}'>"}
+        ]
+      }
+    ]
+  },
+  "file_fetch": {
+    "enabled": true,
+    "continuous_fetch": false,
+    "schedule_minutes": 20,
+    "network_path": "CONFIGURE_COMPRESSION_NETWORK_PATH",
+    "folder_grouping": "AUTO",
+    "daily_folder_format": "%Y-%m-%d",
+    "local_staging_folder": "./staging/files_raw",
+    "metadata_folder": "./staging/metadata",
+    "retry_count": 3,
+    "retry_delay_seconds": 5,
+    "max_files_per_cycle": 100,
+    "deduplicate": true
+  }
+}
