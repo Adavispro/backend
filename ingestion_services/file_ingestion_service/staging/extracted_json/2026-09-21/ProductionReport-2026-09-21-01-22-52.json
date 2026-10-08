@@ -1,0 +1,179 @@
+{
+  "metadata": {
+    "sourceFile": "ProductionReport-2026-09-21-01-22-52.xls",
+    "parsedAt": "2026-10-08T00:52:11.948818",
+    "softwareVersion": "2.0",
+    "reportTimestamp": "2026-09-21T01:22:52",
+    "reportDate": "2026-09-21 00:00:00"
+  },
+  "batchInfo": {
+    "equipmentId": "MC081",
+    "machineName": "MC081 SEJONG 49D",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "productName": "Mirtazapine OD 15mg",
+    "batchNumber": "MPA26060",
+    "stationNo": "Station 2",
+    "userId": "pk8943",
+    "operatorName": "p.s.krishna murthy",
+    "printInterval": 385000,
+    "runningTime": "03 Hour   57 Min13 Sec",
+    "totalRunningTime": "328 Hour   22 Min"
+  },
+  "recipeSettings": {
+    "feeder": {
+      "autoPercent": 40,
+      "manualRpm": 9
+    },
+    "fillingCam": "Cam B 4.5-10mm",
+    "targetQuantity": 1540000,
+    "airPressureLowLimitKpa": 400,
+    "hydraulicPressureLimits": {
+      "highLimitMpa": 15,
+      "lowLimitMpa": 0.1
+    },
+    "oilLubrication": {
+      "upperPunchS1": {
+        "intervalMin": 300,
+        "supplySec": 3
+      },
+      "lowerPunchS2": {
+        "intervalMin": 300,
+        "supplySec": 3
+      },
+      "lowerHeadS3": {
+        "intervalMin": 999,
+        "supplySec": 0
+      }
+    },
+    "powderSupplyTimeSec": 30,
+    "initialRejectTimeSec": 5.8,
+    "upperPunchTightnessHigh": null,
+    "lowerPunchTightnessHigh": null,
+    "ejectingForceHigh": null,
+    "controlLimits": {
+      "hsp": {
+        "percent": 45,
+        "kn": 8.56,
+        "stop": "Yes"
+      },
+      "hep": {
+        "percent": 28,
+        "kn": 7.55,
+        "rot": 10,
+        "tabs": 10
+      },
+      "hcp": {
+        "percent": 3,
+        "kn": 6.08,
+        "times": 5
+      },
+      "ref": {
+        "kn": 5.9
+      },
+      "lcp": {
+        "percent": 3,
+        "kn": 5.72,
+        "times": 5
+      },
+      "lep": {
+        "percent": 27,
+        "kn": 4.31,
+        "rot": 10,
+        "tabs": 10
+      },
+      "lsp": {
+        "percent": 45,
+        "kn": 3.25,
+        "stop": "Yes"
+      },
+      "sdLimit": {
+        "percent": 15,
+        "stop": "Yes"
+      },
+      "preHsp": {
+        "kn": 10.14,
+        "stop": "Yes"
+      },
+      "meanCalculationRangeRot": 3,
+      "calculationPassRot": 3,
+      "emptyPunchNo": null
+    }
+  },
+  "pressureData": {
+    "prePressure": {
+      "meanKn": 4.42,
+      "sdPercent": 0.4,
+      "minKn": 4.38,
+      "minPunchNo": 4,
+      "maxKn": 4.47,
+      "maxPunchNo": 45
+    },
+    "mainPressure": {
+      "meanKn": 5.91,
+      "sdPercent": 1.6,
+      "minKn": 5.63,
+      "minPunchNo": 43,
+      "maxKn": 6.22,
+      "maxPunchNo": 49
+    },
+    "fillingDepthAdjustments": {
+      "increaseTimes": 0,
+      "decreaseTimes": 7
+    }
+  },
+  "operationValues": {
+    "diskSpeedRpm": 22,
+    "capacityTabsPerHour": 192720,
+    "feeder": {
+      "status": "AUTO",
+      "speedRpm": 8
+    },
+    "prePressure": {
+      "thicknessMm": 5.11,
+      "lowerPunchPositionMm": 7.11,
+      "penetrationDepthMm": 2
+    },
+    "mainPressure": {
+      "thicknessMm": 3.28,
+      "lowerPunchPositionMm": 7.28,
+      "penetrationDepthMm": 4
+    },
+    "fillingDepthMm": 7.68,
+    "currentCam": "Cam B 4.5-10mm",
+    "mainAirPressureKpa": 668,
+    "hydraulicPressureMpa": 7.5,
+    "lubricationRemainingMin": {
+      "upperPunchS1": 203,
+      "lowerPunchS2": 203,
+      "lowerHeadS3": 197
+    },
+    "auxiliaryStatus": {
+      "powderStatus": "Enable",
+      "dustCollector": "ON",
+      "initialReject": "ON",
+      "buzzer": "ON"
+    }
+  },
+  "tabletCounters": {
+    "totalCounter": 770064,
+    "awcCounter": 749564,
+    "hep": {
+      "raw": "0 (0%)",
+      "count": 0
+    },
+    "lep": {
+      "raw": "0 (0%)",
+      "count": 0
+    },
+    "good": {
+      "raw": "749564 (100.0%)",
+      "count": 749564
+    }
+  },
+  "signatures": {
+    "operatorName": "p.s.krishna murthy",
+    "reportDate": "2026-09-21 00:00:00"
+  }
+}

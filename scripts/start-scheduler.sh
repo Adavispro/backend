@@ -131,12 +131,12 @@ export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
 if [[ "$FOREGROUND" -eq 1 ]]; then
   echo "$$" > "$SCHEDULER_PID_FILE"
   trap 'rm -f "$SCHEDULER_PID_FILE"; exit 0' SIGINT SIGTERM EXIT
-  exec "$PYTHON_BIN" -m scheduler.run_scheduler_loop \
+  exec "$PYTHON_BIN" "$REPO_ROOT/ingestion_services/unified_ingestion_runner.py" \
     --mongo-uri "$MONGO_URI" \
     --db-name "$DB_NAME" \
     --interval-seconds "$INTERVAL_SECONDS"
 else
-  setsid "$PYTHON_BIN" -m scheduler.run_scheduler_loop \
+  setsid "$PYTHON_BIN" "$REPO_ROOT/ingestion_services/unified_ingestion_runner.py" \
     --mongo-uri "$MONGO_URI" \
     --db-name "$DB_NAME" \
     --interval-seconds "$INTERVAL_SECONDS" </dev/null >> "$SCHEDULER_LOG" 2>&1 &

@@ -7,7 +7,7 @@ Synchronizes:
    - MB004 (Fluid bed drier, AssetId: 10110, Block: PB1, Area: MODULE-B, PLC: MITSUBISHI Fx5U, DataType: SQL)
    - MB005 (Blender, AssetId: 10095, Block: PB1, Area: MODULE-B, PLC: MITSUBISHI Fx3U, DataType: SQL)
    - MB041 (Coating machine, AssetId: 10141, Block: PB1, Area: COATING MODULE-B, PLC: MITSUBISHI Fx3U, DataType: SQL)
-   - MB040 (Compression machine, AssetId: 10040, Block: PB1, Area: MODULE-B, PLC: OMRON Sysmac CJ1G, DataType: MS ACCESS + Excel)
+   - MC081 (SEJONG 49D Compression Machine, AssetId: MC081, Block: PB1, Area: Compression, PLC: OMRON Sysmac CJ1G, DataType: MS ACCESS + Excel)
 2. Products & Recipes (`iiot_product_master`, `iiot_recipe_master`)
 3. Critical Parameters & Limits (`iiot_equipment_critical_parameters`, `iiot_equipment_critical_parameters_limit`)
 4. User Profiles & Role Mappings (`mdm_user_profiles`, `mdm_user_auth_credentials`, `mdm_user_assignments_to_user_groups`, `mdm_user_context_assignments`)
@@ -19,8 +19,13 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 from datetime import datetime
 from pymongo import MongoClient
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 MONGO_URI = os.getenv("MONGODB_URI", "mongodb://admin:Admin123!@localhost:37017/adavis_platform?authSource=admin")
 DB_NAME = os.getenv("MONGODB_DATABASE", "adavis_platform")
@@ -163,13 +168,13 @@ EQUIPMENTS = [
         "blockId": BLOCK_ID,
         "areaId": AREA_MODULE_B,
         "roomId": "ROOM-0002",
-        "equipmentId": "MB040",
-        "equipment_id": "MB040",
-        "equipmentCode": "MB040",
-        "equipment_code": "MB040",
-        "assetId": "10040",
-        "asset_id": "10040",
-        "equipmentName": "Compression machine (MB040)",
+        "equipmentId": "MC081",
+        "equipment_id": "MC081",
+        "equipmentCode": "MC081",
+        "equipment_code": "MC081",
+        "assetId": "MC081",
+        "asset_id": "MC081",
+        "equipmentName": "MC081 SEJONG 49D Compression Machine",
         "equipmentType": "COMP",
         "equipment_type": "COMP",
         "equipmentTypeName": "Compression Machine",
@@ -193,7 +198,7 @@ EQUIPMENTS = [
             "block": "PB1",
             "area": "MODULE-B",
             "room": "ROOM-0002",
-            "fullPath": f"{PLANT_ID}/PB1/MODULE-B/ROOM-0002/MB040",
+            "fullPath": f"{PLANT_ID}/PB1/MODULE-B/ROOM-0002/MC081",
         },
     },
     {
@@ -285,7 +290,7 @@ USERS = [
         "title": "Operator",
         "role": "OPERATOR",
         "groupId": "GRP-0011",
-        "context": "MB040 (Compression) / MODULE-B",
+        "context": "MC081 (Compression) / Compression Area",
         "designation": "10401 (PB1-Compression-Operator)",
     },
     # SUPERVISORS (Role: REVIEWER, UI/Display: SUPERVISOR, Group: GRP-0016)
@@ -346,7 +351,7 @@ USERS = [
         "title": "SUPERVISOR",
         "role": "REVIEWER",
         "groupId": "GRP-0016",
-        "context": "MB040 (Compression) / MODULE-B",
+        "context": "MC081 (Compression) / Compression Area",
         "designation": "10402 (PB1-Compression-Supervisor)",
     },
     # APPROVERS (Role: APPROVER, Group: GRP-0017)
@@ -479,10 +484,10 @@ def sync_master_data():
             {"paramId": "MB041_PAN_SPEED", "code": "panSpeed", "name": "Pan Speed", "unit": "RPM", "base": 2.1, "low": 2.0, "high": 2.2},
             {"paramId": "MB041_SPRAY_RATE", "code": "sprayRate", "name": "Dosing Speed / Spray Rate", "unit": "RPM", "base": 14.6, "low": 13.6, "high": 15.6},
         ],
-        "MB040": [
-            {"paramId": "MB040_TURRET_RPM", "code": "turretRpm", "name": "Turret Speed", "unit": "RPM", "base": 30.0, "low": 25.0, "high": 40.0},
-            {"paramId": "MB040_MAIN_FORCE", "code": "mainCompForce", "name": "Main Compression Force", "unit": "kN", "base": 19.5, "low": 15.0, "high": 22.0},
-            {"paramId": "MB040_PRE_FORCE", "code": "preCompForce", "name": "Pre Compression Force", "unit": "kN", "base": 2.3, "low": 1.5, "high": 3.0},
+        "MC081": [
+            {"paramId": "MC081_TURRET_RPM", "code": "turretRpm", "name": "Turret Speed", "unit": "RPM", "base": 30.0, "low": 25.0, "high": 40.0},
+            {"paramId": "MC081_MAIN_FORCE", "code": "mainCompForce", "name": "Main Compression Force", "unit": "kN", "base": 19.5, "low": 15.0, "high": 22.0},
+            {"paramId": "MC081_PRE_FORCE", "code": "preCompForce", "name": "Pre Compression Force", "unit": "kN", "base": 2.3, "low": 1.5, "high": 3.0},
         ],
     }
 
@@ -626,7 +631,7 @@ def sync_master_data():
         {"equipmentId": "MB003", "lastBatchNo": "AGO0026016", "lastLotNo": "01", "state": "Running", "reason": "Batch in progress: AGO0026016"},
         {"equipmentId": "MB004", "lastBatchNo": "AGO0026016", "lastLotNo": "1B", "state": "Running", "reason": "Batch in progress: AGO0026016"},
         {"equipmentId": "MB005", "lastBatchNo": "AGO0026015", "lastLotNo": "01", "state": "Running", "reason": "Batch in progress: AGO0026015"},
-        {"equipmentId": "MB040", "lastBatchNo": "ADNC26011", "lastLotNo": "01", "state": "Running", "reason": "Batch in progress: ADNC26011"},
+        {"equipmentId": "MC081", "lastBatchNo": "ADNC26011", "lastLotNo": "01", "state": "Running", "reason": "Batch in progress: ADNC26011"},
         {"equipmentId": "MB041", "lastBatchNo": "PED26009", "lastLotNo": "01", "state": "Running", "reason": "Batch in progress: PED26009"},
     ]
     for ls in live_statuses:
@@ -648,6 +653,14 @@ def sync_master_data():
             upsert=True,
         )
     print("✓ Live statuses initialized.")
+
+    # Canonical enhancement pass: enforces the Aurobindo Unit-VII topology,
+    # removes obsolete MB040/G5 equipment and dependent mappings, and publishes
+    # the parameter-specific recipe limits used by current UI/PDF consumers.
+    from ingestion_services.common.master_data_sync import MasterDataSyncManager
+    canonical_sync = MasterDataSyncManager(db)
+    canonical_sync.sync_equipment_master()
+    canonical_sync.sync_critical_parameters()
 
     print("\n=======================================================")
     print(" Master data synchronization completed successfully! ")

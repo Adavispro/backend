@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "batch_id": "PE0026025",
+  "lot_number": "NA  ",
+  "product_no": "PAROXETINE BLEND",
+  "source_timestamp": "2026-10-07T15:57:07",
+  "batch_end_date": "2026-10-07T17:00:20",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:26:32+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='PE0026025', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026025_65641a66\\NA_9cf4a032\\batch_summary_be152272_20261007T132632502217Z.json",
+      "fetch_timestamp": "2026-10-07T13:26:32+00:00",
+      "status": "SUCCESS",
+      "checksum": "863c9205f5aa4abf0ed765f2a0e0ebe5d4a35ffd4bce21dda6eb3864f49baa1d"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='PE0026025', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026025_65641a66\\NA_9cf4a032\\machine_summary_663b23d8_20261007T132632549205Z.json",
+      "fetch_timestamp": "2026-10-07T13:26:32+00:00",
+      "status": "SUCCESS",
+      "checksum": "e63ff9523a4d8106e057a3669b02861c8d78a71036208a2910462570b69b179f"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10012, @BatchNo='PE0026025', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026025_65641a66\\NA_9cf4a032\\login_logout_7b250f13_20261007T132702592357Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:02+00:00",
+      "status": "SUCCESS",
+      "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10012, @BatchNo='PE0026025', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026025_65641a66\\NA_9cf4a032\\users_7dfb4cf6_20261007T132732630935Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:32+00:00",
+      "status": "SUCCESS",
+      "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10012, @BatchNo='PE0026025', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026025_65641a66\\NA_9cf4a032\\alarms_423c13f0_20261007T132732795523Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:32+00:00",
+      "status": "SUCCESS",
+      "checksum": "04a2f57770a183ab1b1ca44ec062bc8b91613de2979e7e9a1b01360adb7265c2"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10012, @BatchNo='PE0026025', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026025_65641a66\\NA_9cf4a032\\audit_trail_35a0293f_20261007T132741656180Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:41+00:00",
+      "status": "SUCCESS",
+      "checksum": "0f72426a1c1df8b62c02b04b3125cab11ac0d7fa44920d397d052b6cfe6b4244"
+    },
+    "blend_recipe": {
+      "source_api": "db:HMI.Blend_Recipe<@BatchNo='PE0026025', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026025_65641a66\\NA_9cf4a032\\blend_recipe_278cfc62_20261007T132741728801Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:41+00:00",
+      "status": "SUCCESS",
+      "checksum": "fdb016bc7a4b5176a8467d5ca58a9844b4f231fbfe4bda88bf17df6e4b7e73d0"
+    },
+    "blend_operational_data": {
+      "source_api": "db:HMI.Blend_Op_Data<@BatchNo='PE0026025', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026025_65641a66\\NA_9cf4a032\\blend_operational_data_50e3ef1a_20261007T132741812576Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:41+00:00",
+      "status": "SUCCESS",
+      "checksum": "bc90a8f622ee74e3dbf8d92e1f43c60542466035ec9304807e1a13b03bd8f473"
+    }
+  }
+}

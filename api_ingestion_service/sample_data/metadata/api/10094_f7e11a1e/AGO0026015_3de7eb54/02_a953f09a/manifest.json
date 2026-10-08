@@ -1,0 +1,68 @@
+{
+  "source": "API",
+  "asset_id": "10094",
+  "batch_id": "AGO0026015",
+  "lot_number": "02",
+  "product_no": "LAMOTRIGIN",
+  "source_timestamp": "2026-09-29T14:39:11",
+  "batch_end_date": "2026-09-29T17:45:34",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T15:11:40+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10094, @BatchNo='AGO0026015', @LotNo='02'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\AGO0026015_3de7eb54\\02_a953f09a\\batch_summary_be152272_20261007T151140134210Z.json",
+      "fetch_timestamp": "2026-10-07T15:11:40+00:00",
+      "status": "SUCCESS",
+      "checksum": "72ced58120345aa2c840d814cd7b9f53c9afe38e720711dcd9fe5f521f52d32b"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10094, @BatchNo='AGO0026015', @LotNo='02'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\AGO0026015_3de7eb54\\02_a953f09a\\machine_summary_663b23d8_20261007T151140176203Z.json",
+      "fetch_timestamp": "2026-10-07T15:11:40+00:00",
+      "status": "SUCCESS",
+      "checksum": "aca352b71d6c53ef255c78886d64b2a1903489e0ec5d31af5258088eb199c6d2"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10094, @BatchNo='AGO0026015', @LotNo='02'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\AGO0026015_3de7eb54\\02_a953f09a\\login_logout_7b250f13_20261007T151141901819Z.json",
+      "fetch_timestamp": "2026-10-07T15:11:41+00:00",
+      "status": "SUCCESS",
+      "checksum": "47129435f4a0a1ec51c2ccfb062d078f5214132942465c8c6ecf13a13d6cdc50"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10094, @BatchNo='AGO0026015', @LotNo='02'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\AGO0026015_3de7eb54\\02_a953f09a\\users_7dfb4cf6_20261007T151143861593Z.json",
+      "fetch_timestamp": "2026-10-07T15:11:43+00:00",
+      "status": "SUCCESS",
+      "checksum": "47129435f4a0a1ec51c2ccfb062d078f5214132942465c8c6ecf13a13d6cdc50"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10094, @BatchNo='AGO0026015', @LotNo='02'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\AGO0026015_3de7eb54\\02_a953f09a\\alarms_423c13f0_20261007T151213904947Z.json",
+      "fetch_timestamp": "2026-10-07T15:12:13+00:00",
+      "status": "SUCCESS",
+      "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail",
+      "fetch_timestamp": "2026-10-07T15:12:23+00:00",
+      "status": "FAILED",
+      "error_message": "Dataset API returned HTTP 404"
+    },
+    "rmg_operational_data": {
+      "source_api": "db:HMI.RMG_op_data<@AssetId='10094', @BatchNo='AGO0026015', @LotNo='02'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\AGO0026015_3de7eb54\\02_a953f09a\\rmg_operational_data_53809943_20261007T151224170061Z.json",
+      "fetch_timestamp": "2026-10-07T15:12:24+00:00",
+      "status": "SUCCESS",
+      "checksum": "aa741c7749516f5fa3baa9c4bd29fc422243134ea3c8383f438508323b87c14d"
+    },
+    "rmg_recipe": {
+      "source_api": "db:HMI.RMG_recipe<@AssetId='10094', @BatchNo='AGO0026015', @LotNo='02'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\AGO0026015_3de7eb54\\02_a953f09a\\rmg_recipe_18884de8_20261007T151224259689Z.json",
+      "fetch_timestamp": "2026-10-07T15:12:24+00:00",
+      "status": "SUCCESS",
+      "checksum": "170b765ac355a7ca731bc9b93af818beeb92f8a5a374f6106d76251525688029"
+    }
+  }
+}

@@ -101,11 +101,11 @@ equipment:
     sampleLot: "01"
     sampleProduct: "PAROXETINE USP 40mg (STPA1D00)"
 
-  - equipmentId: ${COMPRESSION_EQUIPMENT_ID:-MB040}
-    equipmentCode: ${COMPRESSION_EQUIPMENT_CODE:-MB040}
-    equipmentName: "Compression Machine (MB040)"
+  - equipmentId: ${COMPRESSION_EQUIPMENT_ID:-MC081}
+    equipmentCode: ${COMPRESSION_EQUIPMENT_CODE:-MC081}
+    equipmentName: "MC081 SEJONG 49D Compression Machine"
     equipmentType: COMPRESSION
-    assetId: ${COMPRESSION_ASSET_ID:-10040}
+    assetId: ${COMPRESSION_ASSET_ID:-MC081}
     sourceType: EXCEL
     sourcePath: ${COMPRESSION_SOURCE_PATH:-data/ingestion/compression}
     sampleBatch: "ADNC26011"

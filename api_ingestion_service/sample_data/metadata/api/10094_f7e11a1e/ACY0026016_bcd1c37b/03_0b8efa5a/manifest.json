@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10094",
+  "batch_id": "ACY0026016",
+  "lot_number": "03",
+  "product_no": "Nadolol ",
+  "source_timestamp": "2026-09-26T00:29:35",
+  "batch_end_date": "2026-09-26T01:16:20",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T15:16:45+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10094, @BatchNo='ACY0026016', @LotNo='03'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\ACY0026016_bcd1c37b\\03_0b8efa5a\\batch_summary_be152272_20261007T151645441742Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:45+00:00",
+      "status": "SUCCESS",
+      "checksum": "a4afef697fa73905bcda3a83b6e1f79e15009697972375e5841658f106619bcf"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10094, @BatchNo='ACY0026016', @LotNo='03'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\ACY0026016_bcd1c37b\\03_0b8efa5a\\machine_summary_663b23d8_20261007T151645485910Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:45+00:00",
+      "status": "SUCCESS",
+      "checksum": "aca352b71d6c53ef255c78886d64b2a1903489e0ec5d31af5258088eb199c6d2"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10094, @BatchNo='ACY0026016', @LotNo='03'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\ACY0026016_bcd1c37b\\03_0b8efa5a\\login_logout_7b250f13_20261007T151647314723Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:47+00:00",
+      "status": "SUCCESS",
+      "checksum": "eefa48acc08b49d966a73712097e66298b1c56a988da14e036e2a17af016f4f3"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10094, @BatchNo='ACY0026016', @LotNo='03'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\ACY0026016_bcd1c37b\\03_0b8efa5a\\users_7dfb4cf6_20261007T151649166796Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:49+00:00",
+      "status": "SUCCESS",
+      "checksum": "eefa48acc08b49d966a73712097e66298b1c56a988da14e036e2a17af016f4f3"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10094, @BatchNo='ACY0026016', @LotNo='03'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\ACY0026016_bcd1c37b\\03_0b8efa5a\\alarms_423c13f0_20261007T151719207633Z.json",
+      "fetch_timestamp": "2026-10-07T15:17:19+00:00",
+      "status": "SUCCESS",
+      "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10094, @BatchNo='ACY0026016', @LotNo='03'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\ACY0026016_bcd1c37b\\03_0b8efa5a\\audit_trail_35a0293f_20261007T151727306438Z.json",
+      "fetch_timestamp": "2026-10-07T15:17:27+00:00",
+      "status": "SUCCESS",
+      "checksum": "c4fe7d6da663bcdeffc7a84f76d8ee73704ada968854c1da2ab3526ed6ee7186"
+    },
+    "rmg_operational_data": {
+      "source_api": "db:HMI.RMG_op_data<@AssetId='10094', @BatchNo='ACY0026016', @LotNo='03'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\ACY0026016_bcd1c37b\\03_0b8efa5a\\rmg_operational_data_53809943_20261007T151727515086Z.json",
+      "fetch_timestamp": "2026-10-07T15:17:27+00:00",
+      "status": "SUCCESS",
+      "checksum": "28747dc359535db7cad7b3d6f582a2188e8b41e7c7c602ba73eaf372dee27f40"
+    },
+    "rmg_recipe": {
+      "source_api": "db:HMI.RMG_recipe<@AssetId='10094', @BatchNo='ACY0026016', @LotNo='03'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\ACY0026016_bcd1c37b\\03_0b8efa5a\\rmg_recipe_18884de8_20261007T151727562759Z.json",
+      "fetch_timestamp": "2026-10-07T15:17:27+00:00",
+      "status": "SUCCESS",
+      "checksum": "b3e3de07ddacfa0482895c76040fbaf6aeaf421b9cd237ca9acf065b59c6540b"
+    }
+  }
+}

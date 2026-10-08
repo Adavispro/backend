@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "batch_id": "PM0026008",
+  "lot_number": "NA  ",
+  "product_no": "Nadolol Blend",
+  "source_timestamp": "2026-09-24T09:18:19",
+  "batch_end_date": "2026-09-24T11:59:54",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:59:20+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='PM0026008', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PM0026008_6af22ff0\\NA_9cf4a032\\batch_summary_be152272_20261007T135920970548Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:20+00:00",
+      "status": "SUCCESS",
+      "checksum": "d044e4ec118270419596ff35a2ee335536a2bb1de98809dfeab0c07149c34778"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='PM0026008', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PM0026008_6af22ff0\\NA_9cf4a032\\machine_summary_663b23d8_20261007T135921017831Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:21+00:00",
+      "status": "SUCCESS",
+      "checksum": "e63ff9523a4d8106e057a3669b02861c8d78a71036208a2910462570b69b179f"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10012, @BatchNo='PM0026008', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PM0026008_6af22ff0\\NA_9cf4a032\\login_logout_7b250f13_20261007T135922722525Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:22+00:00",
+      "status": "SUCCESS",
+      "checksum": "54359e5b967331cfef76ace68f0564cca4bfd368d8b120d9e89dbdee0e31d8f2"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10012, @BatchNo='PM0026008', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PM0026008_6af22ff0\\NA_9cf4a032\\users_7dfb4cf6_20261007T135924501224Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:24+00:00",
+      "status": "SUCCESS",
+      "checksum": "54359e5b967331cfef76ace68f0564cca4bfd368d8b120d9e89dbdee0e31d8f2"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10012, @BatchNo='PM0026008', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PM0026008_6af22ff0\\NA_9cf4a032\\alarms_423c13f0_20261007T135924695116Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:24+00:00",
+      "status": "SUCCESS",
+      "checksum": "5fb27a19302a208f1fb9b38e9a941e955f46f50ee5e22ffbf012d0febc66918b"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10012, @BatchNo='PM0026008', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PM0026008_6af22ff0\\NA_9cf4a032\\audit_trail_35a0293f_20261007T135932170279Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:32+00:00",
+      "status": "SUCCESS",
+      "checksum": "f012e5c76a6e0164b7c3d6604adffd6038ec3b55f98e31c971b86442fb60db34"
+    },
+    "blend_recipe": {
+      "source_api": "db:HMI.Blend_Recipe<@BatchNo='PM0026008', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PM0026008_6af22ff0\\NA_9cf4a032\\blend_recipe_278cfc62_20261007T135932251507Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:32+00:00",
+      "status": "SUCCESS",
+      "checksum": "ed1ffcdccbec2c9bac5b48c326b0f3a69b382c4830a1979014d1f2a1610ab002"
+    },
+    "blend_operational_data": {
+      "source_api": "db:HMI.Blend_Op_Data<@BatchNo='PM0026008', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PM0026008_6af22ff0\\NA_9cf4a032\\blend_operational_data_50e3ef1a_20261007T135932342287Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:32+00:00",
+      "status": "SUCCESS",
+      "checksum": "c0a2709f64ef549faa39ace0a9e3413fd42a6b7b6eb77cecd6c3c355b6b61306"
+    }
+  }
+}

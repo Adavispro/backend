@@ -1,0 +1,10 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "source_api": "db:HMI.Batch_Info",
+  "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\batch_info_20261007T152049938034Z.json",
+  "fetch_timestamp": "2026-10-07T15:20:49+00:00",
+  "status": "SUCCESS",
+  "checksum": "a32e7f1b01d0860561304f52e510e0b826cdecbb074208602e1386a9daa4b78a",
+  "batches_found": 100
+}

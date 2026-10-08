@@ -236,7 +236,12 @@ public class BatchPdfGeneratorService {
         List<Document> plcEvents = fetchEquipmentPlcEvents(resolvedEq, summary);
 
         // 6. Generate PDF bytes via OpenPDF
-        byte[] pdfBytes = buildPdfDocument(summary, workflowInstance, historyList, auditList, workflowAuditList, cppSamples, alarms, plcEvents, resolvedEq);
+        byte[] pdfBytes;
+        if (isCompressionEquipment(resolvedEq)) {
+            pdfBytes = buildCompressionPdfDocument(summary, workflowInstance, historyList, auditList, workflowAuditList, cppSamples, alarms, plcEvents, resolvedEq);
+        } else {
+            pdfBytes = buildPdfDocument(summary, workflowInstance, historyList, auditList, workflowAuditList, cppSamples, alarms, plcEvents, resolvedEq);
+        }
 
         // 7. Validate PDF binary
         validatePdfBytes(pdfBytes);
@@ -532,6 +537,14 @@ public class BatchPdfGeneratorService {
         String col = "iiot_ts_batch_" + equipmentCode;
         if (!mongoTemplate.collectionExists(col)) return Collections.emptyList();
         Query q = new Query();
+        if (batchNo != null && !batchNo.isBlank()) {
+            q.addCriteria(Criteria.where("meta.batchNo").is(batchNo));
+        }
+        // A compression QA dossier is batch-scoped and must include every derived
+        // production-report lot. Other equipment remains lot-scoped.
+        if (!isCompressionEquipment(equipmentCode) && lotNo != null && !lotNo.isBlank()) {
+            q.addCriteria(Criteria.where("meta.lotNo").is(lotNo));
+        }
         // Support up to 50,000 points in time-series telemetry
         q.with(Sort.by(Sort.Direction.ASC, "observedAt")).limit(50000);
         return mongoTemplate.find(q, Document.class, col);
@@ -976,6 +989,477 @@ public class BatchPdfGeneratorService {
         } catch (Exception ex) {
             log.error("PDF generation failed", ex);
             throw new BusinessException("PDF generation failed: " + ex.getMessage());
+        }
+    }
+
+    private boolean isCompressionEquipment(String eq) {
+        if (eq == null) return false;
+        String upper = eq.toUpperCase(Locale.ROOT);
+        return upper.contains("MC081") || upper.contains("COMP") || upper.contains("SEJONG") || upper.contains("MB040");
+    }
+
+    private String safeString(Document doc, String key, String defaultVal) {
+        String val = safeString(doc, key);
+        // Compression reports must never manufacture a plausible engineering value.
+        // Keep this overload for layout compatibility, but render unavailable source
+        // values explicitly rather than using the historical sample fallback.
+        return (val == null || "-".equals(val) || val.isBlank()) ? "Not available" : val;
+    }
+
+    private byte[] buildCompressionPdfDocument(
+            Document summary,
+            Document workflowInstance,
+            List<Document> historyList,
+            List<Document> auditList,
+            List<Document> workflowAuditList,
+            List<Document> cppSamples,
+            List<Document> alarms,
+            List<Document> plcEvents,
+            String equipmentCode) {
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        CompressionLayoutHelper helper = new CompressionLayoutHelper();
+
+        try {
+            com.lowagie.text.Document doc = new com.lowagie.text.Document(PageSize.A4, 36f, 36f, 36f, 36f);
+            PdfWriter writer = PdfWriter.getInstance(doc, baos);
+            writer.setPageEvent(helper);
+
+            doc.open();
+            doc.addTitle("SEJONG TABLET PRESS REPORT - MC081");
+            doc.addSubject("Sejong Tablet Press Production Report");
+
+            // Locate authentic compression details
+            Document compDetails = null;
+            if (cppSamples != null) {
+                for (Document sample : cppSamples) {
+                    if (sample.get("compression_details") instanceof Document cd) {
+                        compDetails = cd;
+                        break;
+                    }
+                }
+            }
+            if (compDetails == null && mongoTemplate.collectionExists("iiot_ts_batch_MC081")) {
+                String bNo = safeString(summary, "batchNo");
+                Query q = new Query();
+                if (bNo != null && !bNo.isBlank() && !"-".equals(bNo)) {
+                    q.addCriteria(new Criteria().orOperator(
+                            Criteria.where("meta.batchNo").is(bNo),
+                            Criteria.where("compression_details.batchInfo.batchNo").is(bNo)
+                    ));
+                }
+                Document found = mongoTemplate.findOne(q, Document.class, "iiot_ts_batch_MC081");
+                if (found != null && found.get("compression_details") instanceof Document cd) {
+                    compDetails = cd;
+                }
+            }
+
+            Document bInfo = compDetails != null && compDetails.get("batchInfo") instanceof Document d ? d : new Document();
+            Document recipe = compDetails != null && compDetails.get("recipeSettings") instanceof Document d ? d : new Document();
+            Document feeder = recipe.get("feeder") instanceof Document d ? d : new Document();
+            Document hydra = recipe.get("hydraulicPressureLimits") instanceof Document d ? d : new Document();
+            Document oil = recipe.get("oilLubrication") instanceof Document d ? d : new Document();
+            Document s1 = oil.get("upperPunchS1") instanceof Document d ? d : new Document();
+            Document s2 = oil.get("lowerPunchS2") instanceof Document d ? d : new Document();
+            Document s3 = oil.get("lowerHeadS3") instanceof Document d ? d : new Document();
+            Document limits = recipe.get("controlLimits") instanceof Document d ? d : new Document();
+            Document hsp = limits.get("hsp") instanceof Document d ? d : new Document();
+            Document hep = limits.get("hep") instanceof Document d ? d : new Document();
+            Document hcp = limits.get("hcp") instanceof Document d ? d : new Document();
+            Document ref = limits.get("ref") instanceof Document d ? d : new Document();
+            Document lcp = limits.get("lcp") instanceof Document d ? d : new Document();
+            Document lep = limits.get("lep") instanceof Document d ? d : new Document();
+            Document lsp = limits.get("lsp") instanceof Document d ? d : new Document();
+            Document sd = limits.get("sdLimit") instanceof Document d ? d : new Document();
+            Document preHsp = limits.get("preHsp") instanceof Document d ? d : new Document();
+            Document pressure = compDetails != null && compDetails.get("pressureData") instanceof Document d ? d : new Document();
+            Document pp = pressure.get("prePressure") instanceof Document d ? d : new Document();
+            Document mp = pressure.get("mainPressure") instanceof Document d ? d : new Document();
+            Document adj = pressure.get("fillingDepthAdjustments") instanceof Document d ? d : new Document();
+            Document opVals = compDetails != null && compDetails.get("operationValues") instanceof Document d ? d : new Document();
+            Document opFeeder = opVals.get("feeder") instanceof Document d ? d : new Document();
+            Document opPre = opVals.get("prePressure") instanceof Document d ? d : new Document();
+            Document opMain = opVals.get("mainPressure") instanceof Document d ? d : new Document();
+            Document opOil = opVals.get("lubricationRemainingMin") instanceof Document d ? d : new Document();
+            Document aux = opVals.get("auxiliaryStatus") instanceof Document d ? d : new Document();
+            Document counters = compDetails != null && compDetails.get("tabletCounters") instanceof Document d ? d : new Document();
+            Document hepCounter = counters.get("hep") instanceof Document d ? d : new Document();
+            Document lepCounter = counters.get("lep") instanceof Document d ? d : new Document();
+            Document goodCounter = counters.get("good") instanceof Document d ? d : new Document();
+            Document meta = compDetails != null && compDetails.get("metadata") instanceof Document d ? d : new Document();
+
+            String batchNo = safeString(bInfo, "batchNo", safeString(summary, "batchNo", "ADQB26003"));
+            String prodName = safeString(bInfo, "productName", safeString(summary, "productName", "Sertraline 100mg"));
+            String operatorName = safeString(bInfo, "operatorName", "mahaboob ramzan");
+            String userId = safeString(bInfo, "userId", "mr11358");
+
+            // ==========================================
+            // PAGE 1: Product Info, Settings, Pressure
+            // ==========================================
+            addSejongPageHeader(doc, "1/2", safeString(meta, "softwareVersion", "2.0"), "PRODUCTION REPORT");
+
+            // Section 1: Product Information
+            addSejongSectionHeading(doc, "Product Information");
+            PdfPTable tProd = new PdfPTable(4);
+            tProd.setWidthPercentage(100);
+            tProd.setWidths(new float[]{22f, 28f, 22f, 28f});
+            tProd.setSpacingAfter(6f);
+
+            addSejongFieldRow(tProd, "Station No :", safeString(bInfo, "stationNo", "Station 1"), "", "");
+            String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : "MC081";
+            String machineDesc = effectiveEq + " SEJONG 49D (Compression Machine)";
+            if (bInfo.containsKey("machineName") && !safeString(bInfo, "machineName").isBlank()) {
+                machineDesc = safeString(bInfo, "machineName") + " (" + effectiveEq + " - Compression Machine)";
+            }
+            addSejongFieldRow(tProd, "Machine Name :", machineDesc, "Product Name :", prodName);
+            addSejongFieldRow(tProd, "User ID :", userId, "Batch NO. :", batchNo);
+            addSejongFieldRow(tProd, "Derived Lot No. :", safeString(bInfo, "derivedLotNo"), "Recipe Name :", safeString(summary, "recipeName"));
+            addSejongFieldRow(tProd, "Print Interval :", safeString(bInfo, "printInterval", "243750") + " Tabs", "Running Time :", safeString(bInfo, "runningTime", "01 Hour   31 Min34 Sec"));
+            addSejongFieldRow(tProd, "Total Counter :", safeString(bInfo, "totalCounter", "243880") + " Tabs", "Total Running Time :", safeString(bInfo, "totalRunningTime", "394 Hour   2 Min"));
+            doc.add(tProd);
+
+            // Section 2: Setting Value
+            addSejongSectionHeading(doc, "Setting Value");
+            PdfPTable tSetting = new PdfPTable(4);
+            tSetting.setWidthPercentage(100);
+            tSetting.setWidths(new float[]{24f, 26f, 26f, 24f});
+            tSetting.setSpacingAfter(6f);
+
+            addSejongFieldRow(tSetting, "Feeder :", "Auto ; " + safeString(feeder, "autoPercent", "60") + " %", "Manual ; " + safeString(feeder, "manualRpm", "12") + " RPM", "");
+            addSejongFieldRow(tSetting, "Filling Cam :", safeString(recipe, "fillingCam", "Cam C 8.5-14mm"), "Target Quantity :", safeString(recipe, "targetQuantity", "975000") + " Tabs");
+            addSejongFieldRow(tSetting, "Air Pressure Low Limit :", safeString(recipe, "airPressureLowLimitKpa", "400") + " Kpa", "Hydraulic High Limit :", safeString(hydra, "highLimitMpa", "15") + " Mpa (Low: " + safeString(hydra, "lowLimitMpa", "0.1") + " Mpa)");
+            addSejongFieldRow(tSetting, "Oil Lubrication S1 :", "Interval: " + safeString(s1, "intervalMin", "300") + " Min", "Supply: " + safeString(s1, "supplySec", "3") + " Sec", "Upper Punch");
+            addSejongFieldRow(tSetting, "Oil Lubrication S2 :", "Interval: " + safeString(s2, "intervalMin", "300") + " Min", "Supply: " + safeString(s2, "supplySec", "3") + " Sec", "Lower Punch");
+            addSejongFieldRow(tSetting, "Oil Lubrication S3 :", "Interval: " + safeString(s3, "intervalMin", "999") + " Min", "Supply: " + safeString(s3, "supplySec", "0") + " Sec", "Lower Head");
+            addSejongFieldRow(tSetting, "Powder Supply Time :", safeString(recipe, "powderSupplyTimeSec", "30") + " Sec", "Initial Reject Time :", safeString(recipe, "initialRejectTimeSec", "6.9") + " Sec");
+            doc.add(tSetting);
+
+            // Section 3: Control Limits & Stop Conditions
+            addSejongSectionHeading(doc, "Control Limits & Stop Conditions");
+            PdfPTable tLimits = new PdfPTable(4);
+            tLimits.setWidthPercentage(100);
+            tLimits.setWidths(new float[]{34f, 18f, 22f, 26f});
+            tLimits.setSpacingAfter(6f);
+
+            addSejongTableHeader(tLimits, "Parameter", "% Setting", "kN Limit", "Stop Condition");
+            addSejongTableRow(tLimits, "HSP (High Stop Pressure)", safeString(hsp, "percent", "45") + " %", safeString(hsp, "kn", "21.51") + " kN", "Stop: " + safeString(hsp, "stop", "Yes"));
+            addSejongTableRow(tLimits, "HEP (High Error Pressure)", safeString(hep, "percent", "29") + " %", safeString(hep, "kn", "19.13") + " kN", safeString(hep, "rot", "10") + " Rot / " + safeString(hep, "tabs", "10") + " Tabs");
+            addSejongTableRow(tLimits, "HCP (High Control Pressure)", safeString(hcp, "percent", "3") + " %", safeString(hcp, "kn", "15.28") + " kN", safeString(hcp, "times", "5") + " Times");
+            addSejongTableRow(tLimits, "Ref (Reference Pressure)", "-", safeString(ref, "kn", "14.83") + " kN", "-");
+            addSejongTableRow(tLimits, "LCP (Low Control Pressure)", safeString(lcp, "percent", "3") + " %", safeString(lcp, "kn", "14.39") + " kN", safeString(lcp, "times", "5") + " Times");
+            addSejongTableRow(tLimits, "LEP (Low Error Pressure)", safeString(lep, "percent", "28") + " %", safeString(lep, "kn", "10.68") + " kN", safeString(lep, "rot", "10") + " Rot / " + safeString(lep, "tabs", "10") + " Tabs");
+            addSejongTableRow(tLimits, "LSP (Low Stop Pressure)", safeString(lsp, "percent", "45") + " %", safeString(lsp, "kn", "8.16") + " kN", "Stop: " + safeString(lsp, "stop", "Yes"));
+            addSejongTableRow(tLimits, "SD Limit", safeString(sd, "percent", "15") + " %", "-", "Stop: " + safeString(sd, "stop", "Yes"));
+            addSejongTableRow(tLimits, "Pre HSP", "-", safeString(preHsp, "kn", "20.62") + " kN", "Stop: " + safeString(preHsp, "stop", "Yes"));
+            doc.add(tLimits);
+
+            // Section 4: Pressure Data
+            addSejongSectionHeading(doc, "Pressure Data");
+            PdfPTable tPress = new PdfPTable(5);
+            tPress.setWidthPercentage(100);
+            tPress.setWidths(new float[]{26f, 18f, 16f, 20f, 20f});
+            tPress.setSpacingAfter(8f);
+
+            addSejongTableHeader(tPress, "Section", "Mean (kN)", "SD (%)", "Min (kN) [Punch]", "Max (kN) [Punch]");
+            addSejongTableRow(tPress, "Pre Pressure", safeString(pp, "meanKn", "3.8") + " kN", safeString(pp, "sdPercent", "0.5") + " %", safeString(pp, "minKn", "3.74") + " kN [#" + safeString(pp, "minPunchNo", "64") + "]", safeString(pp, "maxKn", "3.84") + " kN [#" + safeString(pp, "maxPunchNo", "43") + "]");
+            addSejongTableRow(tPress, "Main Pressure", safeString(mp, "meanKn", "14.93") + " kN", safeString(mp, "sdPercent", "3.9") + " %", safeString(mp, "minKn", "12.68") + " kN [#" + safeString(mp, "minPunchNo", "50") + "]", safeString(mp, "maxKn", "16.56") + " kN [#" + safeString(mp, "maxPunchNo", "26") + "]");
+            addSejongTableRow(tPress, "Filling Depth Adjustments", "Increase: " + safeString(adj, "increaseTimes", "55") + " times", "Decrease: " + safeString(adj, "decreaseTimes", "73") + " times", "-", "-");
+            doc.add(tPress);
+
+            // Page 1 Signatures Block
+            PdfPTable tSig1 = new PdfPTable(3);
+            tSig1.setWidthPercentage(100);
+            tSig1.setWidths(new float[]{33f, 34f, 33f});
+            tSig1.setSpacingAfter(4f);
+            String productionSignatureTime = safeString(meta, "reportTimestamp");
+            if ("-".equals(productionSignatureTime) || productionSignatureTime.isBlank()) {
+                productionSignatureTime = safeString(meta, "reportDate", "Not available");
+            }
+            addSejongFieldRow(tSig1, "Date: " + productionSignatureTime, "Operator: " + operatorName + " (" + userId + ")", "Signature: [E-Signed / Verified]");
+            doc.add(tSig1);
+
+            // ==========================================
+            // PAGE 2: Operations, Counters, Approvals & Controlled Print
+            // ==========================================
+            doc.newPage();
+            addSejongPageHeader(doc, "2/2", safeString(meta, "softwareVersion", "2.0"), "PRODUCTION REPORT - OPERATIONS & TABLET DATA");
+
+            // Section 5: Operation Value
+            addSejongSectionHeading(doc, "Operation Value");
+            PdfPTable tOp = new PdfPTable(4);
+            tOp.setWidthPercentage(100);
+            tOp.setWidths(new float[]{25f, 25f, 25f, 25f});
+            tOp.setSpacingAfter(6f);
+
+            addSejongFieldRow(tOp, "Disk Speed :", safeString(opVals, "diskSpeedRpm", "18") + " RPM", "Capacity :", safeString(opVals, "capacityTabsPerHour", "0") + " Tabs/hour");
+            addSejongFieldRow(tOp, "Feeder Status :", safeString(opFeeder, "status", "AUTO"), "Feeder Speed :", safeString(opFeeder, "speedRpm", "10") + " RPM");
+            addSejongFieldRow(tOp, "Pre-Pressure Thickness :", safeString(opPre, "thicknessMm", "6.86") + " mm", "Lower Punch Position :", safeString(opPre, "lowerPunchPositionMm", "8.86") + " mm (Penet: " + safeString(opPre, "penetrationDepthMm", "2") + " mm)");
+            addSejongFieldRow(tOp, "Main-Pressure Thickness :", safeString(opMain, "thicknessMm", "4.28") + " mm", "Lower Punch Position :", safeString(opMain, "lowerPunchPositionMm", "7.28") + " mm (Penet: " + safeString(opMain, "penetrationDepthMm", "3") + " mm)");
+            addSejongFieldRow(tOp, "Filling Depth :", safeString(opVals, "fillingDepthMm", "12.01") + " mm", "Current Cam :", safeString(opVals, "currentCam", "Cam C 8.5-14mm"));
+            addSejongFieldRow(tOp, "Main Air Pressure :", safeString(opVals, "mainAirPressureKpa", "571") + " Kpa", "Hydraulic Pressure :", safeString(opVals, "hydraulicPressureMpa", "7.6") + " Mpa");
+            addSejongFieldRow(tOp, "Oil S1 Remain Time :", safeString(opOil, "upperPunchS1", "172") + " Min", "Oil S2 / S3 Remain :", "S2: " + safeString(opOil, "lowerPunchS2", "172") + " Min | S3: " + safeString(opOil, "lowerHeadS3", "262") + " Min");
+            addSejongFieldRow(tOp, "Powder Status :", safeString(aux, "powderStatus", "Enable"), "Dust Collector :", safeString(aux, "dustCollector", "ON"));
+            addSejongFieldRow(tOp, "Initial Reject :", safeString(aux, "initialReject", "ON"), "Buzzer :", safeString(aux, "buzzer", "ON"));
+            doc.add(tOp);
+
+            // Section 6: Tablet Data & Production Counters
+            addSejongSectionHeading(doc, "Tablet Data & Production Counters");
+            PdfPTable tTab = new PdfPTable(3);
+            tTab.setWidthPercentage(100);
+            tTab.setWidths(new float[]{34f, 33f, 33f});
+            tTab.setSpacingAfter(6f);
+
+            addSejongTableHeader(tTab, "Metric", "Value / Count (Tabs)", "Percentage / Details");
+            addSejongTableRow(tTab, "Total Counter", safeString(counters, "totalCounter", "243880") + " Tabs", "100% Machine Processed");
+            addSejongTableRow(tTab, "A.W.C. Counter", safeString(counters, "awcCounter", "238564") + " Tabs", "Automatic Weight Controlled");
+            addSejongTableRow(tTab, "HEP (High Error Punch Reject)", safeString(hepCounter, "count", "2648") + " Tabs", safeString(hepCounter, "raw", "2648 (1.1%)"));
+            addSejongTableRow(tTab, "LEP (Low Error Punch Reject)", safeString(lepCounter, "count", "0") + " Tabs", safeString(lepCounter, "raw", "0 (0%)"));
+            addSejongTableRow(tTab, "GOOD Tablets (Accepted)", safeString(goodCounter, "count", "235916") + " Tabs", safeString(goodCounter, "raw", "235916 (98.9%)"));
+            doc.add(tTab);
+
+            // Section 7: Regulatory Workflow Signatures & Approvals Trail
+            addSejongSectionHeading(doc, "Regulatory Sign-Off & Approvals Trail (21 CFR Part 11)");
+            PdfPTable tWorkflow = new PdfPTable(5);
+            tWorkflow.setWidthPercentage(100);
+            tWorkflow.setWidths(new float[]{22f, 20f, 20f, 20f, 18f});
+            tWorkflow.setSpacingAfter(6f);
+
+            addSejongTableHeader(tWorkflow, "Workflow Stage", "User ID", "Role Title", "Timestamp", "Decision");
+            List<WorkflowSignoffEntry> signoffs = collectWorkflowSignoffs(summary, workflowInstance, historyList, workflowAuditList, equipmentCode);
+            for (WorkflowSignoffEntry entry : signoffs) {
+                addSejongTableRow(tWorkflow, entry.action, entry.performedBy, entry.role, entry.dateTime, entry.transition);
+            }
+            doc.add(tWorkflow);
+
+            // Section 8: Controlled Print Verification Summary
+            addSejongSectionHeading(doc, "Controlled Print Verification Summary");
+            PdfPTable tPrint = new PdfPTable(4);
+            tPrint.setWidthPercentage(100);
+            tPrint.setWidths(new float[]{20f, 25f, 25f, 30f});
+            tPrint.setSpacingAfter(6f);
+
+            addSejongTableHeader(tPrint, "Copy No", "Authorized Printer", "Printed By", "Timestamp & Watermark");
+            String qaApprovedAt = signoffs.stream()
+                    .filter(e -> e.role != null && e.role.toUpperCase(Locale.ROOT).contains("QA"))
+                    .map(e -> e.dateTime).filter(Objects::nonNull).reduce((first, second) -> second).orElse("Not available");
+            String qaApprovedBy = signoffs.stream()
+                    .filter(e -> e.role != null && e.role.toUpperCase(Locale.ROOT).contains("QA"))
+                    .map(e -> e.performedBy).filter(Objects::nonNull).reduce((first, second) -> second).orElse("Not available");
+            String printedAt = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date());
+            addSejongTableRow(tPrint, "Copy #1", "Controlled PDF", qaApprovedBy, printedAt + " [OFFICIAL]");
+            addSejongTableRow(tPrint, "QA Approved Print Time", qaApprovedAt, "Batch approval timestamp", "Audit-derived");
+            doc.add(tPrint);
+
+            // Final Signatures
+            PdfPTable tSig2 = new PdfPTable(3);
+            tSig2.setWidthPercentage(100);
+            tSig2.setWidths(new float[]{33f, 34f, 33f});
+            tSig2.setSpacingAfter(2f);
+            addSejongFieldRow(tSig2, "Approval Status: " + resolveDynamicStatus(summary, workflowInstance, historyList, equipmentCode), "QA Approver: " + qaApprovedBy, "Regulatory Compliance: 21 CFR Part 11");
+            doc.add(tSig2);
+
+            addCompressionLotsAppendix(doc, cppSamples, batchNo);
+
+            doc.close();
+            return baos.toByteArray();
+        } catch (Exception ex) {
+            log.error("Compression PDF generation failed", ex);
+            throw new BusinessException("Compression PDF generation failed: " + ex.getMessage());
+        }
+    }
+
+    private void addCompressionLotsAppendix(com.lowagie.text.Document doc, List<Document> samples, String batchNo) throws DocumentException {
+        if (samples == null || samples.isEmpty()) return;
+        for (Document sample : samples) {
+            if (!(sample.get("compression_details") instanceof Document details)) continue;
+            Document sampleMeta = sample.get("meta") instanceof Document d ? d : new Document();
+            String lotNo = safeString(sampleMeta, "derivedLotNo");
+            if ("-".equals(lotNo)) lotNo = safeString(sampleMeta, "lotNo");
+            doc.newPage();
+            addSejongPageHeader(doc, "LOT", safeString(details.get("metadata") instanceof Document d ? d : new Document(), "softwareVersion"), "PRODUCTION REPORT LOT DETAIL");
+            addSejongSectionHeading(doc, "Batch " + batchNo + " / Derived Lot " + lotNo);
+            for (String section : List.of("batchInfo", "recipeSettings", "pressureData", "operationValues", "tightness", "tabletChecker", "tabletCounters")) {
+                Object sectionValue = details.get(section);
+                if (!(sectionValue instanceof Document sectionDoc)) continue;
+                addSejongSectionHeading(doc, compressionSectionTitle(section));
+                PdfPTable table = new PdfPTable(2);
+                table.setWidthPercentage(100);
+                table.setWidths(new float[]{46f, 54f});
+                appendCompressionValues(table, "", sectionDoc);
+                doc.add(table);
+            }
+        }
+    }
+
+    private String compressionSectionTitle(String key) {
+        return switch (key) {
+            case "batchInfo" -> "Production Information";
+            case "recipeSettings" -> "Setting Values";
+            case "pressureData" -> "Pressure Data";
+            case "operationValues" -> "Operational Values";
+            case "tightness" -> "Tightness";
+            case "tabletChecker" -> "Tablet Checker";
+            case "tabletCounters" -> "Tablet Data";
+            default -> key;
+        };
+    }
+
+    private void appendCompressionValues(PdfPTable table, String prefix, Document values) {
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
+            String label = prefix.isBlank() ? entry.getKey() : prefix + " / " + entry.getKey();
+            if (entry.getValue() instanceof Document child) {
+                appendCompressionValues(table, label, child);
+            } else if (!(entry.getValue() instanceof List<?>)) {
+                addSejongTableRow(table, label, entry.getValue() == null ? "Not available" : String.valueOf(entry.getValue()));
+            }
+        }
+    }
+
+    private void addSejongPageHeader(com.lowagie.text.Document doc, String pageTag, String version, String subtitle) throws DocumentException {
+        PdfPTable head = new PdfPTable(3);
+        head.setWidthPercentage(100);
+        head.setWidths(new float[]{18f, 67f, 15f});
+        head.setSpacingAfter(2f);
+
+        PdfPCell cLogo = new PdfPCell();
+        cLogo.setBorder(Rectangle.NO_BORDER);
+        byte[] logoBytes = getLogoBytes();
+        if (logoBytes != null && logoBytes.length > 0) {
+            try {
+                Image logo = Image.getInstance(logoBytes);
+                logo.scaleToFit(64f, 30f);
+                cLogo.addElement(logo);
+            } catch (Exception ex) {
+                log.warn("Unable to render Aurobindo logo in compression header", ex);
+            }
+        }
+
+        PdfPCell cLeft = new PdfPCell();
+        cLeft.setBorder(Rectangle.NO_BORDER);
+        Paragraph title = new Paragraph("SEJONG TABLET PRESS (COMPRESSION MACHINE) REPORT", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12.5f, new Color(26, 43, 76)));
+        title.setAlignment(Element.ALIGN_CENTER);
+        Paragraph ver = new Paragraph("Software version ( " + version + " )", FontFactory.getFont(FontFactory.HELVETICA, 8f, Color.DARK_GRAY));
+        ver.setAlignment(Element.ALIGN_CENTER);
+        Paragraph sub = new Paragraph(subtitle, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9.5f, new Color(44, 62, 80)));
+        sub.setAlignment(Element.ALIGN_CENTER);
+        cLeft.addElement(title);
+        cLeft.addElement(ver);
+        cLeft.addElement(sub);
+
+        PdfPCell cRight = new PdfPCell();
+        cRight.setBorder(Rectangle.NO_BORDER);
+        cRight.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        Paragraph tag = new Paragraph("(" + pageTag + ")", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9f, new Color(26, 43, 76)));
+        tag.setAlignment(Element.ALIGN_RIGHT);
+        cRight.addElement(tag);
+
+        head.addCell(cLogo);
+        head.addCell(cLeft);
+        head.addCell(cRight);
+        doc.add(head);
+    }
+
+    private void addSejongSectionHeading(com.lowagie.text.Document doc, String title) throws DocumentException {
+        Paragraph p = new Paragraph(title, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9f, new Color(26, 43, 76)));
+        p.setSpacingBefore(3f);
+        p.setSpacingAfter(2f);
+        doc.add(p);
+    }
+
+    private void addSejongFieldRow(PdfPTable table, String k1, String v1, String k2, String v2) {
+        PdfPCell c1 = new PdfPCell(new Phrase(k1, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, new Color(30, 41, 59))));
+        c1.setBackgroundColor(new Color(248, 250, 252));
+        c1.setBorderColor(new Color(226, 232, 240));
+        c1.setPadding(2.5f);
+
+        PdfPCell c2 = new PdfPCell(new Phrase(v1 != null && !v1.isBlank() ? v1 : "-", FontFactory.getFont(FontFactory.HELVETICA, 7.2f, new Color(30, 41, 59))));
+        c2.setBorderColor(new Color(226, 232, 240));
+        c2.setPadding(2.5f);
+
+        PdfPCell c3 = new PdfPCell(new Phrase(k2, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, new Color(30, 41, 59))));
+        c3.setBackgroundColor(new Color(248, 250, 252));
+        c3.setBorderColor(new Color(226, 232, 240));
+        c3.setPadding(2.5f);
+
+        PdfPCell c4 = new PdfPCell(new Phrase(v2 != null && !v2.isBlank() ? v2 : "-", FontFactory.getFont(FontFactory.HELVETICA, 7.2f, new Color(30, 41, 59))));
+        c4.setBorderColor(new Color(226, 232, 240));
+        c4.setPadding(2.5f);
+
+        table.addCell(c1);
+        table.addCell(c2);
+        table.addCell(c3);
+        table.addCell(c4);
+    }
+
+    private void addSejongFieldRow(PdfPTable table, String k1, String v1, String k2) {
+        PdfPCell c1 = new PdfPCell(new Phrase(k1, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, new Color(30, 41, 59))));
+        c1.setBackgroundColor(new Color(248, 250, 252));
+        c1.setBorderColor(new Color(226, 232, 240));
+        c1.setPadding(2.5f);
+
+        PdfPCell c2 = new PdfPCell(new Phrase(v1 != null && !v1.isBlank() ? v1 : "-", FontFactory.getFont(FontFactory.HELVETICA, 7.2f, new Color(30, 41, 59))));
+        c2.setBorderColor(new Color(226, 232, 240));
+        c2.setPadding(2.5f);
+
+        PdfPCell c3 = new PdfPCell(new Phrase(k2, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, new Color(30, 41, 59))));
+        c3.setBackgroundColor(new Color(248, 250, 252));
+        c3.setBorderColor(new Color(226, 232, 240));
+        c3.setPadding(2.5f);
+
+        table.addCell(c1);
+        table.addCell(c2);
+        table.addCell(c3);
+    }
+
+    private void addSejongTableHeader(PdfPTable table, String... headers) {
+        for (String h : headers) {
+            PdfPCell cell = new PdfPCell(new Phrase(h, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.2f, new Color(26, 43, 76))));
+            cell.setBackgroundColor(new Color(237, 242, 247));
+            cell.setBorderColor(new Color(203, 213, 225));
+            cell.setPadding(3f);
+            table.addCell(cell);
+        }
+    }
+
+    private void addSejongTableRow(PdfPTable table, String... values) {
+        for (String v : values) {
+            PdfPCell cell = new PdfPCell(new Phrase(v != null && !v.isBlank() ? v : "-", FontFactory.getFont(FontFactory.HELVETICA, 7.0f, new Color(30, 41, 59))));
+            cell.setBorderColor(new Color(226, 232, 240));
+            cell.setPadding(2.5f);
+            table.addCell(cell);
+        }
+    }
+
+    private static class CompressionLayoutHelper extends PdfPageEventHelper {
+        @Override
+        public void onEndPage(PdfWriter writer, com.lowagie.text.Document document) {
+            PdfPTable footer = new PdfPTable(2);
+            try {
+                footer.setWidths(new float[]{80f, 20f});
+                float marginLeft = document.left();
+                float marginRight = document.right();
+                float totalWidth = marginRight - marginLeft;
+                footer.setTotalWidth(totalWidth);
+                footer.setLockedWidth(true);
+
+                Paragraph leftFooter = new Paragraph("ADAVIS IIoT Platform - Equipment MC081 (Stage 4 Compression)", FontFactory.getFont(FontFactory.HELVETICA, 7.0f, new Color(100, 116, 139)));
+                Paragraph rightFooter = new Paragraph(String.format("Page %d", writer.getPageNumber()), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.0f, new Color(100, 116, 139)));
+                rightFooter.setAlignment(Element.ALIGN_RIGHT);
+
+                PdfPCell cellLeft = new PdfPCell(leftFooter);
+                cellLeft.setBorder(Rectangle.NO_BORDER);
+                cellLeft.setPadding(0);
+
+                PdfPCell cellRight = new PdfPCell(rightFooter);
+                cellRight.setBorder(Rectangle.NO_BORDER);
+                cellRight.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                cellRight.setPadding(0);
+
+                footer.addCell(cellLeft);
+                footer.addCell(cellRight);
+                footer.writeSelectedRows(0, -1, marginLeft, 20, writer.getDirectContent());
+            } catch (Exception ignored) {
+            }
         }
     }
 

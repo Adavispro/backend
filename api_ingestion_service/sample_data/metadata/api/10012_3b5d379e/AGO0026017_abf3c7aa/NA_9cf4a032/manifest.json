@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "batch_id": "AGO0026017",
+  "lot_number": "NA  ",
+  "product_no": "LAMOTRIGINE",
+  "source_timestamp": "2026-10-01T16:44:29",
+  "batch_end_date": "2026-10-01T17:55:04",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:47:08+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='AGO0026017', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026017_abf3c7aa\\NA_9cf4a032\\batch_summary_be152272_20261007T134708785420Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:08+00:00",
+      "status": "SUCCESS",
+      "checksum": "6c4d1f6129ee5fa0662bf9d6380ffa3f5dc3336cdebc0808bbf999fee26fe7c5"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='AGO0026017', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026017_abf3c7aa\\NA_9cf4a032\\machine_summary_663b23d8_20261007T134708809442Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:08+00:00",
+      "status": "SUCCESS",
+      "checksum": "e63ff9523a4d8106e057a3669b02861c8d78a71036208a2910462570b69b179f"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10012, @BatchNo='AGO0026017', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026017_abf3c7aa\\NA_9cf4a032\\login_logout_7b250f13_20261007T134710469495Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:10+00:00",
+      "status": "SUCCESS",
+      "checksum": "b8932032fe1f08a6ed92ee6453dbf04fc62427669ab879b3fe9be1300270478c"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10012, @BatchNo='AGO0026017', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026017_abf3c7aa\\NA_9cf4a032\\users_7dfb4cf6_20261007T134712230775Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:12+00:00",
+      "status": "SUCCESS",
+      "checksum": "b8932032fe1f08a6ed92ee6453dbf04fc62427669ab879b3fe9be1300270478c"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10012, @BatchNo='AGO0026017', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026017_abf3c7aa\\NA_9cf4a032\\alarms_423c13f0_20261007T134712421788Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:12+00:00",
+      "status": "SUCCESS",
+      "checksum": "cc4e0a1d94013991d0cc6189671dd2014b0b6b08c40119707e671ad250429389"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10012, @BatchNo='AGO0026017', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026017_abf3c7aa\\NA_9cf4a032\\audit_trail_35a0293f_20261007T134720840355Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:20+00:00",
+      "status": "SUCCESS",
+      "checksum": "ee05073e3b05674f46a55bd4d47ac5da88d1887ecffaefd01b935aaaae1fa1ff"
+    },
+    "blend_recipe": {
+      "source_api": "db:HMI.Blend_Recipe<@BatchNo='AGO0026017', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026017_abf3c7aa\\NA_9cf4a032\\blend_recipe_278cfc62_20261007T134720919150Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:20+00:00",
+      "status": "SUCCESS",
+      "checksum": "7d4977fb3e67fa7ea5893e76d829003741967e34a3c7830fefdc2e7d845f5485"
+    },
+    "blend_operational_data": {
+      "source_api": "db:HMI.Blend_Op_Data<@BatchNo='AGO0026017', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026017_abf3c7aa\\NA_9cf4a032\\blend_operational_data_50e3ef1a_20261007T134721000535Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:21+00:00",
+      "status": "SUCCESS",
+      "checksum": "f3a326f458c902e7f3d6359ccdd99637b561630bf7907ca173ab58b045316b48"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "source": "API",
+  "asset_id": "10110",
+  "batch_id": "AGO0026018",
+  "lot_number": "2B",
+  "product_no": "LAMOTRIGINE",
+  "source_timestamp": "2026-10-02T01:11:06",
+  "batch_end_date": "2026-10-02T03:36:43",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:56:41+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10110, @BatchNo='AGO0026018', @LotNo='2B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\AGO0026018_0ca3a7bf\\2B_5c19c5df\\batch_summary_be152272_20261007T135641895835Z.json",
+      "fetch_timestamp": "2026-10-07T13:56:41+00:00",
+      "status": "SUCCESS",
+      "checksum": "6c80bd93ff2b137a897ca8d4e3ef82f43737508923e15c90295543fbd6484bc5"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10110, @BatchNo='AGO0026018', @LotNo='2B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\AGO0026018_0ca3a7bf\\2B_5c19c5df\\machine_summary_663b23d8_20261007T135641937951Z.json",
+      "fetch_timestamp": "2026-10-07T13:56:41+00:00",
+      "status": "SUCCESS",
+      "checksum": "2ff1e1643914b866548306bb213bb3efef5edd2a24dbd229e8a031ac9be5a438"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10110, @BatchNo='AGO0026018', @LotNo='2B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\AGO0026018_0ca3a7bf\\2B_5c19c5df\\login_logout_7b250f13_20261007T135643789587Z.json",
+      "fetch_timestamp": "2026-10-07T13:56:43+00:00",
+      "status": "SUCCESS",
+      "checksum": "a2f44d31bc1dd79d3bf704919f41e87604a6c34c11b3867bc07c7587c673df9e"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10110, @BatchNo='AGO0026018', @LotNo='2B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\AGO0026018_0ca3a7bf\\2B_5c19c5df\\users_7dfb4cf6_20261007T135645625172Z.json",
+      "fetch_timestamp": "2026-10-07T13:56:45+00:00",
+      "status": "SUCCESS",
+      "checksum": "a2f44d31bc1dd79d3bf704919f41e87604a6c34c11b3867bc07c7587c673df9e"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10110, @BatchNo='AGO0026018', @LotNo='2B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\AGO0026018_0ca3a7bf\\2B_5c19c5df\\alarms_423c13f0_20261007T135715661374Z.json",
+      "fetch_timestamp": "2026-10-07T13:57:15+00:00",
+      "status": "SUCCESS",
+      "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10110, @BatchNo='AGO0026018', @LotNo='2B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\AGO0026018_0ca3a7bf\\2B_5c19c5df\\audit_trail_35a0293f_20261007T135723475169Z.json",
+      "fetch_timestamp": "2026-10-07T13:57:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "5d7136ff32d7136308781cbe56e8ad55e24558339c37a75806613b7e1263156f"
+    },
+    "fbd_operational_data": {
+      "source_api": "db:HMI.FBD_Op_Data<@AssetId='10110', @BatchNo='AGO0026018', @LotNo='2B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\AGO0026018_0ca3a7bf\\2B_5c19c5df\\fbd_operational_data_24666a4b_20261007T135723686306Z.json",
+      "fetch_timestamp": "2026-10-07T13:57:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "07d669e1602ecca7793b69b98e5aab5d9b1d41dda3345806f901938635493a99"
+    },
+    "fbd_recipe": {
+      "source_api": "db:HMI.FBD_Recipe<@AssetId='10110', @BatchNo='AGO0026018', @LotNo='2B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\AGO0026018_0ca3a7bf\\2B_5c19c5df\\fbd_recipe_03121173_20261007T135723786654Z.json",
+      "fetch_timestamp": "2026-10-07T13:57:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "24812eeecf2f9ddcc7d9b3eaf6266591f49e2e086496f3e63d7ca4f2ea4ab821"
+    },
+    "fbd_min_max": {
+      "source_api": "db:HMI.FBD_Min_Max<@AssetId='10110', @BatchNo='AGO0026018', @LotNo='2B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\AGO0026018_0ca3a7bf\\2B_5c19c5df\\fbd_min_max_44d425dd_20261007T135723991630Z.json",
+      "fetch_timestamp": "2026-10-07T13:57:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "c25cc0b81df62a2cf996e61d2da22da84118c455a3196d2c9d6934ea195c12d6"
+    }
+  }
+}

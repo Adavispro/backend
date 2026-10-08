@@ -30,18 +30,19 @@ var ROOM_ID = "ROOM-0001";
 var EQUIPMENT_MASTER_COLLECTIONS = ["iiot_equipment_master", "iiot_equiment_master"];
 
 var DATASET_IDS = [
-    "G5RMG",
-    "G5FBD",
-    "G5OGB",
-    "G5COAT"
+    "MB003",
+    "MB004",
+    "MB005",
+    "MB041",
+    "MC081"
 ];
 
-var DATASET_TYPE_MAP = {
-    RMG: { name: "Rapid Mixer Granulator", make: "SAAN", modelPrefix: "RMG", area: "PB3", block: "PB3" },
-    FBD: { name: "Fluid Bed Dryer", make: "SAAN", modelPrefix: "FBD", area: "GRANULATION", block: "PB3" },
-    OGB: { name: "Octagonal Blender", make: "SAAN", modelPrefix: "OGB", area: "BLENDER2", block: "PB3" },
-    BLE: { name: "Octagonal Blender", make: "SAAN", modelPrefix: "OGB", area: "BLENDER2", block: "PB3" },
-    COAT: { name: "Auto Coater", make: "SAAN", modelPrefix: "COAT", area: "COATING", block: "PB3" }
+var EQUIPMENT_BY_CODE = {
+    MB003: { type: "RMG", name: "Rapid Mixer Granulator", make: "SAAN", model: "RMG", area: "AREA-GRAN", room: "ROOM-GRAN" },
+    MB004: { type: "FBD", name: "Fluid Bed Dryer", make: "SAAN", model: "FBD", area: "AREA-GRAN", room: "ROOM-DRY" },
+    MB005: { type: "BLE", name: "Octagonal Blender", make: "SAAN", model: "OGB", area: "AREA-BLEND", room: "ROOM-BLEND" },
+    MB041: { type: "COAT", name: "Auto Coater", make: "SAAN", model: "COAT", area: "AREA-COAT", room: "ROOM-COAT" },
+    MC081: { type: "COMP", name: "MC081 SEJONG 49D Compression Machine", make: "SEJONG PHARMATEC", model: "SEJONG 49D", area: "AREA-COMP", room: "ROOM-COMP" }
 };
 
 var MOCK_PRODUCTS = [
@@ -128,39 +129,27 @@ function safeUpsert(collectionName, docs, keyField) {
 function createEquipmentDefinitions() {
     var defs = [];
     DATASET_IDS.forEach(function (datasetId) {
-        var type = datasetId.replace(/[^A-Z]/g, "").replace("G", "");
-        if (type.startsWith("5") || type.startsWith("6") || type.startsWith("7")) {
-            type = type.slice(1);
-        }
-        if (!DATASET_TYPE_MAP[type]) {
-            if (datasetId.includes("RMG")) type = "RMG";
-            else if (datasetId.includes("FBD")) type = "FBD";
-            else if (datasetId.includes("OGB") || datasetId.includes("BLE")) type = "OGB";
-            else if (datasetId.includes("COAT")) type = "COAT";
-            else if (datasetId.includes("CIP")) type = "CIP";
-            else type = "RMG";
-        }
-        var typeMeta = DATASET_TYPE_MAP[type] || DATASET_TYPE_MAP.RMG;
-        var lineNo = parseInt(datasetId.replace(/[^0-9]/g, ""), 10) || 5;
+        var typeMeta = EQUIPMENT_BY_CODE[datasetId];
+        var type = typeMeta.type;
 
         defs.push({
             equipmentId: datasetId,
             equipmentCode: datasetId,
-            equipmentName: typeMeta.name + " (" + datasetId + ")",
+            equipmentName: typeMeta.name,
             plantId: PLANT_ID,
-            blockId: typeMeta.block || BLOCK_ID,
-            areaId: typeMeta.area || AREA_ID,
-            roomId: ROOM_ID,
+            blockId: "BLK-PB1",
+            areaId: typeMeta.area,
+            roomId: typeMeta.room,
             make: typeMeta.make,
-            model: typeMeta.modelPrefix + "-" + lineNo,
-            equipmentType: type === "OGB" ? "BLE" : type,
+            model: typeMeta.model,
+            equipmentType: type,
             equipmentTypeName: typeMeta.name,
             hierarchy: {
                 plant: PLANT_ID,
-                block: typeMeta.block || BLOCK_ID,
-                area: typeMeta.area || AREA_ID,
-                room: ROOM_ID,
-                fullPath: PLANT_ID + "/" + (typeMeta.block || BLOCK_ID) + "/" + (typeMeta.area || AREA_ID) + "/" + ROOM_ID + "/" + datasetId
+                block: "BLK-PB1",
+                area: typeMeta.area,
+                room: typeMeta.room,
+                fullPath: PLANT_ID + "/BLK-PB1/" + typeMeta.area + "/" + typeMeta.room + "/" + datasetId
             }
         });
     });
@@ -221,7 +210,8 @@ function getProductCatalog(ts) {
 function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
     var rawType = (equipmentId || "").toString().trim().toUpperCase();
     var eqType = "RMG";
-    if (rawType.includes("RMG")) eqType = "RMG";
+    if (EQUIPMENT_BY_CODE[rawType]) eqType = EQUIPMENT_BY_CODE[rawType].type;
+    else if (rawType.includes("RMG")) eqType = "RMG";
     else if (rawType.includes("FBD")) eqType = "FBD";
     else if (rawType.includes("OGB") || rawType.includes("BLE")) eqType = "BLE";
     else if (rawType.includes("COAT")) eqType = "COAT";
@@ -251,6 +241,14 @@ function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
             { suffix: "SPRAY_RATE", code: "sprayRate", name: "Coating Spray Rate", unitOfMeasure: "g/min", baseValue: 120.0, lowWarn: 15.0, lowCrit: 30.0, highWarn: 15.0, highCrit: 30.0 },
             { suffix: "ATOM_AIR_PRESS", code: "atomAirPress", name: "Atomizing Air Pressure", unitOfMeasure: "bar", baseValue: 2.5, lowWarn: 0.5, lowCrit: 1.0, highWarn: 0.5, highCrit: 1.0 }
         ];
+    } else if (eqType === "COMP") {
+        parameters = [
+            { suffix: "MAIN_PRESS", code: "mainPressure", name: "Main Compression Force", unitOfMeasure: "kN", baseValue: 8.65, lowWarn: 1.65, lowCrit: 3.65, highWarn: 1.35, highCrit: 3.35 },
+            { suffix: "PRE_PRESS", code: "prePressure", name: "Pre Compression Force", unitOfMeasure: "kN", baseValue: 2.1, lowWarn: 0.6, lowCrit: 1.1, highWarn: 0.9, highCrit: 1.9 },
+            { suffix: "TURRET_RPM", code: "diskSpeedRpm", name: "Turret / Disk Speed", unitOfMeasure: "RPM", baseValue: 23.0, lowWarn: 3.0, lowCrit: 8.0, highWarn: 7.0, highCrit: 17.0 },
+            { suffix: "FEEDER_RPM", code: "feederRpm", name: "Feeder Speed", unitOfMeasure: "RPM", baseValue: 12.0, lowWarn: 2.0, lowCrit: 7.0, highWarn: 8.0, highCrit: 18.0 },
+            { suffix: "FILL_DEPTH", code: "fillingDepthMm", name: "Filling Depth", unitOfMeasure: "mm", baseValue: 11.2, lowWarn: 1.2, lowCrit: 3.2, highWarn: 1.8, highCrit: 3.8 }
+        ];
     } else {
         // BLE (Octagonal Blender)
         parameters = [
@@ -272,7 +270,7 @@ function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
             equipmentId: equipmentId,
             parameterId: parameterId,
             parameterCode: parameterId,
-            parameterName: p.name + " #" + pad3(equipmentIndex),
+            parameterName: p.name,
             parameterType: "FLOAT",
             unitOfMeasure: p.unitOfMeasure,
             isCritical: true,
@@ -290,9 +288,14 @@ function buildParameterDocs(equipmentId, plantId, equipmentIndex, ts) {
             equipmentId: equipmentId,
             parameterId: parameterId,
             parameterCode: parameterId,
-            parameterName: p.name + " #" + pad3(equipmentIndex),
+            parameterName: p.name,
             parameterType: "FLOAT",
             floatValue: Number(p.baseValue.toFixed(2)),
+            targetValue: Number(p.baseValue.toFixed(2)),
+            targetSetpoint: Number(p.baseValue.toFixed(2)),
+            setPoint: Number(p.baseValue.toFixed(2)),
+            lowLimit: Number((p.baseValue - p.lowCrit).toFixed(2)),
+            highLimit: Number((p.baseValue + p.highCrit).toFixed(2)),
             lowCriticalValue: Number((p.baseValue - p.lowCrit).toFixed(2)),
             lowWarningValue: Number((p.baseValue - p.lowWarn).toFixed(2)),
             idealMinValue: Number((p.baseValue - p.lowWarn / 2).toFixed(2)),
@@ -522,6 +525,52 @@ function seedMasterData() {
             updatedAt: ts
         }
     ];
+
+    // Recipe Management mirrors the parameter-specific set points and limits for
+    // every active equipment. This avoids a generic range and keeps the master,
+    // batch details, trends and PDF consumers on one source of truth.
+    recipeManagementDocs = parameterLimitDocs.map(function (limit) {
+        var eq = equipmentDefs.find(function (item) { return item.equipmentId === limit.equipmentId; });
+        return {
+            recipeManagementId: "RCM-" + limit.equipmentId + "-" + limit.parameterId,
+            tenantId: TENANT_ID,
+            plantId: PLANT_ID,
+            recipeId: "RCP-" + limit.equipmentId + "-STANDARD",
+            recipeCode: "RCP-" + limit.equipmentId + "-STANDARD",
+            recipeName: limit.equipmentId + " Standard Operating Recipe",
+            equipmentId: limit.equipmentId,
+            equipmentCode: limit.equipmentId,
+            equipmentName: eq ? eq.equipmentName : limit.equipmentId,
+            parameterId: limit.parameterId,
+            parameterCode: limit.parameterCode,
+            parameterName: limit.parameterName,
+            unitOfMeasure: (parameterDocs.find(function (p) { return p.parameterId === limit.parameterId; }) || {}).unitOfMeasure || "",
+            targetSetpoint: limit.targetSetpoint,
+            setPoint: limit.setPoint,
+            lowLimit: limit.lowLimit,
+            highLimit: limit.highLimit,
+            isActive: true,
+            createdAt: ts,
+            updatedAt: ts
+        };
+    });
+
+    equipmentDefs.forEach(function (eq) {
+        recipeDocs.push({
+            recipeId: "RCP-" + eq.equipmentId + "-STANDARD",
+            recipeCode: "RCP-" + eq.equipmentId + "-STANDARD",
+            recipeName: eq.equipmentId + " Standard Operating Recipe",
+            equipmentId: eq.equipmentId,
+            equipmentCode: eq.equipmentCode,
+            equipmentName: eq.equipmentName,
+            version: "1.0",
+            tenantId: TENANT_ID,
+            plantId: PLANT_ID,
+            isActive: true,
+            createdAt: ts,
+            updatedAt: ts
+        });
+    });
 
     EQUIPMENT_MASTER_COLLECTIONS.forEach(function (name) {
         safeUpsert(name, equipmentDocs, "equipmentId");

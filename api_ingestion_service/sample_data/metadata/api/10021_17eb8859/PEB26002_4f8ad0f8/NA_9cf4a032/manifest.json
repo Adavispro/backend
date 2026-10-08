@@ -1,0 +1,76 @@
+{
+  "source": "API",
+  "asset_id": "10021",
+  "batch_id": "PEB26002            ",
+  "lot_number": "NA  ",
+  "product_no": "Paroxetine USP 20mg ",
+  "source_timestamp": "2026-09-18T15:20:56",
+  "batch_end_date": "2026-09-19T00:59:15",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:46:23+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10021, @BatchNo='PEB26002            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\PEB26002_4f8ad0f8\\NA_9cf4a032\\batch_summary_be152272_20261007T134623972337Z.json",
+      "fetch_timestamp": "2026-10-07T13:46:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "f6db74a2d03452e48f1a0ffc06467226b023e8da600f735e991a580a86c0a01f"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10021, @BatchNo='PEB26002            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\PEB26002_4f8ad0f8\\NA_9cf4a032\\machine_summary_663b23d8_20261007T134623992675Z.json",
+      "fetch_timestamp": "2026-10-07T13:46:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "780f18e47d3414b500720f7d8703c992419d947370f8b51eda550c2ef5c4e99e"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10021, @BatchNo='PEB26002            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\PEB26002_4f8ad0f8\\NA_9cf4a032\\login_logout_7b250f13_20261007T134625693512Z.json",
+      "fetch_timestamp": "2026-10-07T13:46:25+00:00",
+      "status": "SUCCESS",
+      "checksum": "988e0413e8921007646b24251c0aa172d124436cf0b0a3e3e0f69a4bdcf0cc67"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10021, @BatchNo='PEB26002            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\PEB26002_4f8ad0f8\\NA_9cf4a032\\users_7dfb4cf6_20261007T134627512891Z.json",
+      "fetch_timestamp": "2026-10-07T13:46:27+00:00",
+      "status": "SUCCESS",
+      "checksum": "988e0413e8921007646b24251c0aa172d124436cf0b0a3e3e0f69a4bdcf0cc67"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10021, @BatchNo='PEB26002            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\PEB26002_4f8ad0f8\\NA_9cf4a032\\alarms_423c13f0_20261007T134627697416Z.json",
+      "fetch_timestamp": "2026-10-07T13:46:27+00:00",
+      "status": "SUCCESS",
+      "checksum": "744130d14b42fc76d19533da48eea6cf8c3f9abb35155708aa75db95cd769f1a"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10021, @BatchNo='PEB26002            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\PEB26002_4f8ad0f8\\NA_9cf4a032\\audit_trail_35a0293f_20261007T134635605094Z.json",
+      "fetch_timestamp": "2026-10-07T13:46:35+00:00",
+      "status": "SUCCESS",
+      "checksum": "3cd9e89e1c6a8cd2fd437f9c46b7e6b97e1fa7fbba7450c25c9f537f89a2fe56"
+    },
+    "coat_operational_data": {
+      "source_api": "db:HMI.Coat_Op_Data<@BatchNo='PEB26002            ', @LotNo='NA  ', @AssetId='10021'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\PEB26002_4f8ad0f8\\NA_9cf4a032\\coat_operational_data_ef01b81e_20261007T134636026652Z.json",
+      "fetch_timestamp": "2026-10-07T13:46:36+00:00",
+      "status": "SUCCESS",
+      "checksum": "90983e2d022615bc43854e3097fb2669e5f62ac094dce8527f8dfd3193d9acbe"
+    },
+    "coat_recipe": {
+      "source_api": "db:HMI.Coat_Recipe<@BatchNo='PEB26002            ', @LotNo='NA  ', @AssetId='10021'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\PEB26002_4f8ad0f8\\NA_9cf4a032\\coat_recipe_72d88ee3_20261007T134636246221Z.json",
+      "fetch_timestamp": "2026-10-07T13:46:36+00:00",
+      "status": "SUCCESS",
+      "checksum": "525c7eb178f54ae3137dc3c7e7b2d5ccb3f73b4b4bb6fb6f10937d67f21450c8"
+    },
+    "coat_min_max": {
+      "source_api": "db:HMI.Coat_Min_Max<@BatchNo='PEB26002            ', @LotNo='NA  ', @AssetId='10021'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\PEB26002_4f8ad0f8\\NA_9cf4a032\\coat_min_max_a16dcad9_20261007T134636808093Z.json",
+      "fetch_timestamp": "2026-10-07T13:46:36+00:00",
+      "status": "SUCCESS",
+      "checksum": "2d31c34a158946f96cd0516aa2efd530780d898df33f7610a77816e02815d481"
+    }
+  }
+}

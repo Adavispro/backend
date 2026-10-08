@@ -1,0 +1,75 @@
+{
+  "source": "API",
+  "asset_id": "10021",
+  "batch_id": "RTB26013            ",
+  "lot_number": "NA  ",
+  "product_no": "CARVEDILOL 6.25mg   ",
+  "source_timestamp": "2026-09-08T15:02:28",
+  "batch_end_date": "2026-09-09T01:51:41",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:58:22+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10021, @BatchNo='RTB26013            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\RTB26013_3d780ab9\\NA_9cf4a032\\batch_summary_be152272_20261007T135822475474Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:22+00:00",
+      "status": "SUCCESS",
+      "checksum": "27a88028074381720ffbf35a539355b3b384438d2e9c0b54724557f0eac17838"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10021, @BatchNo='RTB26013            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\RTB26013_3d780ab9\\NA_9cf4a032\\machine_summary_663b23d8_20261007T135822508706Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:22+00:00",
+      "status": "SUCCESS",
+      "checksum": "780f18e47d3414b500720f7d8703c992419d947370f8b51eda550c2ef5c4e99e"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10021, @BatchNo='RTB26013            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\RTB26013_3d780ab9\\NA_9cf4a032\\login_logout_7b250f13_20261007T135824416349Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:24+00:00",
+      "status": "SUCCESS",
+      "checksum": "86b832fab53ceb087f0fd93e7185a2d46732b386b2a3b79a0741a83c6bf80b54"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10021, @BatchNo='RTB26013            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\RTB26013_3d780ab9\\NA_9cf4a032\\users_7dfb4cf6_20261007T135826232230Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:26+00:00",
+      "status": "SUCCESS",
+      "checksum": "86b832fab53ceb087f0fd93e7185a2d46732b386b2a3b79a0741a83c6bf80b54"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10021, @BatchNo='RTB26013            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\RTB26013_3d780ab9\\NA_9cf4a032\\alarms_423c13f0_20261007T135826415771Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:26+00:00",
+      "status": "SUCCESS",
+      "checksum": "a71bf583816c96de304beb3f9719a6d674cd709dd635663f6754f01387bf90ea"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail",
+      "fetch_timestamp": "2026-10-07T13:58:36+00:00",
+      "status": "FAILED",
+      "error_message": "Dataset API returned HTTP 404"
+    },
+    "coat_operational_data": {
+      "source_api": "db:HMI.Coat_Op_Data<@BatchNo='RTB26013            ', @LotNo='NA  ', @AssetId='10021'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\RTB26013_3d780ab9\\NA_9cf4a032\\coat_operational_data_ef01b81e_20261007T135836878167Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:36+00:00",
+      "status": "SUCCESS",
+      "checksum": "0d948d13499ac794934ff8eff59e8435d0d33b16f8c826f42f174be0d56cc30f"
+    },
+    "coat_recipe": {
+      "source_api": "db:HMI.Coat_Recipe<@BatchNo='RTB26013            ', @LotNo='NA  ', @AssetId='10021'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\RTB26013_3d780ab9\\NA_9cf4a032\\coat_recipe_72d88ee3_20261007T135837068805Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:37+00:00",
+      "status": "SUCCESS",
+      "checksum": "eab47384746342cc5ea0ce09f838ac6460b6a5e9b3945f8f620a28d189da9fc4"
+    },
+    "coat_min_max": {
+      "source_api": "db:HMI.Coat_Min_Max<@BatchNo='RTB26013            ', @LotNo='NA  ', @AssetId='10021'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\RTB26013_3d780ab9\\NA_9cf4a032\\coat_min_max_a16dcad9_20261007T135837818315Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:37+00:00",
+      "status": "SUCCESS",
+      "checksum": "e9d5c4019da64bf8c359216c2ff4bfe8a0a38e3de48bb39645f0278e7c9e1c07"
+    }
+  }
+}

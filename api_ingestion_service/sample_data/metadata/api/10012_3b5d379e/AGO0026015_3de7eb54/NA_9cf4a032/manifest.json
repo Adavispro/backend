@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "batch_id": "AGO0026015",
+  "lot_number": "NA  ",
+  "product_no": "LAMOTRIGINE",
+  "source_timestamp": "2026-09-29T23:27:38",
+  "batch_end_date": "2026-09-30T00:48:20",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:47:33+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='AGO0026015', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026015_3de7eb54\\NA_9cf4a032\\batch_summary_be152272_20261007T134733707535Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:33+00:00",
+      "status": "SUCCESS",
+      "checksum": "129085a67b59d64372e2768e0621b18349d11e5e81dd6d9c26111b280ffb3504"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='AGO0026015', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026015_3de7eb54\\NA_9cf4a032\\machine_summary_663b23d8_20261007T134733733112Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:33+00:00",
+      "status": "SUCCESS",
+      "checksum": "e63ff9523a4d8106e057a3669b02861c8d78a71036208a2910462570b69b179f"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10012, @BatchNo='AGO0026015', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026015_3de7eb54\\NA_9cf4a032\\login_logout_7b250f13_20261007T134735633991Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:35+00:00",
+      "status": "SUCCESS",
+      "checksum": "508c0c3f119c45e2a22fb123ae22c86ac5ba95c1340c41425f3459ecf454f7ff"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10012, @BatchNo='AGO0026015', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026015_3de7eb54\\NA_9cf4a032\\users_7dfb4cf6_20261007T134737427099Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:37+00:00",
+      "status": "SUCCESS",
+      "checksum": "508c0c3f119c45e2a22fb123ae22c86ac5ba95c1340c41425f3459ecf454f7ff"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10012, @BatchNo='AGO0026015', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026015_3de7eb54\\NA_9cf4a032\\alarms_423c13f0_20261007T134737607299Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:37+00:00",
+      "status": "SUCCESS",
+      "checksum": "dd1f8d2a3eeb604dfa4757c2fee7c794aa5ab189cfb6cf7c35a4e9741064cd0b"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10012, @BatchNo='AGO0026015', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026015_3de7eb54\\NA_9cf4a032\\audit_trail_35a0293f_20261007T134745763738Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:45+00:00",
+      "status": "SUCCESS",
+      "checksum": "82e7d420d29a4d49ac911dda8fc806f668644ee3aad4f244ba0e93a1d4d2e488"
+    },
+    "blend_recipe": {
+      "source_api": "db:HMI.Blend_Recipe<@BatchNo='AGO0026015', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026015_3de7eb54\\NA_9cf4a032\\blend_recipe_278cfc62_20261007T134745864557Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:45+00:00",
+      "status": "SUCCESS",
+      "checksum": "7d4977fb3e67fa7ea5893e76d829003741967e34a3c7830fefdc2e7d845f5485"
+    },
+    "blend_operational_data": {
+      "source_api": "db:HMI.Blend_Op_Data<@BatchNo='AGO0026015', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026015_3de7eb54\\NA_9cf4a032\\blend_operational_data_50e3ef1a_20261007T134745942420Z.json",
+      "fetch_timestamp": "2026-10-07T13:47:45+00:00",
+      "status": "SUCCESS",
+      "checksum": "9e4b1761d05976735171764b1c976f801d8cdde58ab64d95d9516b2e401cb85c"
+    }
+  }
+}

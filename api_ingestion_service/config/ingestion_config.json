@@ -1,0 +1,130 @@
+{
+  "database": {
+    "mongo_uri": "",
+    "db_name": "adavis_platform",
+    "connect_timeout_ms": 5000,
+    "socket_timeout_ms": 30000
+  },
+  "auth": {
+    "auth_type": "oauth2_pkce",
+    "token_url": "https://u3-miebmr-srv-t/fwxserverweb/security/connect/token",
+    "auth_url": "https://u3-miebmr-srv-t/fwxserverweb/security/connect/authorize",
+    "callback_url": "http://u3-miebmr-srv-t",
+    "client_id": "In_house_client",
+    "client_secret": "",
+    "username": "",
+    "password": "",
+    "scope": "openid profile fwxapi offline_access"
+  },
+  "api": {
+    "use_mock": true,
+    "mock_service_url": "http://127.0.0.1:8001/fwxapi/rest/v1/Dataset",
+    "live_base_url": "https://u3-miebmr-srv-t",
+    "dataset_path": "/fwxapi/rest/v1/Dataset",
+    "bearer_token": "",
+    "verify_tls": false,
+    "request_timeout_seconds": 60,
+    "max_retries": 3,
+    "backoff_factor": 0.5
+  },
+  "mock_server": {
+    "host": "127.0.0.1",
+    "port": 8001,
+    "sample_data_path": "./sample_data"
+  },
+  "ingestion": {
+    "ingestion_mode": "APPEND",
+    "backup_before_truncate": true,
+    "schedule_minutes": 15,
+    "continuous_run": false,
+    "max_parallel_assets": 4,
+    "max_batches_per_asset_per_cycle": 5,
+    "process_live_batches": true,
+    "deduplicate_events": true,
+    "data_ingestion_start_date": "2026-08-01 00:00:00"
+  },
+  "assets": [
+    {
+      "asset_id": "10094",
+      "code": "MB003",
+      "name": "Rapid Mixer Granulator",
+      "stage_order": 1,
+      "stage_name": "Granulation",
+      "equipment_type": "RMG",
+      "enabled": true,
+      "datasets": {
+        "batch_info": "db:HMI.Batch_Info<@AssetId=10094, @Batch_No=''>",
+        "batch_summary": "db:HMI.Batch_summary<@AssetId=10094, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "machine_summary": "db:HMI.Mach_summary<@AssetId=10094, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "login_logout": "db:HMI.Login<@AssetId=10094, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "users": "db:HMI.Users<@AssetId=10094, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "alarms": "db:HMI.Alarms<@AssetId=10094, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "audit_trail": "db:HMI.Audit_Trail<@AssetId=10094, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "operational_data": "db:HMI.RMG_op_data<@AssetId='10094', @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "recipe": "db:HMI.RMG_recipe<@AssetId='10094', @BatchNo='{batch_no}', @LotNo='{lot_no}'>"
+      }
+    },
+    {
+      "asset_id": "10110",
+      "code": "MB004",
+      "name": "Fluid Bed Dryer",
+      "stage_order": 2,
+      "stage_name": "Drying",
+      "equipment_type": "FBD",
+      "enabled": true,
+      "datasets": {
+        "batch_info": "db:HMI.Batch_Info<@AssetId=10110, @Batch_No=''>",
+        "batch_summary": "db:HMI.Batch_summary<@AssetId=10110, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "machine_summary": "db:HMI.Mach_summary<@AssetId=10110, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "login_logout": "db:HMI.Login<@AssetId=10110, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "users": "db:HMI.Users<@AssetId=10110, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "alarms": "db:HMI.Alarms<@AssetId=10110, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "audit_trail": "db:HMI.Audit_Trail<@AssetId=10110, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "operational_data": "db:HMI.FBD_Op_Data<@AssetId='10110', @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "recipe": "db:HMI.FBD_Recipe<@AssetId='10110', @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "min_max": "db:HMI.FBD_Min_Max<@AssetId='10110', @BatchNo='{batch_no}', @LotNo='{lot_no}'>"
+      }
+    },
+    {
+      "asset_id": "10012",
+      "code": "MB005",
+      "name": "Blender / Octagonal Blender",
+      "stage_order": 3,
+      "stage_name": "Blending",
+      "equipment_type": "BLE",
+      "enabled": true,
+      "datasets": {
+        "batch_info": "db:HMI.Batch_Info<@AssetId=10012, @Batch_No=''>",
+        "batch_summary": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "machine_summary": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "login_logout": "db:HMI.Login<@AssetId=10012, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "users": "db:HMI.Users<@AssetId=10012, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "alarms": "db:HMI.Alarms<@AssetId=10012, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "audit_trail": "db:HMI.Audit_Trail<@AssetId=10012, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "operational_data": "db:HMI.Blend_Op_Data<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='10012'>",
+        "recipe": "db:HMI.Blend_Recipe<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='10012'>"
+      }
+    },
+    {
+      "asset_id": "10021",
+      "code": "MB041",
+      "name": "Auto Coater",
+      "stage_order": 4,
+      "stage_name": "Coating",
+      "equipment_type": "COAT",
+      "enabled": true,
+      "datasets": {
+        "batch_info": "db:HMI.Batch_Info<@AssetId=10021, @Batch_No=''>",
+        "batch_summary": "db:HMI.Batch_summary<@AssetId=10021, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "machine_summary": "db:HMI.Mach_summary<@AssetId=10021, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "login_logout": "db:HMI.Login<@AssetId=10021, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "users": "db:HMI.Users<@AssetId=10021, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "alarms": "db:HMI.Alarms<@AssetId=10021, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "audit_trail": "db:HMI.Audit_Trail<@AssetId=10021, @BatchNo='{batch_no}', @LotNo='{lot_no}'>",
+        "operational_data": "db:HMI.Coat_Op_Data<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='10021'>",
+        "recipe": "db:HMI.Coat_Recipe<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='10021'>",
+        "min_max": "db:HMI.Coat_Min_Max<@BatchNo='{batch_no}', @LotNo='{lot_no}', @AssetId='10021'>"
+      }
+    }
+  ]
+}

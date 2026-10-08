@@ -1,0 +1,609 @@
+{
+  "observedAt": "2026-09-25 08:24:22",
+  "event_time": "2026-09-25 08:24:22",
+  "meta": {
+    "batchNo": "MPB26054",
+    "lotNo": "MPB26054",
+    "productCode": "Mirtazapine OD 30mg",
+    "productName": "Mirtazapine OD 30mg",
+    "equipmentCode": "MC081",
+    "equipmentId": "MC081",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "operatorName": "mahaboob ramzan",
+    "userId": "mr11358",
+    "status": "COMPLETED"
+  },
+  "metrics": {},
+  "compression_details": {
+    "metadata": {
+      "sourceFile": "ProductionReport-2026-09-25-08-24-22.xls",
+      "parsedAt": "2026-10-08T02:05:43.923560+00:00",
+      "softwareVersion": "2.0",
+      "reportTimestamp": "2026-09-25T08:24:22",
+      "reportDate": "2026-09-25 00:00:00"
+    },
+    "batchInfo": {
+      "equipmentId": "MC081",
+      "machineName": "MC081 SEJONG 49D",
+      "equipmentType": "COMP",
+      "stageId": "STAGE-4",
+      "stageName": "Compression",
+      "productName": "Mirtazapine OD 30mg",
+      "batchNo": "MPB26054",
+      "stationNo": "Station 1",
+      "userId": "mr11358",
+      "operatorName": "mahaboob ramzan",
+      "printInterval": 192500,
+      "runningTime": "04 Hour   04 Min30 Sec",
+      "totalRunningTime": "365 Hour   12 Min"
+    },
+    "recipeSettings": {
+      "feeder": {
+        "autoPercent": 40,
+        "manualRpm": 9
+      },
+      "fillingCam": "Cam C 8.5-14mm",
+      "targetQuantity": 770000,
+      "airPressureLowLimitKpa": 400,
+      "hydraulicPressureLimits": {
+        "highLimitMpa": 15,
+        "lowLimitMpa": 0.1
+      },
+      "oilLubrication": {
+        "upperPunchS1": {
+          "intervalMin": 300,
+          "supplySec": 3
+        },
+        "lowerPunchS2": {
+          "intervalMin": 300,
+          "supplySec": 3
+        },
+        "lowerHeadS3": {
+          "intervalMin": 999,
+          "supplySec": 0
+        }
+      },
+      "powderSupplyTimeSec": 30,
+      "initialRejectTimeSec": 7.8,
+      "upperPunchTightnessHigh": null,
+      "lowerPunchTightnessHigh": null,
+      "ejectingForceHigh": null,
+      "controlLimits": {
+        "hsp": {
+          "percent": 45,
+          "kn": 8.41,
+          "stop": "Yes"
+        },
+        "hep": {
+          "percent": 28,
+          "kn": 7.42,
+          "rot": 10,
+          "tabs": 10
+        },
+        "hcp": {
+          "percent": 3,
+          "kn": 5.97,
+          "times": 5
+        },
+        "ref": {
+          "kn": 5.8
+        },
+        "lcp": {
+          "percent": 3,
+          "kn": 5.62,
+          "times": 5
+        },
+        "lep": {
+          "percent": 26,
+          "kn": 4.29,
+          "rot": 10,
+          "tabs": 10
+        },
+        "lsp": {
+          "percent": 45,
+          "kn": 3.19,
+          "stop": "Yes"
+        },
+        "sdLimit": {
+          "percent": 15,
+          "stop": "Yes"
+        },
+        "preHsp": {
+          "kn": 8.63,
+          "stop": "Yes"
+        },
+        "meanCalculationRangeRot": 3,
+        "calculationPassRot": 3,
+        "emptyPunchNo": null
+      }
+    },
+    "pressureData": {
+      "prePressure": {
+        "meanKn": 2.51,
+        "sdPercent": 0.8,
+        "minKn": 2.45,
+        "minPunchNo": 5,
+        "maxKn": 2.56,
+        "maxPunchNo": 17
+      },
+      "mainPressure": {
+        "meanKn": 5.71,
+        "sdPercent": 1.4,
+        "minKn": 5.43,
+        "minPunchNo": 6,
+        "maxKn": 6.06,
+        "maxPunchNo": 13
+      },
+      "fillingDepthAdjustments": {
+        "increaseTimes": 28,
+        "decreaseTimes": 26
+      }
+    },
+    "operationValues": {
+      "diskSpeedRpm": 16,
+      "capacityTabsPerHour": 140160,
+      "feeder": {
+        "status": "AUTO",
+        "speedRpm": 6
+      },
+      "prePressure": {
+        "thicknessMm": 12.15,
+        "lowerPunchPositionMm": 14.15,
+        "penetrationDepthMm": 2
+      },
+      "mainPressure": {
+        "thicknessMm": 4.39,
+        "lowerPunchPositionMm": 7.39,
+        "penetrationDepthMm": 3
+      },
+      "fillingDepthMm": 10.84,
+      "currentCam": "Cam C 8.5-14mm",
+      "mainAirPressureKpa": 591,
+      "hydraulicPressureMpa": 7.6,
+      "lubricationRemainingMin": {
+        "upperPunchS1": 98,
+        "lowerPunchS2": 98,
+        "lowerHeadS3": 989
+      },
+      "auxiliaryStatus": {
+        "powderStatus": "Enable",
+        "dustCollector": "ON",
+        "initialReject": "ON",
+        "buzzer": "ON"
+      }
+    },
+    "tightness": {
+      "upperPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "lowerPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "ejectionForce": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      }
+    },
+    "tabletChecker": {
+      "weightMg": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "thicknessMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "diameterMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "hardnessN": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      }
+    },
+    "tabletCounters": {
+      "totalCounter": 577668,
+      "awcCounter": 563195,
+      "hep": {
+        "raw": "116 (0.0%)",
+        "count": 116
+      },
+      "lep": {
+        "raw": "0 (0%)",
+        "count": 0
+      },
+      "good": {
+        "raw": "563079 (100.0%)",
+        "count": 563079
+      }
+    },
+    "signatures": {
+      "operatorName": "mahaboob ramzan",
+      "reportDate": "2026-09-25 00:00:00"
+    },
+    "operation_history": [
+      {
+        "auditId": "AUD-MC081-20260925-12",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 16:45:13",
+        "eventType": "PARAMETER_CHANGE",
+        "action": "Parameter Setup (0980)",
+        "classA": "0010",
+        "classB": "0980",
+        "previousValue": "OFF",
+        "newValue": "ON",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "auditId": "AUD-MC081-20260925-13",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 16:45:13",
+        "eventType": "PARAMETER_CHANGE",
+        "action": "Parameter Setup (0990)",
+        "classA": "0010",
+        "classB": "0990",
+        "previousValue": "OFF",
+        "newValue": "ON",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "auditId": "AUD-MC081-20260925-14",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 16:45:14",
+        "eventType": "PARAMETER_CHANGE",
+        "action": "Parameter Setup (0980)",
+        "classA": "0010",
+        "classB": "0980",
+        "previousValue": "ON",
+        "newValue": "OFF",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "auditId": "AUD-MC081-20260925-15",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 16:45:14",
+        "eventType": "PARAMETER_CHANGE",
+        "action": "Parameter Setup (0990)",
+        "classA": "0010",
+        "classB": "0990",
+        "previousValue": "ON",
+        "newValue": "OFF",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      }
+    ],
+    "login_history": [],
+    "alarm_history": [
+      {
+        "alarmId": "ALM-MC081-20260925-1",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 14:25:30",
+        "classA": "0030",
+        "classB": "1520",
+        "alarmCode": "1520",
+        "alarmName": "Alarm Code 1520",
+        "description": "Alarm Code 1520",
+        "severity": "WARNING",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-2",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 14:25:30",
+        "classA": "0030",
+        "classB": "1530",
+        "alarmCode": "1530",
+        "alarmName": "Alarm Code 1530",
+        "description": "Alarm Code 1530",
+        "severity": "WARNING",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-3",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 14:25:30",
+        "classA": "0030",
+        "classB": "0040",
+        "alarmCode": "0040",
+        "alarmName": "Upper Punch Safety Rail",
+        "description": "Upper Punch Safety Rail",
+        "severity": "CRITICAL",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-4",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 14:25:30",
+        "classA": "0030",
+        "classB": "0100",
+        "alarmCode": "0100",
+        "alarmName": "Today\u2019s Safety Message",
+        "description": "Today\u2019s Safety Message",
+        "severity": "CRITICAL",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-5",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 14:25:30",
+        "classA": "0030",
+        "classB": "0150",
+        "alarmCode": "0150",
+        "alarmName": "Feeder Overload",
+        "description": "Feeder Overload",
+        "severity": "CRITICAL",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-6",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 15:30:34",
+        "classA": "0030",
+        "classB": "1520",
+        "alarmCode": "1520",
+        "alarmName": "Alarm Code 1520",
+        "description": "Alarm Code 1520",
+        "severity": "WARNING",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-7",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 15:30:34",
+        "classA": "0030",
+        "classB": "1530",
+        "alarmCode": "1530",
+        "alarmName": "Alarm Code 1530",
+        "description": "Alarm Code 1530",
+        "severity": "WARNING",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-8",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 15:30:34",
+        "classA": "0030",
+        "classB": "0040",
+        "alarmCode": "0040",
+        "alarmName": "Upper Punch Safety Rail",
+        "description": "Upper Punch Safety Rail",
+        "severity": "CRITICAL",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-9",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 15:30:34",
+        "classA": "0030",
+        "classB": "0080",
+        "alarmCode": "0080",
+        "alarmName": "Insert Handle",
+        "description": "Insert Handle",
+        "severity": "WARNING",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-10",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 15:30:34",
+        "classA": "0030",
+        "classB": "0100",
+        "alarmCode": "0100",
+        "alarmName": "Today\u2019s Safety Message",
+        "description": "Today\u2019s Safety Message",
+        "severity": "CRITICAL",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-11",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 15:30:34",
+        "classA": "0030",
+        "classB": "0150",
+        "alarmCode": "0150",
+        "alarmName": "Feeder Overload",
+        "description": "Feeder Overload",
+        "severity": "CRITICAL",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-16",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 16:45:15",
+        "classA": "0030",
+        "classB": "1520",
+        "alarmCode": "1520",
+        "alarmName": "Alarm Code 1520",
+        "description": "Alarm Code 1520",
+        "severity": "WARNING",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-17",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 16:45:15",
+        "classA": "0030",
+        "classB": "1530",
+        "alarmCode": "1530",
+        "alarmName": "Alarm Code 1530",
+        "description": "Alarm Code 1530",
+        "severity": "WARNING",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-18",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 16:45:15",
+        "classA": "0030",
+        "classB": "0040",
+        "alarmCode": "0040",
+        "alarmName": "Upper Punch Safety Rail",
+        "description": "Upper Punch Safety Rail",
+        "severity": "CRITICAL",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-19",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 16:45:16",
+        "classA": "0030",
+        "classB": "0080",
+        "alarmCode": "0080",
+        "alarmName": "Insert Handle",
+        "description": "Insert Handle",
+        "severity": "WARNING",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      },
+      {
+        "alarmId": "ALM-MC081-20260925-20",
+        "equipmentId": "MC081",
+        "equipmentCode": "MC081",
+        "equipmentType": "COMP",
+        "stageId": "STAGE-4",
+        "timestamp": "2026-09-25 16:45:16",
+        "classA": "0030",
+        "classB": "0100",
+        "alarmCode": "0100",
+        "alarmName": "Today\u2019s Safety Message",
+        "description": "Today\u2019s Safety Message",
+        "severity": "CRITICAL",
+        "productName": "",
+        "batchNo": "",
+        "userId": "",
+        "operatorName": ""
+      }
+    ]
+  }
+}

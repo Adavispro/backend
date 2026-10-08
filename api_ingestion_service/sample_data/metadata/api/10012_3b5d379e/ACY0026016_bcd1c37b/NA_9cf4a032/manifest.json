@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "batch_id": "ACY0026016",
+  "lot_number": "NA  ",
+  "product_no": "Nadolol Blend",
+  "source_timestamp": "2026-09-26T09:29:52",
+  "batch_end_date": "2026-09-26T11:38:57",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:58:51+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='ACY0026016', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\ACY0026016_bcd1c37b\\NA_9cf4a032\\batch_summary_be152272_20261007T135851995751Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:52+00:00",
+      "status": "SUCCESS",
+      "checksum": "96a95aa125d5507c6752a1578c777a9836be80ef9ae34a6740c3c60bb176cccc"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='ACY0026016', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\ACY0026016_bcd1c37b\\NA_9cf4a032\\machine_summary_663b23d8_20261007T135852042931Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:52+00:00",
+      "status": "SUCCESS",
+      "checksum": "e63ff9523a4d8106e057a3669b02861c8d78a71036208a2910462570b69b179f"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10012, @BatchNo='ACY0026016', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\ACY0026016_bcd1c37b\\NA_9cf4a032\\login_logout_7b250f13_20261007T135853947161Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:53+00:00",
+      "status": "SUCCESS",
+      "checksum": "900cb6ae25128824a5d65b1466b119457cd45d37924f83d7ffe13e987b532909"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10012, @BatchNo='ACY0026016', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\ACY0026016_bcd1c37b\\NA_9cf4a032\\users_7dfb4cf6_20261007T135855781577Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:55+00:00",
+      "status": "SUCCESS",
+      "checksum": "900cb6ae25128824a5d65b1466b119457cd45d37924f83d7ffe13e987b532909"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10012, @BatchNo='ACY0026016', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\ACY0026016_bcd1c37b\\NA_9cf4a032\\alarms_423c13f0_20261007T135855968075Z.json",
+      "fetch_timestamp": "2026-10-07T13:58:55+00:00",
+      "status": "SUCCESS",
+      "checksum": "8017131e270dd82157769cd391bffffbc7f6572628eb8b507311dfbfd4e4f131"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10012, @BatchNo='ACY0026016', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\ACY0026016_bcd1c37b\\NA_9cf4a032\\audit_trail_35a0293f_20261007T135907175292Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:07+00:00",
+      "status": "SUCCESS",
+      "checksum": "580fecaf8f1957ff9fd6b34b1d9e16f7c513d2ef364030f7daeb37f1a46cfb2b"
+    },
+    "blend_recipe": {
+      "source_api": "db:HMI.Blend_Recipe<@BatchNo='ACY0026016', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\ACY0026016_bcd1c37b\\NA_9cf4a032\\blend_recipe_278cfc62_20261007T135907262043Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:07+00:00",
+      "status": "SUCCESS",
+      "checksum": "ed1ffcdccbec2c9bac5b48c326b0f3a69b382c4830a1979014d1f2a1610ab002"
+    },
+    "blend_operational_data": {
+      "source_api": "db:HMI.Blend_Op_Data<@BatchNo='ACY0026016', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\ACY0026016_bcd1c37b\\NA_9cf4a032\\blend_operational_data_50e3ef1a_20261007T135907320126Z.json",
+      "fetch_timestamp": "2026-10-07T13:59:07+00:00",
+      "status": "SUCCESS",
+      "checksum": "97b4300fdd8f707c06b5ef90773ddc244b16f6cce21ffb618a6cfd4317d07918"
+    }
+  }
+}

@@ -25,7 +25,8 @@ if [[ -f "$SCHEDULER_PID_FILE" ]]; then
   rm -f "$SCHEDULER_PID_FILE"
 fi
 
-# Fallback check for any lingering run_scheduler_loop.py process
+# Fallback check for any lingering scheduler / unified ingestion runner processes
+pkill -f "unified_ingestion_runner.py" 2>/dev/null && stopped_any=1 || true
 pkill -f "scheduler.run_scheduler_loop" 2>/dev/null && stopped_any=1 || true
 
 # Stop mock data service if requested or if default

@@ -137,6 +137,9 @@ tools/**/temp/
 # Script runtime state
 scripts/.state/
 
+# Legacy scheduler (superseded by standalone ingestion services)
+scheduler/
+
 # Runtime DMS data
 **/data/dms/
 services/*/data/

@@ -1,0 +1,179 @@
+{
+  "metadata": {
+    "sourceFile": "ProductionReport-2026-09-09-15-34-52.xls",
+    "parsedAt": "2026-10-08T00:52:08.257594",
+    "softwareVersion": "2.0",
+    "reportTimestamp": "2026-09-09T15:34:52",
+    "reportDate": "2026-09-09 00:00:00"
+  },
+  "batchInfo": {
+    "equipmentId": "MC081",
+    "machineName": "MC081 SEJONG 49D",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "productName": "Mirtazapine OD 45mg",
+    "batchNumber": "MPC26020",
+    "stationNo": "Station 2",
+    "userId": "mr11358",
+    "operatorName": "mahaboob ramzan",
+    "printInterval": 128333,
+    "runningTime": "00 Hour   54 Min04 Sec",
+    "totalRunningTime": "246 Hour   56 Min"
+  },
+  "recipeSettings": {
+    "feeder": {
+      "autoPercent": 65,
+      "manualRpm": 13
+    },
+    "fillingCam": "Cam C 8.5-14mm",
+    "targetQuantity": 513333,
+    "airPressureLowLimitKpa": 400,
+    "hydraulicPressureLimits": {
+      "highLimitMpa": 15,
+      "lowLimitMpa": 0.1
+    },
+    "oilLubrication": {
+      "upperPunchS1": {
+        "intervalMin": 300,
+        "supplySec": 3
+      },
+      "lowerPunchS2": {
+        "intervalMin": 300,
+        "supplySec": 3
+      },
+      "lowerHeadS3": {
+        "intervalMin": 999,
+        "supplySec": 0
+      }
+    },
+    "powderSupplyTimeSec": 30,
+    "initialRejectTimeSec": 8,
+    "upperPunchTightnessHigh": null,
+    "lowerPunchTightnessHigh": null,
+    "ejectingForceHigh": null,
+    "controlLimits": {
+      "hsp": {
+        "percent": 45,
+        "kn": 12.01,
+        "stop": "Yes"
+      },
+      "hep": {
+        "percent": 27,
+        "kn": 10.52,
+        "rot": 10,
+        "tabs": 10
+      },
+      "hcp": {
+        "percent": 3,
+        "kn": 8.53,
+        "times": 5
+      },
+      "ref": {
+        "kn": 8.28
+      },
+      "lcp": {
+        "percent": 3,
+        "kn": 8.03,
+        "times": 5
+      },
+      "lep": {
+        "percent": 27,
+        "kn": 6.05,
+        "rot": 10,
+        "tabs": 10
+      },
+      "lsp": {
+        "percent": 45,
+        "kn": 4.56,
+        "stop": "Yes"
+      },
+      "sdLimit": {
+        "percent": 15,
+        "stop": "Yes"
+      },
+      "preHsp": {
+        "kn": 12.01,
+        "stop": "Yes"
+      },
+      "meanCalculationRangeRot": 3,
+      "calculationPassRot": 3,
+      "emptyPunchNo": null
+    }
+  },
+  "pressureData": {
+    "prePressure": {
+      "meanKn": 2.35,
+      "sdPercent": 0.8,
+      "minKn": 2.31,
+      "minPunchNo": 62,
+      "maxKn": 2.41,
+      "maxPunchNo": 48
+    },
+    "mainPressure": {
+      "meanKn": 8.17,
+      "sdPercent": 1,
+      "minKn": 7.88,
+      "minPunchNo": 47,
+      "maxKn": 8.48,
+      "maxPunchNo": 55
+    },
+    "fillingDepthAdjustments": {
+      "increaseTimes": 0,
+      "decreaseTimes": 4
+    }
+  },
+  "operationValues": {
+    "diskSpeedRpm": 16,
+    "capacityTabsPerHour": 140160,
+    "feeder": {
+      "status": "AUTO",
+      "speedRpm": 10
+    },
+    "prePressure": {
+      "thicknessMm": 10.75,
+      "lowerPunchPositionMm": 12.75,
+      "penetrationDepthMm": 2
+    },
+    "mainPressure": {
+      "thicknessMm": 4.76,
+      "lowerPunchPositionMm": 7.76,
+      "penetrationDepthMm": 3
+    },
+    "fillingDepthMm": 12.39,
+    "currentCam": "Cam C 8.5-14mm",
+    "mainAirPressureKpa": 606,
+    "hydraulicPressureMpa": 7.7,
+    "lubricationRemainingMin": {
+      "upperPunchS1": 276,
+      "lowerPunchS2": 276,
+      "lowerHeadS3": 75
+    },
+    "auxiliaryStatus": {
+      "powderStatus": "Enable",
+      "dustCollector": "ON",
+      "initialReject": "ON",
+      "buzzer": "ON"
+    }
+  },
+  "tabletCounters": {
+    "totalCounter": 128410,
+    "awcCounter": 115705,
+    "hep": {
+      "raw": "1685 (1.5%)",
+      "count": 1685
+    },
+    "lep": {
+      "raw": "0 (0%)",
+      "count": 0
+    },
+    "good": {
+      "raw": "114020 (98.5%)",
+      "count": 114020
+    }
+  },
+  "signatures": {
+    "operatorName": "mahaboob ramzan",
+    "reportDate": "2026-09-09 00:00:00"
+  }
+}

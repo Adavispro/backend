@@ -59,50 +59,27 @@ if [[ -f "$REPO_ROOT/docker/seed_data_iiot_file.js" ]]; then
   cat "$REPO_ROOT/docker/seed_data_iiot_file.js" | $CONTAINER_CLI exec -i "$CONTAINER_NAME" mongosh "$CONTAINER_MONGO_URI" --quiet
 fi
 
-# 4. Run mock data ingestion to seed batches, alarms, audits, and time-series records
-if [[ -f "$REPO_ROOT/data_service_layer/mock_data_service.py" && -f "$REPO_ROOT/scheduler/run_scheduler_loop.py" ]]; then
-  echo "Seeding batch, alarm, audit, and time-series records via mock ingestion..."
-  PYTHON_BIN="$REPO_ROOT/.venv/bin/python3"
-  if [[ ! -f "$PYTHON_BIN" ]]; then
-    if command -v python3 >/dev/null 2>&1; then
-      PYTHON_BIN="python3"
-    elif command -v python.exe >/dev/null 2>&1; then
-      PYTHON_BIN="python.exe"
-    else
-      PYTHON_BIN="python"
-    fi
+# 4. Run authentic unified IIoT ingestion (4 API Equipment + 1 Compression Equipment)
+echo "Seeding authentic IIoT batches, master data, parameters, alarms, audits, and time-series records..."
+PYTHON_BIN="$REPO_ROOT/.venv/bin/python3"
+if [[ ! -f "$PYTHON_BIN" ]]; then
+  if command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+  elif command -v python.exe >/dev/null 2>&1; then
+    PYTHON_BIN="python.exe"
+  else
+    PYTHON_BIN="python"
   fi
-
-  # Check if required Python modules are available
-  if ! "$PYTHON_BIN" -c "import pymongo, requests" >/dev/null 2>&1; then
-    echo "  Installing required Python modules (pymongo, requests)..."
-    "$PYTHON_BIN" -m pip install pymongo requests >/dev/null 2>&1 || {
-      echo "  [WARN] Could not install pymongo/requests automatically. Ensure they are installed via 'pip install pymongo requests'."
-    }
-  fi
-
-  # Start mock service in background with safety trap
-  mkdir -p "$SCRIPT_DIR/logs"
-  export DATA_INGESTION_START_DATE="2026-08-29 20:00:00"
-  PYTHONPATH="$REPO_ROOT" "$PYTHON_BIN" -m data_service_layer.mock_data_service > "$SCRIPT_DIR/logs/mock_data_service.log" 2>&1 &
-  MOCK_PID=$!
-  trap '[[ -n "${MOCK_PID:-}" ]] && kill "$MOCK_PID" 2>/dev/null || true' EXIT INT TERM
-  sleep 2
-
-  # Run single unified ingestion cycle across all datasets
-  echo "  - Ingesting all datasets (G5RMG, G5FBD, G5OGB, G5COAT)..."
-  PYTHONPATH="$REPO_ROOT" "$PYTHON_BIN" -m scheduler.run_scheduler_loop \
-    --mongo-uri "$HOST_MONGO_URI" \
-    --db-name "$DB_NAME" \
-    --dataset-ids G5RMG G5FBD G5OGB G5COAT \
-    --once >> "$SCRIPT_DIR/logs/ingestion.log" 2>&1 || {
-      echo "    [WARN] Ingestion encountered an error. Check scripts/logs/ingestion.log"
-    }
-
-  # Stop mock service
-  kill "$MOCK_PID" 2>/dev/null || true
-  trap - EXIT INT TERM
 fi
+
+mkdir -p "$SCRIPT_DIR/logs"
+PYTHONPATH="$REPO_ROOT/ingestion_services" "$PYTHON_BIN" "$REPO_ROOT/ingestion_services/unified_ingestion_runner.py" \
+  --truncate-and-load \
+  --mongo-uri "$HOST_MONGO_URI" \
+  --db-name "$DB_NAME" \
+  --once >> "$SCRIPT_DIR/logs/ingestion.log" 2>&1 || {
+    echo "    [WARN] Unified ingestion encountered an error. Check scripts/logs/ingestion.log"
+  }
 
 # 5. Display collection summary
 echo "Verifying database collection counts..."

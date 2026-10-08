@@ -1,0 +1,41 @@
+{
+  "database": {
+    "mongo_uri": "",
+    "db_name": "adavis_platform",
+    "connect_timeout_ms": 5000,
+    "socket_timeout_ms": 30000
+  },
+  "source": {
+    "remote_source_path": "",
+    "local_backup_path": "../compression_server",
+    "staging_path": "./staging",
+    "include_extensions": [".xls", ".xlsx", ".mdb", ".accdb"]
+  },
+  "equipment": {
+    "code": "MC081",
+    "name": "MC081 SEJONG 49D Compression Machine",
+    "model": "Sejong 49D",
+    "equipment_type": "COMP",
+    "stage_order": 4,
+    "stage_name": "Compression",
+    "stage_id": "STAGE-4"
+  },
+  "ingestion": {
+    "ingestion_mode": "APPEND",
+    "auto_discover_dates": true,
+    "start_date": "2026-09-01",
+    "end_date": "2026-09-30",
+    "schedule_minutes": 15,
+    "continuous_run": false,
+    "max_batches_per_run": 5,
+    "deduplicate_events": true,
+    "export_json": true,
+    "export_pdf": false
+  },
+  "output_paths": {
+    "staged_raw_dir": "./staging/raw",
+    "extracted_json_dir": "./staging/extracted_json",
+    "generated_pdf_dir": "./staging/generated_pdfs",
+    "logs_dir": "./logs"
+  }
+}

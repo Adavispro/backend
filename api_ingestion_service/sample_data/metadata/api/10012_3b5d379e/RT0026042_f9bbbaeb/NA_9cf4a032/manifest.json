@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "batch_id": "RT0026042",
+  "lot_number": "NA  ",
+  "product_no": " Carvedilol Blend",
+  "source_timestamp": "2026-09-09T23:49:37",
+  "batch_end_date": "2026-09-10T01:06:08",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T15:21:20+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='RT0026042', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\RT0026042_f9bbbaeb\\NA_9cf4a032\\batch_summary_be152272_20261007T152120128353Z.json",
+      "fetch_timestamp": "2026-10-07T15:21:20+00:00",
+      "status": "SUCCESS",
+      "checksum": "44cf89d47b3c97b5b64b37e1d801983c139867a7ea1c54740ba839b1b99c9907"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='RT0026042', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\RT0026042_f9bbbaeb\\NA_9cf4a032\\machine_summary_663b23d8_20261007T152120142967Z.json",
+      "fetch_timestamp": "2026-10-07T15:21:20+00:00",
+      "status": "SUCCESS",
+      "checksum": "e63ff9523a4d8106e057a3669b02861c8d78a71036208a2910462570b69b179f"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10012, @BatchNo='RT0026042', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\RT0026042_f9bbbaeb\\NA_9cf4a032\\login_logout_7b250f13_20261007T152121937052Z.json",
+      "fetch_timestamp": "2026-10-07T15:21:21+00:00",
+      "status": "SUCCESS",
+      "checksum": "aeb6e3a3645ff10a65b2741710b8bfa906386070ad5c65e5042cd5d2260b4e96"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10012, @BatchNo='RT0026042', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\RT0026042_f9bbbaeb\\NA_9cf4a032\\users_7dfb4cf6_20261007T152123697014Z.json",
+      "fetch_timestamp": "2026-10-07T15:21:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "aeb6e3a3645ff10a65b2741710b8bfa906386070ad5c65e5042cd5d2260b4e96"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10012, @BatchNo='RT0026042', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\RT0026042_f9bbbaeb\\NA_9cf4a032\\alarms_423c13f0_20261007T152123922460Z.json",
+      "fetch_timestamp": "2026-10-07T15:21:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "154b0d8a64696f2cd736f6ed0639671e4bae9e7306ad5b6e06cf6d9dbea35c6d"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10012, @BatchNo='RT0026042', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\RT0026042_f9bbbaeb\\NA_9cf4a032\\audit_trail_35a0293f_20261007T152131347545Z.json",
+      "fetch_timestamp": "2026-10-07T15:21:31+00:00",
+      "status": "SUCCESS",
+      "checksum": "19eed205cec050589a71f3aadc2beaf1cab81b4a5dfb7d512f587dfb1406339b"
+    },
+    "blend_recipe": {
+      "source_api": "db:HMI.Blend_Recipe<@BatchNo='RT0026042', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\RT0026042_f9bbbaeb\\NA_9cf4a032\\blend_recipe_278cfc62_20261007T152131411445Z.json",
+      "fetch_timestamp": "2026-10-07T15:21:31+00:00",
+      "status": "SUCCESS",
+      "checksum": "41adeadc80400765ea6ce57c26cfcbb21de653f4e22fd386f54b3a3be30db851"
+    },
+    "blend_operational_data": {
+      "source_api": "db:HMI.Blend_Op_Data<@BatchNo='RT0026042', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\RT0026042_f9bbbaeb\\NA_9cf4a032\\blend_operational_data_50e3ef1a_20261007T152131498344Z.json",
+      "fetch_timestamp": "2026-10-07T15:21:31+00:00",
+      "status": "SUCCESS",
+      "checksum": "5a0af0645012a1147184bb1fad5464c6442b5d55661b41d39ac21f8fd02805dd"
+    }
+  }
+}

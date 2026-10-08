@@ -3,7 +3,7 @@
 
 Tests:
 1. REST API ingestion for RMG (MB003), FBD (MB004), Blender (MB005), Coater (MB041)
-2. File-based ingestion for Compression Machine (MB040)
+2. File-based ingestion for SEJONG 49D Compression Machine (MC081)
 3. Checkpoint tracking in iiot_ingestion_checkpoint
 4. Duplicate prevention & idempotency
 5. Fail-resilient execution (equipment failure isolation)
@@ -96,7 +96,7 @@ class TestMultiEquipmentIngestion(unittest.TestCase):
         """Verify run_scheduler_cycle processes all 5 equipments without errors."""
         result = self.service.run_scheduler_cycle(
             current_time=datetime.now(),
-            dataset_ids=["MB003", "MB004", "MB005", "MB041", "MB040"],
+            dataset_ids=["MB003", "MB004", "MB005", "MB041", "MC081"],
         )
 
         self.assertIsInstance(result, dict)
@@ -109,7 +109,7 @@ class TestMultiEquipmentIngestion(unittest.TestCase):
         """Verify checkpoint tracking in MongoDB and that checkpoints exist for all 5 equipments."""
         if self.service.db is not None:
             checkpoint_col = self.service.db["iiot_ingestion_checkpoint"]
-            for eq in ["MB003", "MB004", "MB005", "MB041", "MB040"]:
+            for eq in ["MB003", "MB004", "MB005", "MB041", "MC081"]:
                 cp = checkpoint_col.find_one({"equipmentId": eq})
                 self.assertIsNotNone(cp, f"Checkpoint should exist for {eq}")
                 self.assertIn("status", cp)

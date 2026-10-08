@@ -178,6 +178,54 @@ public class BatchPdfPersistenceTest {
     }
 
     @Test
+    @DisplayName("Compression QA PDF includes every deterministic derived lot and source section")
+    void testCompressionPdfIncludesAllDerivedLots() throws Exception {
+        testSummary.put("equipmentId", "MC081");
+        testSummary.put("recipeName", "Compression Recipe");
+        testSummary.put("stages", List.of(new Document("equipmentCode", "MC081")
+                .append("approval", new Document("status", "APPROVED")
+                        .append("approvedBy", "QA-01")
+                        .append("approvedAt", new Date()))));
+
+        Document first = compressionSample("NL0026008-LOT-20260930120217", "ProductionReport-2026-09-30-12-02-17.xls");
+        Document second = compressionSample("NL0026008-LOT-20260930133357", "ProductionReport-2026-09-30-13-33-57.xls");
+        when(mongoTemplate.collectionExists("iiot_ts_batch_MC081")).thenReturn(true);
+        when(mongoTemplate.find(any(Query.class), eq(Document.class), eq("iiot_ts_batch_MC081")))
+                .thenReturn(List.of(first, second));
+
+        BatchPdfGeneratorService.PdfGenerationResult result = pdfGeneratorService.generateAndStoreBatchPdf(
+                "NL0026008", "01 of 05", "MC081", "TNT-0001", "PLNT-0001", "QA-01", "QA_APPROVER");
+
+        PdfReader reader = new PdfReader(result.getPdfBytes());
+        PdfTextExtractor extractor = new PdfTextExtractor(reader);
+        StringBuilder text = new StringBuilder();
+        for (int page = 1; page <= reader.getNumberOfPages(); page++) {
+            text.append(extractor.getTextFromPage(page));
+        }
+        reader.close();
+
+        assertTrue(text.toString().contains("NL0026008-LOT-20260930120217"));
+        assertTrue(text.toString().contains("NL0026008-LOT-20260930133357"));
+        assertTrue(text.toString().contains("Tightness"));
+        assertTrue(text.toString().contains("Tablet Checker"));
+        assertTrue(text.toString().contains("QA Approved Print Time"));
+    }
+
+    private Document compressionSample(String lotNo, String sourceFile) {
+        Document details = new Document("metadata", new Document("sourceFile", sourceFile).append("softwareVersion", "2.0"))
+                .append("batchInfo", new Document("batchNo", "NL0026008").append("derivedLotNo", lotNo).append("productName", "Test Product"))
+                .append("recipeSettings", new Document("targetQuantity", 1000))
+                .append("pressureData", new Document("mainPressure", new Document("meanKn", 10.5)))
+                .append("operationValues", new Document("diskSpeedRpm", 20))
+                .append("tightness", new Document("upperPunch", new Document("averageKn", null)))
+                .append("tabletChecker", new Document("weightMg", new Document("average", 250)))
+                .append("tabletCounters", new Document("totalCounter", 1000));
+        return new Document("observedAt", new Date())
+                .append("meta", new Document("batchNo", "NL0026008").append("lotNo", lotNo).append("derivedLotNo", lotNo))
+                .append("compression_details", details);
+    }
+
+    @Test
     @DisplayName("Should serve existing stored PDF from dms_documents without regenerating")
     void testGetBatchPdfBytesServingExistingStoredDocument() {
         byte[] existingPdf = pdfGeneratorService.generateAndStoreBatchPdf(
@@ -561,9 +609,9 @@ public class BatchPdfPersistenceTest {
     }
 
     @Test
-    @DisplayName("Should successfully generate GxP PDF for all 5 target equipments (MB003, MB004, MB005, MB040, MB041)")
+    @DisplayName("Should successfully generate GxP PDF for all target equipments (MB003, MB004, MB005, MC081, MB041)")
     void testGeneratePdfForFiveTargetEquipments() throws Exception {
-        String[] equipments = {"MB003", "MB004", "MB005", "MB040", "MB041"};
+        String[] equipments = {"MB003", "MB004", "MB005", "MC081", "MB041"};
         String[] expectedTypeNames = {"Rapid Mixer Granulator", "Fluid Bed Dryer", "Octagonal Blender", "Compression Machine", "Auto Coater"};
 
         for (int idx = 0; idx < equipments.length; idx++) {

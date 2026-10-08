@@ -1,0 +1,76 @@
+{
+  "source": "API",
+  "asset_id": "10110",
+  "batch_id": "PE0026025",
+  "lot_number": "P-B",
+  "product_no": "Paroxetine Blend",
+  "source_timestamp": "2026-10-07T09:24:32",
+  "batch_end_date": "2026-10-07T12:27:57",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:22:50+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10110, @BatchNo='PE0026025', @LotNo='P-B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\PE0026025_65641a66\\P-B_da530adc\\batch_summary_be152272_20261007T132250367232Z.json",
+      "fetch_timestamp": "2026-10-07T13:22:50+00:00",
+      "status": "SUCCESS",
+      "checksum": "cdaf9d0764b2bd00d9753ce2fc0fabbbbbc44933950f52700bdc23ea24ad8d6b"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10110, @BatchNo='PE0026025', @LotNo='P-B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\PE0026025_65641a66\\P-B_da530adc\\machine_summary_663b23d8_20261007T132250415023Z.json",
+      "fetch_timestamp": "2026-10-07T13:22:50+00:00",
+      "status": "SUCCESS",
+      "checksum": "2ff1e1643914b866548306bb213bb3efef5edd2a24dbd229e8a031ac9be5a438"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10110, @BatchNo='PE0026025', @LotNo='P-B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\PE0026025_65641a66\\P-B_da530adc\\login_logout_7b250f13_20261007T132252043597Z.json",
+      "fetch_timestamp": "2026-10-07T13:22:52+00:00",
+      "status": "SUCCESS",
+      "checksum": "4ccc92a10b286aa3c1895cfe679bb509315066f63809e0ac7bc21bdc44e3122a"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10110, @BatchNo='PE0026025', @LotNo='P-B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\PE0026025_65641a66\\P-B_da530adc\\users_7dfb4cf6_20261007T132253769022Z.json",
+      "fetch_timestamp": "2026-10-07T13:22:53+00:00",
+      "status": "SUCCESS",
+      "checksum": "4ccc92a10b286aa3c1895cfe679bb509315066f63809e0ac7bc21bdc44e3122a"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10110, @BatchNo='PE0026025', @LotNo='P-B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\PE0026025_65641a66\\P-B_da530adc\\alarms_423c13f0_20261007T132323791087Z.json",
+      "fetch_timestamp": "2026-10-07T13:23:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10110, @BatchNo='PE0026025', @LotNo='P-B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\PE0026025_65641a66\\P-B_da530adc\\audit_trail_35a0293f_20261007T132330257200Z.json",
+      "fetch_timestamp": "2026-10-07T13:23:30+00:00",
+      "status": "SUCCESS",
+      "checksum": "d906a8240c257d33dc42242142975047de7aafcc20c82311197ab51914fa86ae"
+    },
+    "fbd_operational_data": {
+      "source_api": "db:HMI.FBD_Op_Data<@AssetId='10110', @BatchNo='PE0026025', @LotNo='P-B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\PE0026025_65641a66\\P-B_da530adc\\fbd_operational_data_24666a4b_20261007T132330680785Z.json",
+      "fetch_timestamp": "2026-10-07T13:23:30+00:00",
+      "status": "SUCCESS",
+      "checksum": "3c0f92c539ed854121d3e29fce779c6e0ea8f285a6f7a9fd21fdac553fb2c036"
+    },
+    "fbd_recipe": {
+      "source_api": "db:HMI.FBD_Recipe<@AssetId='10110', @BatchNo='PE0026025', @LotNo='P-B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\PE0026025_65641a66\\P-B_da530adc\\fbd_recipe_03121173_20261007T132330757815Z.json",
+      "fetch_timestamp": "2026-10-07T13:23:30+00:00",
+      "status": "SUCCESS",
+      "checksum": "c1bbd62bcdbc063013ce5e9e11a0a4c7b4807b68c4efa635f5579f3b625d58a4"
+    },
+    "fbd_min_max": {
+      "source_api": "db:HMI.FBD_Min_Max<@AssetId='10110', @BatchNo='PE0026025', @LotNo='P-B'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10110_db757b73\\PE0026025_65641a66\\P-B_da530adc\\fbd_min_max_44d425dd_20261007T132330916378Z.json",
+      "fetch_timestamp": "2026-10-07T13:23:30+00:00",
+      "status": "SUCCESS",
+      "checksum": "7b97eaa4339460c5d2ee5d9a3949998438712aeded4ed5448a32606a9cc072f5"
+    }
+  }
+}

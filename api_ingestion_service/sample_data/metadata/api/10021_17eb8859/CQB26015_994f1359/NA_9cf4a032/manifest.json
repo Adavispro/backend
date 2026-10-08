@@ -1,0 +1,76 @@
+{
+  "source": "API",
+  "asset_id": "10021",
+  "batch_id": "CQB26015            ",
+  "lot_number": "NA  ",
+  "product_no": "Citalopram HBR 20mg ",
+  "source_timestamp": "2026-08-29T04:42:33",
+  "batch_end_date": "2026-08-29T14:59:57",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T15:20:21+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10021, @BatchNo='CQB26015            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\CQB26015_994f1359\\NA_9cf4a032\\batch_summary_be152272_20261007T152021798246Z.json",
+      "fetch_timestamp": "2026-10-07T15:20:21+00:00",
+      "status": "SUCCESS",
+      "checksum": "5ed1fa9b23a20a929b8f48c9d436540c87aa247e697448fb1eb111bb5ae7c1f4"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10021, @BatchNo='CQB26015            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\CQB26015_994f1359\\NA_9cf4a032\\machine_summary_663b23d8_20261007T152021823138Z.json",
+      "fetch_timestamp": "2026-10-07T15:20:21+00:00",
+      "status": "SUCCESS",
+      "checksum": "780f18e47d3414b500720f7d8703c992419d947370f8b51eda550c2ef5c4e99e"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10021, @BatchNo='CQB26015            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\CQB26015_994f1359\\NA_9cf4a032\\login_logout_7b250f13_20261007T152023651945Z.json",
+      "fetch_timestamp": "2026-10-07T15:20:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "5349b2ba8cf91d934d8cc0b8b358adaeb59c5518182702cc6dd64807dec72eb6"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10021, @BatchNo='CQB26015            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\CQB26015_994f1359\\NA_9cf4a032\\users_7dfb4cf6_20261007T152025470214Z.json",
+      "fetch_timestamp": "2026-10-07T15:20:25+00:00",
+      "status": "SUCCESS",
+      "checksum": "5349b2ba8cf91d934d8cc0b8b358adaeb59c5518182702cc6dd64807dec72eb6"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10021, @BatchNo='CQB26015            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\CQB26015_994f1359\\NA_9cf4a032\\alarms_423c13f0_20261007T152025673092Z.json",
+      "fetch_timestamp": "2026-10-07T15:20:25+00:00",
+      "status": "SUCCESS",
+      "checksum": "2fa73651036645985be5ff0a60aab82015c5ce9ad3ed73ee4f2b08850eccd5e8"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10021, @BatchNo='CQB26015            ', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\CQB26015_994f1359\\NA_9cf4a032\\audit_trail_35a0293f_20261007T152032385130Z.json",
+      "fetch_timestamp": "2026-10-07T15:20:32+00:00",
+      "status": "SUCCESS",
+      "checksum": "25ac717016d88170b9b1526e885752f009996820fbd2977db4abb4dcf0919666"
+    },
+    "coat_operational_data": {
+      "source_api": "db:HMI.Coat_Op_Data<@BatchNo='CQB26015            ', @LotNo='NA  ', @AssetId='10021'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\CQB26015_994f1359\\NA_9cf4a032\\coat_operational_data_ef01b81e_20261007T152032872224Z.json",
+      "fetch_timestamp": "2026-10-07T15:20:32+00:00",
+      "status": "SUCCESS",
+      "checksum": "1f49483c1aabbb1a0e74bd4753919e288c557dc02813c9971b8deeb6250c4a58"
+    },
+    "coat_recipe": {
+      "source_api": "db:HMI.Coat_Recipe<@BatchNo='CQB26015            ', @LotNo='NA  ', @AssetId='10021'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\CQB26015_994f1359\\NA_9cf4a032\\coat_recipe_72d88ee3_20261007T152033082658Z.json",
+      "fetch_timestamp": "2026-10-07T15:20:33+00:00",
+      "status": "SUCCESS",
+      "checksum": "a2da6ba44c83ae8692ece5ddfd6b2054ff73f8711e027f7a861c0c4705c06519"
+    },
+    "coat_min_max": {
+      "source_api": "db:HMI.Coat_Min_Max<@BatchNo='CQB26015            ', @LotNo='NA  ', @AssetId='10021'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10021_17eb8859\\CQB26015_994f1359\\NA_9cf4a032\\coat_min_max_a16dcad9_20261007T152033968924Z.json",
+      "fetch_timestamp": "2026-10-07T15:20:33+00:00",
+      "status": "SUCCESS",
+      "checksum": "1c9bea02803a85359a125391a7041e14ed581cf0ddc592b5830f40f33a95abdf"
+    }
+  }
+}

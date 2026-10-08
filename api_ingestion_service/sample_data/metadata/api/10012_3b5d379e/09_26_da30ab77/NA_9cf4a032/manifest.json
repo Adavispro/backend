@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "batch_id": "09/26",
+  "lot_number": "NA  ",
+  "product_no": "NA",
+  "source_timestamp": "2026-09-19T03:31:39",
+  "batch_end_date": "2026-09-19T05:31:34",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T15:15:39+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='09/26', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\09_26_da30ab77\\NA_9cf4a032\\batch_summary_be152272_20261007T151539739368Z.json",
+      "fetch_timestamp": "2026-10-07T15:15:39+00:00",
+      "status": "SUCCESS",
+      "checksum": "150301c6d3b0fdf5a1e0448456f310757bdf1c65fa6da9a1b405fb7f188a9a0a"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='09/26', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\09_26_da30ab77\\NA_9cf4a032\\machine_summary_663b23d8_20261007T151539768819Z.json",
+      "fetch_timestamp": "2026-10-07T15:15:39+00:00",
+      "status": "SUCCESS",
+      "checksum": "e63ff9523a4d8106e057a3669b02861c8d78a71036208a2910462570b69b179f"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10012, @BatchNo='09/26', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\09_26_da30ab77\\NA_9cf4a032\\login_logout_7b250f13_20261007T151541705393Z.json",
+      "fetch_timestamp": "2026-10-07T15:15:41+00:00",
+      "status": "SUCCESS",
+      "checksum": "b416a85824798123a2b5d73b1881a278b50a52ccb1a3254c94c756713963927d"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10012, @BatchNo='09/26', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\09_26_da30ab77\\NA_9cf4a032\\users_7dfb4cf6_20261007T151543627471Z.json",
+      "fetch_timestamp": "2026-10-07T15:15:43+00:00",
+      "status": "SUCCESS",
+      "checksum": "b416a85824798123a2b5d73b1881a278b50a52ccb1a3254c94c756713963927d"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10012, @BatchNo='09/26', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\09_26_da30ab77\\NA_9cf4a032\\alarms_423c13f0_20261007T151543874195Z.json",
+      "fetch_timestamp": "2026-10-07T15:15:43+00:00",
+      "status": "SUCCESS",
+      "checksum": "d8a7004dfef6336afedb23d46f0ffabaa603d5a59cf4aacc207a1a9472809152"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10012, @BatchNo='09/26', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\09_26_da30ab77\\NA_9cf4a032\\audit_trail_35a0293f_20261007T151551687856Z.json",
+      "fetch_timestamp": "2026-10-07T15:15:51+00:00",
+      "status": "SUCCESS",
+      "checksum": "7454e8e8a63b9c27892d67ffc2c456e036f2aa3d6f41724cca674880fc08d4c0"
+    },
+    "blend_recipe": {
+      "source_api": "db:HMI.Blend_Recipe<@BatchNo='09/26', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\09_26_da30ab77\\NA_9cf4a032\\blend_recipe_278cfc62_20261007T151551768016Z.json",
+      "fetch_timestamp": "2026-10-07T15:15:51+00:00",
+      "status": "SUCCESS",
+      "checksum": "33efa935f783e9eb6e7d4331837ebd71c3d155ac60354dac6327abc5dd565eba"
+    },
+    "blend_operational_data": {
+      "source_api": "db:HMI.Blend_Op_Data<@BatchNo='09/26', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\09_26_da30ab77\\NA_9cf4a032\\blend_operational_data_50e3ef1a_20261007T151621812538Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:21+00:00",
+      "status": "SUCCESS",
+      "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  }
+}

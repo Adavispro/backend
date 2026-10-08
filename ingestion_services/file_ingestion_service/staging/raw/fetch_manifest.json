@@ -1,0 +1,757 @@
+{
+  "files": {
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\Sawc.mdb": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\databases\\Sawc.mdb",
+      "size": 7221248,
+      "mtime": 1791391254.9508119,
+      "sha256": "33433886daed8225b35ce7f0e02270c84ebc16f21ed67a8c3c80b1054fd773d6",
+      "copied_at": "2026-10-08T00:51:57.657269Z",
+      "category": "database"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\SawcData.mdb": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\databases\\SawcData.mdb",
+      "size": 16236544,
+      "mtime": 1791391255.0639572,
+      "sha256": "8486f9983d543d513f455242be3e7acfadfb520c619640c551461490b4b4f22f",
+      "copied_at": "2026-10-08T00:51:57.693800Z",
+      "category": "database"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-25\\ProductionReport-2026-09-25-05-39-27.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-25\\ProductionReport-2026-09-25-05-39-27.xls",
+      "size": 49152,
+      "mtime": 1791391256.008796,
+      "sha256": "d92fc81866950de8cebd4c172f4989729717de0a048e0cc25ad0aaaedd224e49",
+      "copied_at": "2026-10-08T00:51:57.716604Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-25\\ProductionReport-2026-09-25-07-03-07.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-25\\ProductionReport-2026-09-25-07-03-07.xls",
+      "size": 49152,
+      "mtime": 1791391256.019363,
+      "sha256": "1b5210c6d49530fe1a14c78d4d750f0d4b78ef4fbe850380be3e0e76a7155160",
+      "copied_at": "2026-10-08T00:51:57.733533Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-25\\ProductionReport-2026-09-25-08-24-22.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-25\\ProductionReport-2026-09-25-08-24-22.xls",
+      "size": 49152,
+      "mtime": 1791391256.0295057,
+      "sha256": "0188606ba4bcb10b14f42cfcf6f84173e86692aaafa1eb60b44a9fcde8129b7e",
+      "copied_at": "2026-10-08T00:51:57.751384Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-01\\ProductionReport-2026-09-01-08-06-43.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-01\\ProductionReport-2026-09-01-08-06-43.xls",
+      "size": 49152,
+      "mtime": 1791391255.1640625,
+      "sha256": "ccd5ba99e194402da0131783f11816a46d3c4eda5f9da7c4dd000f4139622938",
+      "copied_at": "2026-10-08T00:52:06.235488Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-01\\ProductionReport-2026-09-01-09-31-14.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-01\\ProductionReport-2026-09-01-09-31-14.xls",
+      "size": 49152,
+      "mtime": 1791391255.173065,
+      "sha256": "42a071a8863a1f9e8119ce4811b4b9bfa76d8cefd7c380773b97c4ff933b64a0",
+      "copied_at": "2026-10-08T00:52:06.250643Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-01\\ProductionReport-2026-09-01-10-55-44.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-01\\ProductionReport-2026-09-01-10-55-44.xls",
+      "size": 49152,
+      "mtime": 1791391255.182063,
+      "sha256": "b5a32b7b7e513a920384d7575949cb4b618062728472854da5dc6494f7ba339d",
+      "copied_at": "2026-10-08T00:52:06.268419Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-02\\ProductionReport-2026-09-02-01-00-20.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-02\\ProductionReport-2026-09-02-01-00-20.xls",
+      "size": 49152,
+      "mtime": 1791391255.198647,
+      "sha256": "ca4f8ad66da6df0ec67c77fa68b8288a9eea74e2dc566b74aa67d6560f57fd5a",
+      "copied_at": "2026-10-08T00:52:06.559962Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-02\\ProductionReport-2026-09-02-02-24-50.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-02\\ProductionReport-2026-09-02-02-24-50.xls",
+      "size": 49152,
+      "mtime": 1791391255.208664,
+      "sha256": "89e447b538c610a805389406ffc0a0c0c7676d0d2b1568cec06fcb51f451785d",
+      "copied_at": "2026-10-08T00:52:06.576083Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-02\\ProductionReport-2026-09-02-03-49-07.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-02\\ProductionReport-2026-09-02-03-49-07.xls",
+      "size": 49152,
+      "mtime": 1791391255.2196298,
+      "sha256": "f81b9225cfa3b1a827dfed11706cc7f5a09f282dc3db4d3d0c530616c96277fd",
+      "copied_at": "2026-10-08T00:52:06.592562Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-02\\ProductionReport-2026-09-02-18-40-04.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-02\\ProductionReport-2026-09-02-18-40-04.xls",
+      "size": 49152,
+      "mtime": 1791391255.2311935,
+      "sha256": "97f462c2f02ea3dc33c74c01476ab87b7cf654c96c9730cc4794f719554d377e",
+      "copied_at": "2026-10-08T00:52:06.607624Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-02\\ProductionReport-2026-09-02-20-04-29.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-02\\ProductionReport-2026-09-02-20-04-29.xls",
+      "size": 49152,
+      "mtime": 1791391255.243193,
+      "sha256": "708625ad0e7797c2cd4d4852ad7a2d91e9c6dcfb1756e33acd579b60070949af",
+      "copied_at": "2026-10-08T00:52:06.624189Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-02\\ProductionReport-2026-09-02-21-28-51.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-02\\ProductionReport-2026-09-02-21-28-51.xls",
+      "size": 49152,
+      "mtime": 1791391255.252621,
+      "sha256": "e4198b8b4a8c753bf89d39077b48aa9ccc3e3e2339c58b4f3af4fc036aec0f06",
+      "copied_at": "2026-10-08T00:52:06.640155Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-03\\ProductionReport-2026-09-03-06-43-40.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-03\\ProductionReport-2026-09-03-06-43-40.xls",
+      "size": 49152,
+      "mtime": 1791391255.267474,
+      "sha256": "8715e8deac5d20016d558ad9f67182ba79ca40bedc1ec6aea9c433d1b6515413",
+      "copied_at": "2026-10-08T00:52:07.060184Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-03\\ProductionReport-2026-09-03-08-07-51.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-03\\ProductionReport-2026-09-03-08-07-51.xls",
+      "size": 49152,
+      "mtime": 1791391255.2787795,
+      "sha256": "bbefd9a3b7150e4395a4a92277b1410d1ccc57129e84290d82d206ce2fb7b418",
+      "copied_at": "2026-10-08T00:52:07.076279Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-03\\ProductionReport-2026-09-03-09-32-03.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-03\\ProductionReport-2026-09-03-09-32-03.xls",
+      "size": 49152,
+      "mtime": 1791391255.2882254,
+      "sha256": "f6dd5f7e6a6fe9b9010a98f49a13e0d1f167cd27a76d6bce8822283f4f71d64d",
+      "copied_at": "2026-10-08T00:52:07.093278Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-04\\ProductionReport-2026-09-04-01-48-53.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-04\\ProductionReport-2026-09-04-01-48-53.xls",
+      "size": 49152,
+      "mtime": 1791391255.3100665,
+      "sha256": "b59df7ed8492595276207c5ae8312f29176d04991113a44d32adf4b1a86e3182",
+      "copied_at": "2026-10-08T00:52:07.371644Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-04\\ProductionReport-2026-09-04-03-13-10.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-04\\ProductionReport-2026-09-04-03-13-10.xls",
+      "size": 49152,
+      "mtime": 1791391255.3238778,
+      "sha256": "9b0c197a637e2e002c9e52934c5e5caa681d82e71e8f19d1bc7893f47564abf0",
+      "copied_at": "2026-10-08T00:52:07.388416Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-04\\ProductionReport-2026-09-04-04-39-51.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-04\\ProductionReport-2026-09-04-04-39-51.xls",
+      "size": 49152,
+      "mtime": 1791391255.3358438,
+      "sha256": "03fcfbb082a3a9bcfbe01947a29bf5489cdb27511679f7a80570dfe1125ada6f",
+      "copied_at": "2026-10-08T00:52:07.404796Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-04\\ProductionReport-2026-09-04-20-45-37.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-04\\ProductionReport-2026-09-04-20-45-37.xls",
+      "size": 49152,
+      "mtime": 1791391255.3487184,
+      "sha256": "98f17aac2d75dd5b99564487a2c2df1894f8c48c7a661100333a9dbc204c6616",
+      "copied_at": "2026-10-08T00:52:07.421542Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-04\\ProductionReport-2026-09-04-22-10-06.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-04\\ProductionReport-2026-09-04-22-10-06.xls",
+      "size": 49152,
+      "mtime": 1791391255.3602483,
+      "sha256": "7a6e82a1df75e4e1353eaa0ed9c446af2a79aed4f209d058b62606168c3c819a",
+      "copied_at": "2026-10-08T00:52:07.439219Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-04\\ProductionReport-2026-09-04-23-34-34.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-04\\ProductionReport-2026-09-04-23-34-34.xls",
+      "size": 49152,
+      "mtime": 1791391255.3714685,
+      "sha256": "52f5d6b80d43096b1459c79bc8ff0ad6831dc1e38b498db16c70d241d01d0859",
+      "copied_at": "2026-10-08T00:52:07.455649Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-06\\ProductionReport-2026-09-06-13-28-56.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-06\\ProductionReport-2026-09-06-13-28-56.xls",
+      "size": 49664,
+      "mtime": 1791391255.388385,
+      "sha256": "1933a5283c538bbd80a80a7813fb457a6a3c18e08f862776b0e38546ea14c111",
+      "copied_at": "2026-10-08T00:52:07.870914Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-06\\ProductionReport-2026-09-06-15-52-28.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-06\\ProductionReport-2026-09-06-15-52-28.xls",
+      "size": 49152,
+      "mtime": 1791391255.3973837,
+      "sha256": "25dc209b6a8127d99ac022553d57988687f4e9cff89e9f3caa53812be1ad6caf",
+      "copied_at": "2026-10-08T00:52:07.890331Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-06\\ProductionReport-2026-09-06-18-16-21.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-06\\ProductionReport-2026-09-06-18-16-21.xls",
+      "size": 49664,
+      "mtime": 1791391255.404888,
+      "sha256": "9d4bc6c4c4fac2711aaae522a5c71faddc6fea9477417293107c97efbfe5df4c",
+      "copied_at": "2026-10-08T00:52:07.910846Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-09\\ProductionReport-2026-09-09-15-34-52.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-09\\ProductionReport-2026-09-09-15-34-52.xls",
+      "size": 49152,
+      "mtime": 1791391255.4214175,
+      "sha256": "b7ad54d3b0e94f77216eec901e2d0d6370ae9e36cb88c94ec7e156ae951cb4f5",
+      "copied_at": "2026-10-08T00:52:08.211551Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-09\\ProductionReport-2026-09-09-16-29-03.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-09\\ProductionReport-2026-09-09-16-29-03.xls",
+      "size": 49152,
+      "mtime": 1791391255.4308882,
+      "sha256": "bdb2b5473e75ee21fefca46026f744d671a9c7ab0a20d22fa469a1387527e5fe",
+      "copied_at": "2026-10-08T00:52:08.228678Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-09\\ProductionReport-2026-09-09-17-23-52.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-09\\ProductionReport-2026-09-09-17-23-52.xls",
+      "size": 49152,
+      "mtime": 1791391255.4392416,
+      "sha256": "b22a6030a389df76f13ca575e6079649aa2f51936f7b2d53742ebcf0f4fa7953",
+      "copied_at": "2026-10-08T00:52:08.251348Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-10\\ProductionReport-2026-09-10-13-03-35.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-10\\ProductionReport-2026-09-10-13-03-35.xls",
+      "size": 49152,
+      "mtime": 1791391255.454249,
+      "sha256": "0e69af1f8ebb74fee6bc679db4a80f3d3fb4077205f2616e0ac4087a92f584c5",
+      "copied_at": "2026-10-08T00:52:08.552854Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-10\\ProductionReport-2026-09-10-14-02-50.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-10\\ProductionReport-2026-09-10-14-02-50.xls",
+      "size": 49152,
+      "mtime": 1791391255.464053,
+      "sha256": "93e57bca44df9e008c31534df998da97f26ba22875af416942dce51d6911b49f",
+      "copied_at": "2026-10-08T00:52:08.575085Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-10\\ProductionReport-2026-09-10-14-57-05.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-10\\ProductionReport-2026-09-10-14-57-05.xls",
+      "size": 49152,
+      "mtime": 1791391255.4736981,
+      "sha256": "b0816a5d37389a27901d73146d82c3cc2e8f427f95fa896078a8b337a7e15a56",
+      "copied_at": "2026-10-08T00:52:08.594345Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-11\\ProductionReport-2026-09-11-02-36-13.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-11\\ProductionReport-2026-09-11-02-36-13.xls",
+      "size": 49152,
+      "mtime": 1791391255.489209,
+      "sha256": "309869c246911d348787b5a73640485fd44137f5a9a1e65e535772da282879df",
+      "copied_at": "2026-10-08T00:52:08.878616Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-11\\ProductionReport-2026-09-11-03-30-28.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-11\\ProductionReport-2026-09-11-03-30-28.xls",
+      "size": 49152,
+      "mtime": 1791391255.4975588,
+      "sha256": "4ea0944ca9876bdf2e86f843bcd5581b0564a42f26140195095f14de63591406",
+      "copied_at": "2026-10-08T00:52:08.894109Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-11\\ProductionReport-2026-09-11-04-24-43.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-11\\ProductionReport-2026-09-11-04-24-43.xls",
+      "size": 49152,
+      "mtime": 1791391255.506559,
+      "sha256": "42e7fc48a3573af3712cde6c1a54488575f085721034d798dbd82a8e24c261ed",
+      "copied_at": "2026-10-08T00:52:08.912047Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-11\\ProductionReport-2026-09-11-18-13-41.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-11\\ProductionReport-2026-09-11-18-13-41.xls",
+      "size": 49152,
+      "mtime": 1791391255.5145578,
+      "sha256": "455a2e93d82593c19e0cf6f36e2c9e4666460883a5158517a17f812b9d7c328d",
+      "copied_at": "2026-10-08T00:52:08.929136Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-11\\ProductionReport-2026-09-11-19-07-54.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-11\\ProductionReport-2026-09-11-19-07-54.xls",
+      "size": 49152,
+      "mtime": 1791391255.5262463,
+      "sha256": "18707b26b5dd1bdc132a9e8cc46b401ef39b5fe7373d05981b27c7e901205e5d",
+      "copied_at": "2026-10-08T00:52:08.946792Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-11\\ProductionReport-2026-09-11-20-02-08.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-11\\ProductionReport-2026-09-11-20-02-08.xls",
+      "size": 49152,
+      "mtime": 1791391255.5368485,
+      "sha256": "ca5ef37ddba079f59ebc078aded8153f9a560a6b6906a6956ea16db5ef88b379",
+      "copied_at": "2026-10-08T00:52:08.963406Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-13\\ProductionReport-2026-09-13-05-18-44.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-13\\ProductionReport-2026-09-13-05-18-44.xls",
+      "size": 49664,
+      "mtime": 1791391255.5532026,
+      "sha256": "a09de826ef2b1c404155cdbc600585c2fb79dc6d9d5aa31741c3fe9feaa1e40e",
+      "copied_at": "2026-10-08T00:52:09.386867Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-13\\ProductionReport-2026-09-13-11-46-40.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-13\\ProductionReport-2026-09-13-11-46-40.xls",
+      "size": 49152,
+      "mtime": 1791391255.5629735,
+      "sha256": "61193cf0ce3def5bdc3cc84a86b10b037e8ba93be2914743f4a2304047f705d2",
+      "copied_at": "2026-10-08T00:52:09.405792Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-13\\ProductionReport-2026-09-13-13-50-26.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-13\\ProductionReport-2026-09-13-13-50-26.xls",
+      "size": 49152,
+      "mtime": 1791391255.5722418,
+      "sha256": "fde53d5bbcec4f69622dbde8f33ad0c4737c517f4b8c517be33b3166e190658a",
+      "copied_at": "2026-10-08T00:52:09.422845Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-13\\ProductionReport-2026-09-13-23-30-55.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-13\\ProductionReport-2026-09-13-23-30-55.xls",
+      "size": 49152,
+      "mtime": 1791391255.5822449,
+      "sha256": "a84eb3b2d0637c7c0f42da681c67b0720935941ce89ffd9ea9454781d67a0a9c",
+      "copied_at": "2026-10-08T00:52:09.437954Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-14\\ProductionReport-2026-09-14-01-34-41.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-14\\ProductionReport-2026-09-14-01-34-41.xls",
+      "size": 49152,
+      "mtime": 1791391255.5986073,
+      "sha256": "7aa17637d1ff314d30e7ef62266ed66b38502fcb035b68a5ab1c6983660698a8",
+      "copied_at": "2026-10-08T00:52:09.744976Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-14\\ProductionReport-2026-09-14-03-38-26.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-14\\ProductionReport-2026-09-14-03-38-26.xls",
+      "size": 49152,
+      "mtime": 1791391255.6087441,
+      "sha256": "358409ba6bf474f2387e97b78211bac756d50d91043c2738d630679f03b7a8e2",
+      "copied_at": "2026-10-08T00:52:09.761636Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-15\\ProductionReport-2026-09-15-15-45-11.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-15\\ProductionReport-2026-09-15-15-45-11.xls",
+      "size": 49152,
+      "mtime": 1791391255.624709,
+      "sha256": "0ae0e395753adf06718cf580e217082ce269d6671c59bf05cbce9336917c6c3f",
+      "copied_at": "2026-10-08T00:52:10.014830Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-15\\ProductionReport-2026-09-15-17-49-22.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-15\\ProductionReport-2026-09-15-17-49-22.xls",
+      "size": 49152,
+      "mtime": 1791391255.6337202,
+      "sha256": "35f48cd6c975625584943d54ff79db4c36d1bc852b16f92bed9a9ccd6da3ec14",
+      "copied_at": "2026-10-08T00:52:10.031409Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-15\\ProductionReport-2026-09-15-19-52-56.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-15\\ProductionReport-2026-09-15-19-52-56.xls",
+      "size": 49152,
+      "mtime": 1791391255.6430502,
+      "sha256": "d35257b7f7bd6ab29407e2374aaaf14d046104f66526496097c6b87eeb0e1909",
+      "copied_at": "2026-10-08T00:52:10.048609Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-16\\ProductionReport-2026-09-16-08-37-57.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-16\\ProductionReport-2026-09-16-08-37-57.xls",
+      "size": 49152,
+      "mtime": 1791391255.6605277,
+      "sha256": "8b02dd55b9f79df8c4369eb5b0afd1ae1d49a0dc44da80040b549c5cb9146159",
+      "copied_at": "2026-10-08T00:52:10.333362Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-16\\ProductionReport-2026-09-16-10-41-49.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-16\\ProductionReport-2026-09-16-10-41-49.xls",
+      "size": 49152,
+      "mtime": 1791391255.670526,
+      "sha256": "e9fea9790c7e8234a03c20fd57189fc51a8c9fba90bb06ae30d1427b347b071d",
+      "copied_at": "2026-10-08T00:52:10.348307Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-16\\ProductionReport-2026-09-16-12-46-07.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-16\\ProductionReport-2026-09-16-12-46-07.xls",
+      "size": 49152,
+      "mtime": 1791391255.6830106,
+      "sha256": "6f54f609065f8688f7310b79b5b8048429ba71973d828a758dd25e962e4dd570",
+      "copied_at": "2026-10-08T00:52:10.364515Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-18\\ProductionReport-2026-09-18-04-28-06.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-18\\ProductionReport-2026-09-18-04-28-06.xls",
+      "size": 49664,
+      "mtime": 1791391255.7000115,
+      "sha256": "7fa17449e1ff3f3bb863ed8fd8807d06b859a2eafae1e5b704868550b0502929",
+      "copied_at": "2026-10-08T00:52:10.643471Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-18\\ProductionReport-2026-09-18-06-28-00.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-18\\ProductionReport-2026-09-18-06-28-00.xls",
+      "size": 49152,
+      "mtime": 1791391255.7090106,
+      "sha256": "d6e463b905dd683222b3f4838adc145bc0aedf3d381b93bcb2c5c32ed1814449",
+      "copied_at": "2026-10-08T00:52:10.659262Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-18\\ProductionReport-2026-09-18-08-26-23.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-18\\ProductionReport-2026-09-18-08-26-23.xls",
+      "size": 49152,
+      "mtime": 1791391255.7194932,
+      "sha256": "2bf78fcbd309d87c03150c330910cea848355010f8896a1d44060cd6b339aa2e",
+      "copied_at": "2026-10-08T00:52:10.675746Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-18\\ProductionReport-2026-09-18-22-52-55.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-18\\ProductionReport-2026-09-18-22-52-55.xls",
+      "size": 49152,
+      "mtime": 1791391255.729054,
+      "sha256": "b51c3c4f0fc19445b14f3cb3b06f2e2a46992790c5ff0c3fb1b3a2e27347a2fd",
+      "copied_at": "2026-10-08T00:52:10.691811Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-19\\ProductionReport-2026-09-19-00-52-17.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-19\\ProductionReport-2026-09-19-00-52-17.xls",
+      "size": 49152,
+      "mtime": 1791391255.7443733,
+      "sha256": "2379e5b9ca3d050164cf9348215b7cb7331a73db5e4457c488b618741c6652f1",
+      "copied_at": "2026-10-08T00:52:11.069005Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-19\\ProductionReport-2026-09-19-02-51-58.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-19\\ProductionReport-2026-09-19-02-51-58.xls",
+      "size": 49152,
+      "mtime": 1791391255.7545462,
+      "sha256": "e9aba90176bde4f6817b00066f1a4eb70fb20a2211e145ba769633360bd1fb94",
+      "copied_at": "2026-10-08T00:52:11.084860Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-19\\ProductionReport-2026-09-19-13-27-36.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-19\\ProductionReport-2026-09-19-13-27-36.xls",
+      "size": 49152,
+      "mtime": 1791391255.764454,
+      "sha256": "0ae5abc46a477b314ae1d8ecd0671f25ac418b58205a31820dea816cce86af1c",
+      "copied_at": "2026-10-08T00:52:11.101995Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-19\\ProductionReport-2026-09-19-18-54-30.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-19\\ProductionReport-2026-09-19-18-54-30.xls",
+      "size": 49664,
+      "mtime": 1791391255.7735505,
+      "sha256": "43830e6f1bc6a43415dfef22b0022ff2815d7358b526249195703fc00bd52126",
+      "copied_at": "2026-10-08T00:52:11.118844Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-19\\ProductionReport-2026-09-19-20-53-45.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-19\\ProductionReport-2026-09-19-20-53-45.xls",
+      "size": 49152,
+      "mtime": 1791391255.7819314,
+      "sha256": "dd5045b0caedc4bae7a17bb3f19fdf361c327670c5c5a210388aece7a1aecddc",
+      "copied_at": "2026-10-08T00:52:11.134505Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-20\\ProductionReport-2026-09-20-08-09-48.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-20\\ProductionReport-2026-09-20-08-09-48.xls",
+      "size": 49152,
+      "mtime": 1791391255.798931,
+      "sha256": "1eb5a55502f93594ec8d122de122caaa91516f649952f77df0c8fd0fc08804d7",
+      "copied_at": "2026-10-08T00:52:11.496878Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-20\\ProductionReport-2026-09-20-11-29-37.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-20\\ProductionReport-2026-09-20-11-29-37.xls",
+      "size": 49152,
+      "mtime": 1791391255.808292,
+      "sha256": "fc9e8371295460a09bb077544425dd52e6c31d63118dbef14395202682907f06",
+      "copied_at": "2026-10-08T00:52:11.513971Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-20\\ProductionReport-2026-09-20-13-29-14.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-20\\ProductionReport-2026-09-20-13-29-14.xls",
+      "size": 49152,
+      "mtime": 1791391255.8179433,
+      "sha256": "ad01daeb47cebc89f6950e930b5a1d5502c7a649acce92d542e518ca8cdb7c81",
+      "copied_at": "2026-10-08T00:52:11.530561Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-20\\ProductionReport-2026-09-20-23-23-10.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-20\\ProductionReport-2026-09-20-23-23-10.xls",
+      "size": 49152,
+      "mtime": 1791391255.8262148,
+      "sha256": "adf5f76fe1059db8f900e525a0d0e083aec249f246fccd10dc172e307f3b521a",
+      "copied_at": "2026-10-08T00:52:11.547538Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-21\\ProductionReport-2026-09-21-01-22-52.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-21\\ProductionReport-2026-09-21-01-22-52.xls",
+      "size": 49152,
+      "mtime": 1791391255.8447032,
+      "sha256": "43f116de2e23925873059fbef00e3297e1994ab5845bd3fc7f9d25a937e385bd",
+      "copied_at": "2026-10-08T00:52:11.870624Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-21\\ProductionReport-2026-09-21-03-22-02.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-21\\ProductionReport-2026-09-21-03-22-02.xls",
+      "size": 49152,
+      "mtime": 1791391255.855113,
+      "sha256": "2245d7e62e746b6b5b6d334779ce86435891fc193746051842fe67a99522bb7a",
+      "copied_at": "2026-10-08T00:52:11.889656Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-21\\ProductionReport-2026-09-21-19-08-43.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-21\\ProductionReport-2026-09-21-19-08-43.xls",
+      "size": 49664,
+      "mtime": 1791391255.8661106,
+      "sha256": "10a48e4e36cea1002e5fbce70c0239070d4bf69e5c098c5f6c3094379c181890",
+      "copied_at": "2026-10-08T00:52:11.905830Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-21\\ProductionReport-2026-09-21-21-20-42.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-21\\ProductionReport-2026-09-21-21-20-42.xls",
+      "size": 49664,
+      "mtime": 1791391255.8744912,
+      "sha256": "ab3897de44b832fdf0d1b353aee2963a58462bfbdfe011286c904a1ec750daa7",
+      "copied_at": "2026-10-08T00:52:11.922259Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-21\\ProductionReport-2026-09-21-23-20-10.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-21\\ProductionReport-2026-09-21-23-20-10.xls",
+      "size": 49664,
+      "mtime": 1791391255.884364,
+      "sha256": "2ee707c0f0a5e642c98c6480c75f3a60bc837792308433f9aa4bf0e336b1d797",
+      "copied_at": "2026-10-08T00:52:11.940715Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-22\\ProductionReport-2026-09-22-10-13-40.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-22\\ProductionReport-2026-09-22-10-13-40.xls",
+      "size": 49152,
+      "mtime": 1791391255.8992083,
+      "sha256": "fc892052cb1487cff4d0978317b309ae47a84122ef85c97467c2c233729d9266",
+      "copied_at": "2026-10-08T00:52:12.324487Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-22\\ProductionReport-2026-09-22-12-36-53.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-22\\ProductionReport-2026-09-22-12-36-53.xls",
+      "size": 49152,
+      "mtime": 1791391255.9095316,
+      "sha256": "95a045ab5b3bcba7225b7acb060693547f5d63a753d1dc48a4d947b2000f2276",
+      "copied_at": "2026-10-08T00:52:12.340793Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-22\\ProductionReport-2026-09-22-14-36-10.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-22\\ProductionReport-2026-09-22-14-36-10.xls",
+      "size": 49152,
+      "mtime": 1791391255.9196978,
+      "sha256": "d6a0bb9a046786efc4e28c484bb9f16efab0e03f0374774c689b1ea703cd435a",
+      "copied_at": "2026-10-08T00:52:12.358056Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-23\\ProductionReport-2026-09-23-03-32-48.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-23\\ProductionReport-2026-09-23-03-32-48.xls",
+      "size": 49152,
+      "mtime": 1791391255.9342253,
+      "sha256": "f106a766dab8d02744416d7bb9368b748eda284e1a2bd0d81b4f8f76a1c3e87a",
+      "copied_at": "2026-10-08T00:52:12.634942Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-23\\ProductionReport-2026-09-23-05-32-16.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-23\\ProductionReport-2026-09-23-05-32-16.xls",
+      "size": 49664,
+      "mtime": 1791391255.9436626,
+      "sha256": "fb92f401100428716ea9879787640392c4d8ff7cde2da51b959b7bd86ed1af7e",
+      "copied_at": "2026-10-08T00:52:12.651730Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-23\\ProductionReport-2026-09-23-08-45-03.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-23\\ProductionReport-2026-09-23-08-45-03.xls",
+      "size": 49152,
+      "mtime": 1791391255.9526687,
+      "sha256": "b56765359e7c0e725d1dbb3040fe02e1b6c135f1ffab881ab62b3d5026ad81b1",
+      "copied_at": "2026-10-08T00:52:12.668532Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-24\\ProductionReport-2026-09-24-19-06-00.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-24\\ProductionReport-2026-09-24-19-06-00.xls",
+      "size": 49664,
+      "mtime": 1791391255.96715,
+      "sha256": "ce4013eb975dbdaa23d76a9ce3d92203a16353bbb56458b6a0d7b46c9a999c22",
+      "copied_at": "2026-10-08T00:52:12.942758Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-24\\ProductionReport-2026-09-24-20-27-35.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-24\\ProductionReport-2026-09-24-20-27-35.xls",
+      "size": 49664,
+      "mtime": 1791391255.9773774,
+      "sha256": "5150b703f4edcc290f57992676e79e581c0eef9e78f807329e56dbe98ee323ee",
+      "copied_at": "2026-10-08T00:52:12.962080Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-24\\ProductionReport-2026-09-24-21-49-08.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-24\\ProductionReport-2026-09-24-21-49-08.xls",
+      "size": 49152,
+      "mtime": 1791391255.9894783,
+      "sha256": "80d57e82492f05cc7d2061333e78114b77db0db9ada6cd34c57194a6fa918c1d",
+      "copied_at": "2026-10-08T00:52:12.978420Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-27\\ProductionReport-2026-09-27-11-48-26.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-27\\ProductionReport-2026-09-27-11-48-26.xls",
+      "size": 49152,
+      "mtime": 1791391256.0463412,
+      "sha256": "4ad40eccd99e78b9ac21249cdfa89a2764937252c47fca2d506483515e1f37f3",
+      "copied_at": "2026-10-08T00:52:13.535802Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-27\\ProductionReport-2026-09-27-14-00-58.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-27\\ProductionReport-2026-09-27-14-00-58.xls",
+      "size": 49152,
+      "mtime": 1791391256.0543418,
+      "sha256": "86ed491fdfa7c8cc6dfa5a3270cb2f9155d9ebf63443eedd51c8691439206a84",
+      "copied_at": "2026-10-08T00:52:13.551112Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-27\\ProductionReport-2026-09-27-16-18-18.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-27\\ProductionReport-2026-09-27-16-18-18.xls",
+      "size": 49152,
+      "mtime": 1791391256.0643406,
+      "sha256": "66de8bc466467395e9250860762ab61e24b794bbb9585002598e608c2416fc2a",
+      "copied_at": "2026-10-08T00:52:13.570334Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-28\\ProductionReport-2026-09-28-06-57-37.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-28\\ProductionReport-2026-09-28-06-57-37.xls",
+      "size": 49152,
+      "mtime": 1791391256.0811899,
+      "sha256": "0d76539cfe0f0630c9ee7f3545ea4a8bfa4096529454d5ca66b5cceb8d3a8762",
+      "copied_at": "2026-10-08T00:52:15.163799Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-28\\ProductionReport-2026-09-28-09-09-17.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-28\\ProductionReport-2026-09-28-09-09-17.xls",
+      "size": 49152,
+      "mtime": 1791391256.0912085,
+      "sha256": "fcf53afad44981d79d814f9b2360da72ca290f9348128d5b8c11e46241b8f91b",
+      "copied_at": "2026-10-08T00:52:15.183277Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-28\\ProductionReport-2026-09-28-11-20-57.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-28\\ProductionReport-2026-09-28-11-20-57.xls",
+      "size": 49152,
+      "mtime": 1791391256.1003008,
+      "sha256": "80ca28062a254849132f2d0ba51e7b2ff1a44123be19045317bb0854de0a1e83",
+      "copied_at": "2026-10-08T00:52:15.203488Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-29\\ProductionReport-2026-09-29-02-05-21.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-29\\ProductionReport-2026-09-29-02-05-21.xls",
+      "size": 49152,
+      "mtime": 1791391256.1159568,
+      "sha256": "c45f665d8cf733b2dbe05f2b76eb700fba89cef51f504ebc6d00cf9c25782a8a",
+      "copied_at": "2026-10-08T00:52:15.799465Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-29\\ProductionReport-2026-09-29-04-18-19.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-29\\ProductionReport-2026-09-29-04-18-19.xls",
+      "size": 49152,
+      "mtime": 1791391256.1253297,
+      "sha256": "b2da5c028349f0e04f663f6c1fe51b5773bca06b5e415b87bb8917e5cd395369",
+      "copied_at": "2026-10-08T00:52:15.821401Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-29\\ProductionReport-2026-09-29-06-32-44.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-29\\ProductionReport-2026-09-29-06-32-44.xls",
+      "size": 49152,
+      "mtime": 1791391256.1365192,
+      "sha256": "6fe8851c2951f1caf3cf42b0f32b114f58ee8891f6fa25b2dcb4c70c069822bb",
+      "copied_at": "2026-10-08T00:52:15.841234Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-30\\ProductionReport-2026-09-30-12-02-17.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-30\\ProductionReport-2026-09-30-12-02-17.xls",
+      "size": 49152,
+      "mtime": 1791391256.152341,
+      "sha256": "697120dbb69f54f6e86fb6438de501ea27fe5b1be7aad5177bb1e99efab2bcf4",
+      "copied_at": "2026-10-08T00:52:16.367954Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-30\\ProductionReport-2026-09-30-13-33-57.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-30\\ProductionReport-2026-09-30-13-33-57.xls",
+      "size": 49664,
+      "mtime": 1791391256.1625998,
+      "sha256": "c0a7d38f1f0eed1b1587b269560609b1a5c66318eea46a7c352b59208fc608c0",
+      "copied_at": "2026-10-08T00:52:16.385114Z",
+      "category": "report"
+    },
+    "C:\\Sabariraj\\Adavis_Workspace\\backend\\compression_server\\2026-09-30\\ProductionReport-2026-09-30-15-52-59.xls": {
+      "dest": "C:\\Sabariraj\\Adavis_Workspace\\backend\\file_ingestion_service\\staging\\raw\\2026-09-30\\ProductionReport-2026-09-30-15-52-59.xls",
+      "size": 49152,
+      "mtime": 1791391256.1725817,
+      "sha256": "e3bfd206e8df1c3fb71879b69bdf5b17f1c0b45e5f74a6ae8c252134f1b3c4fc",
+      "copied_at": "2026-10-08T00:52:16.402234Z",
+      "category": "report"
+    },
+    "/home/shan/Projects/Adavis/backend/ingestion_services/compression_server/Sawc.mdb": {
+      "dest": "/home/shan/Projects/Adavis/backend/ingestion_services/file_ingestion_service/staging/raw/databases/Sawc.mdb",
+      "size": 7221248,
+      "mtime": 1791382254.0,
+      "sha256": "33433886daed8225b35ce7f0e02270c84ebc16f21ed67a8c3c80b1054fd773d6",
+      "copied_at": "2026-10-08T10:00:28.203207Z",
+      "category": "database"
+    },
+    "/home/shan/Projects/Adavis/backend/ingestion_services/compression_server/SawcData.mdb": {
+      "dest": "/home/shan/Projects/Adavis/backend/ingestion_services/file_ingestion_service/staging/raw/databases/SawcData.mdb",
+      "size": 16236544,
+      "mtime": 1791382254.0,
+      "sha256": "8486f9983d543d513f455242be3e7acfadfb520c619640c551461490b4b4f22f",
+      "copied_at": "2026-10-08T10:00:28.223188Z",
+      "category": "database"
+    },
+    "/home/shan/Projects/Adavis/backend/ingestion_services/compression_server/2026-09-30/ProductionReport-2026-09-30-12-02-17.xls": {
+      "dest": "/home/shan/Projects/Adavis/backend/ingestion_services/file_ingestion_service/staging/raw/2026-09-30/ProductionReport-2026-09-30-12-02-17.xls",
+      "size": 49152,
+      "mtime": 1791382256.0,
+      "sha256": "697120dbb69f54f6e86fb6438de501ea27fe5b1be7aad5177bb1e99efab2bcf4",
+      "copied_at": "2026-10-08T10:00:28.224297Z",
+      "category": "report"
+    },
+    "/home/shan/Projects/Adavis/backend/ingestion_services/compression_server/2026-09-30/ProductionReport-2026-09-30-13-33-57.xls": {
+      "dest": "/home/shan/Projects/Adavis/backend/ingestion_services/file_ingestion_service/staging/raw/2026-09-30/ProductionReport-2026-09-30-13-33-57.xls",
+      "size": 49664,
+      "mtime": 1791382256.0,
+      "sha256": "c0a7d38f1f0eed1b1587b269560609b1a5c66318eea46a7c352b59208fc608c0",
+      "copied_at": "2026-10-08T10:00:28.225309Z",
+      "category": "report"
+    },
+    "/home/shan/Projects/Adavis/backend/ingestion_services/compression_server/2026-09-30/ProductionReport-2026-09-30-15-52-59.xls": {
+      "dest": "/home/shan/Projects/Adavis/backend/ingestion_services/file_ingestion_service/staging/raw/2026-09-30/ProductionReport-2026-09-30-15-52-59.xls",
+      "size": 49152,
+      "mtime": 1791382256.0,
+      "sha256": "e3bfd206e8df1c3fb71879b69bdf5b17f1c0b45e5f74a6ae8c252134f1b3c4fc",
+      "copied_at": "2026-10-08T10:00:28.226213Z",
+      "category": "report"
+    }
+  },
+  "last_sync": "2026-10-08T19:57:30.916722Z"
+}

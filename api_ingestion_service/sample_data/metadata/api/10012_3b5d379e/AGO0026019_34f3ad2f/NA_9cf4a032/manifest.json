@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "batch_id": "AGO0026019",
+  "lot_number": "NA  ",
+  "product_no": "LAMOTRIGINE",
+  "source_timestamp": "2026-10-04T04:31:53",
+  "batch_end_date": "2026-10-04T05:55:29",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T13:27:41+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='AGO0026019', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026019_34f3ad2f\\NA_9cf4a032\\batch_summary_be152272_20261007T132741854205Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:41+00:00",
+      "status": "SUCCESS",
+      "checksum": "f6a81a0fafb4de42f70cec14a60a1d03cbb6b4c10eaa51e4d508e0d98ed62413"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='AGO0026019', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026019_34f3ad2f\\NA_9cf4a032\\machine_summary_663b23d8_20261007T132741900301Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:41+00:00",
+      "status": "SUCCESS",
+      "checksum": "e63ff9523a4d8106e057a3669b02861c8d78a71036208a2910462570b69b179f"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10012, @BatchNo='AGO0026019', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026019_34f3ad2f\\NA_9cf4a032\\login_logout_7b250f13_20261007T132743708806Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:43+00:00",
+      "status": "SUCCESS",
+      "checksum": "39be3341dd7826ec278cad9e7e0b79483b784172343cefae85845314e3e854f9"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10012, @BatchNo='AGO0026019', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026019_34f3ad2f\\NA_9cf4a032\\users_7dfb4cf6_20261007T132745617480Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:45+00:00",
+      "status": "SUCCESS",
+      "checksum": "39be3341dd7826ec278cad9e7e0b79483b784172343cefae85845314e3e854f9"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10012, @BatchNo='AGO0026019', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026019_34f3ad2f\\NA_9cf4a032\\alarms_423c13f0_20261007T132745802558Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:45+00:00",
+      "status": "SUCCESS",
+      "checksum": "c5babd224877f9633641919cddfc013306d260e63f8a0ef36669d8e958a2485d"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10012, @BatchNo='AGO0026019', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026019_34f3ad2f\\NA_9cf4a032\\audit_trail_35a0293f_20261007T132754347060Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:54+00:00",
+      "status": "SUCCESS",
+      "checksum": "b99f3948671e8e50bbded3a9f869918c184c3979247f6c676860eb728ea4a992"
+    },
+    "blend_recipe": {
+      "source_api": "db:HMI.Blend_Recipe<@BatchNo='AGO0026019', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026019_34f3ad2f\\NA_9cf4a032\\blend_recipe_278cfc62_20261007T132754439102Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:54+00:00",
+      "status": "SUCCESS",
+      "checksum": "7d4977fb3e67fa7ea5893e76d829003741967e34a3c7830fefdc2e7d845f5485"
+    },
+    "blend_operational_data": {
+      "source_api": "db:HMI.Blend_Op_Data<@BatchNo='AGO0026019', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\AGO0026019_34f3ad2f\\NA_9cf4a032\\blend_operational_data_50e3ef1a_20261007T132754516321Z.json",
+      "fetch_timestamp": "2026-10-07T13:27:54+00:00",
+      "status": "SUCCESS",
+      "checksum": "2c06973d23556d245ec4e05ee13b6920c1ac01979879c2a7e3bf9a17b7f0b5e7"
+    }
+  }
+}

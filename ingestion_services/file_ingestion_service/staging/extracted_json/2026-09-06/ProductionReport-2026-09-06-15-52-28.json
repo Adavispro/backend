@@ -1,0 +1,179 @@
+{
+  "metadata": {
+    "sourceFile": "ProductionReport-2026-09-06-15-52-28.xls",
+    "parsedAt": "2026-10-08T00:52:07.972142",
+    "softwareVersion": "2.0",
+    "reportTimestamp": "2026-09-06T15:52:28",
+    "reportDate": "2026-09-06 00:00:00"
+  },
+  "batchInfo": {
+    "equipmentId": "MC081",
+    "machineName": "MC081 SEJONG 49D",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "productName": "Amisulpride 100mg",
+    "batchNumber": "ADNB26004",
+    "stationNo": "Station 1",
+    "userId": "mr11358",
+    "operatorName": "mahaboob ramzan",
+    "printInterval": 250000,
+    "runningTime": "04 Hour   40 Min16 Sec",
+    "totalRunningTime": "241 Hour   29 Min"
+  },
+  "recipeSettings": {
+    "feeder": {
+      "autoPercent": 90,
+      "manualRpm": 13
+    },
+    "fillingCam": "Cam C 8.5-14mm",
+    "targetQuantity": 1000000,
+    "airPressureLowLimitKpa": 400,
+    "hydraulicPressureLimits": {
+      "highLimitMpa": 15,
+      "lowLimitMpa": 0.1
+    },
+    "oilLubrication": {
+      "upperPunchS1": {
+        "intervalMin": 300,
+        "supplySec": 3
+      },
+      "lowerPunchS2": {
+        "intervalMin": 300,
+        "supplySec": 3
+      },
+      "lowerHeadS3": {
+        "intervalMin": 999,
+        "supplySec": 0
+      }
+    },
+    "powderSupplyTimeSec": 30,
+    "initialRejectTimeSec": 7.1,
+    "upperPunchTightnessHigh": null,
+    "lowerPunchTightnessHigh": null,
+    "ejectingForceHigh": null,
+    "controlLimits": {
+      "hsp": {
+        "percent": 45,
+        "kn": 20.59,
+        "stop": "Yes"
+      },
+      "hep": {
+        "percent": 30,
+        "kn": 18.46,
+        "rot": 10,
+        "tabs": 10
+      },
+      "hcp": {
+        "percent": 3,
+        "kn": 14.62,
+        "times": 5
+      },
+      "ref": {
+        "kn": 14.2
+      },
+      "lcp": {
+        "percent": 3,
+        "kn": 13.77,
+        "times": 5
+      },
+      "lep": {
+        "percent": 29,
+        "kn": 10.08,
+        "rot": 10,
+        "tabs": 10
+      },
+      "lsp": {
+        "percent": 45,
+        "kn": 7.81,
+        "stop": "Yes"
+      },
+      "sdLimit": {
+        "percent": 15,
+        "stop": "Yes"
+      },
+      "preHsp": {
+        "kn": 19.37,
+        "stop": "Yes"
+      },
+      "meanCalculationRangeRot": 3,
+      "calculationPassRot": 3,
+      "emptyPunchNo": null
+    }
+  },
+  "pressureData": {
+    "prePressure": {
+      "meanKn": 2.41,
+      "sdPercent": 0.8,
+      "minKn": 2.36,
+      "minPunchNo": 5,
+      "maxKn": 2.47,
+      "maxPunchNo": 31
+    },
+    "mainPressure": {
+      "meanKn": 14.03,
+      "sdPercent": 4.2,
+      "minKn": 12.81,
+      "minPunchNo": 41,
+      "maxKn": 15.65,
+      "maxPunchNo": 12
+    },
+    "fillingDepthAdjustments": {
+      "increaseTimes": 105,
+      "decreaseTimes": 146
+    }
+  },
+  "operationValues": {
+    "diskSpeedRpm": 18,
+    "capacityTabsPerHour": 105840,
+    "feeder": {
+      "status": "AUTO",
+      "speedRpm": 16
+    },
+    "prePressure": {
+      "thicknessMm": 11.14,
+      "lowerPunchPositionMm": 13.14,
+      "penetrationDepthMm": 2
+    },
+    "mainPressure": {
+      "thicknessMm": 3.08,
+      "lowerPunchPositionMm": 6.08,
+      "penetrationDepthMm": 3
+    },
+    "fillingDepthMm": 10.67,
+    "currentCam": "Cam C 8.5-14mm",
+    "mainAirPressureKpa": 636,
+    "hydraulicPressureMpa": 7.6,
+    "lubricationRemainingMin": {
+      "upperPunchS1": 300,
+      "lowerPunchS2": 300,
+      "lowerHeadS3": 399
+    },
+    "auxiliaryStatus": {
+      "powderStatus": "Enable",
+      "dustCollector": "ON",
+      "initialReject": "ON",
+      "buzzer": "ON"
+    }
+  },
+  "tabletCounters": {
+    "totalCounter": 500082,
+    "awcCounter": 482209,
+    "hep": {
+      "raw": "2113 (0.4%)",
+      "count": 2113
+    },
+    "lep": {
+      "raw": "22 (0.0%)",
+      "count": 22
+    },
+    "good": {
+      "raw": "480074 (99.6%)",
+      "count": 480074
+    }
+  },
+  "signatures": {
+    "operatorName": "mahaboob ramzan",
+    "reportDate": "2026-09-06 00:00:00"
+  }
+}

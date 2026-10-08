@@ -1065,13 +1065,12 @@ ensureIndex('id_sequence_mappings', { collectionName: 1, fieldName: 1 }, { uniqu
 
 logInfo('Seeding default data...');
 
-var manufacturingBlockId = "BLK-0001";
-var warehouseBlockId = "BLK-0002";
+var manufacturingBlockId = "BLK-PB1";
 var utilityBlockId = "BLK-0003";
 var qualityControlBlockId = "BLK-0004";
 
-var dispensingAreaId = "AREA-0001";
-var compressionAreaId = "AREA-0002";
+var dispensingAreaId = "AREA-GRAN";
+var compressionAreaId = "AREA-COMP";
 var packingAreaId = "AREA-0001";
 var rawMaterialAreaId = "AREA-0004";
 var finishedGoodsAreaId = "AREA-0005";
@@ -1087,48 +1086,23 @@ var plantHierarchyConfig = {
         blocks: [
             {
                 blockId: manufacturingBlockId,
-                blockCode: 'BLK-MFG',
-                blockName: 'Manufacturing Block',
+                blockCode: 'PB1',
+                blockName: 'Production Block 1',
                 displayOrder: 1
-            },
-            {
-                blockId: warehouseBlockId,
-                blockCode: 'BLK-WH',
-                blockName: 'Warehouse Block',
-                displayOrder: 2
             }
         ],
         areas: [
-            { areaId: dispensingAreaId, blockId: manufacturingBlockId, areaCode: 'AREA-DISP', areaName: 'Dispensing Area', displayOrder: 1 },
-            { areaId: compressionAreaId, blockId: warehouseBlockId, areaCode: 'AREA-COMP', areaName: 'Compression Area', displayOrder: 2 }
+            { areaId: 'AREA-GRAN', blockId: manufacturingBlockId, areaCode: 'GRAN', areaName: 'Granulation Area', displayOrder: 1 },
+            { areaId: 'AREA-BLEND', blockId: manufacturingBlockId, areaCode: 'BLEND', areaName: 'Blending Area', displayOrder: 2 },
+            { areaId: 'AREA-COMP', blockId: manufacturingBlockId, areaCode: 'COMP', areaName: 'Compression Area', displayOrder: 3 },
+            { areaId: 'AREA-COAT', blockId: manufacturingBlockId, areaCode: 'COAT', areaName: 'Coating Area', displayOrder: 4 }
         ],
         rooms: [
-            { roomId: 'ROOM-0001', areaId: dispensingAreaId, roomCode: 'RM-DISP-01', roomName: 'Dispensing Room 01', classification: 'ISO_8' },
-            { roomId: 'ROOM-0002', areaId: compressionAreaId, roomCode: 'RM-COMP-101', roomName: 'Compression Room 101', classification: 'ISO_7' }
-        ]
-    },
-    'PLNT-0002': {
-        blocks: [
-            {
-                blockId: 'BLK-0003',
-                blockCode: 'BLK-API-MFG',
-                blockName: 'API Manufacturing Block',
-                displayOrder: 1
-            },
-            {
-                blockId: 'BLK-0004',
-                blockCode: 'BLK-API-QC',
-                blockName: 'API QC Block',
-                displayOrder: 2
-            }
-        ],
-        areas: [
-            { areaId: 'AREA-0012', blockId: 'BLK-0003', areaCode: 'AREA-API-MIX', areaName: 'API Mixing Area', displayOrder: 1 },
-            { areaId: 'AREA-0013', blockId: 'BLK-0004', areaCode: 'AREA-API-QC', areaName: 'API QC Area', displayOrder: 2 }
-        ],
-        rooms: [
-            { roomId: 'ROOM-0018', areaId: 'AREA-0012', roomCode: 'RM-API-MIX-101', roomName: 'API Mixing Room 101', classification: 'ISO_7' },
-            { roomId: 'ROOM-0019', areaId: 'AREA-0013', roomCode: 'RM-API-QC-01', roomName: 'API QC Room 01', classification: 'LAB' }
+            { roomId: 'ROOM-GRAN', areaId: 'AREA-GRAN', roomCode: 'GRAN-RM', roomName: 'Granulation Room', classification: 'ISO_8' },
+            { roomId: 'ROOM-DRY', areaId: 'AREA-GRAN', roomCode: 'DRY-RM', roomName: 'Drying Room', classification: 'ISO_8' },
+            { roomId: 'ROOM-BLEND', areaId: 'AREA-BLEND', roomCode: 'BLEND-RM', roomName: 'Blending Room', classification: 'ISO_8' },
+            { roomId: 'ROOM-COMP', areaId: 'AREA-COMP', roomCode: 'COMP-RM', roomName: 'Compression Room', classification: 'ISO_7' },
+            { roomId: 'ROOM-COAT', areaId: 'AREA-COAT', roomCode: 'COAT-RM', roomName: 'Coating Room', classification: 'ISO_7' }
         ]
     }
 };
@@ -1138,10 +1112,8 @@ db.mdm_tenants.updateOne(
     },
     {
         $set: {
-            companyName: 'Adavis Technologies Pvt Ltd.',
-            domain: 'https://adavis.technologies.com',
-            companyCode: 'NCP',
-            contactEmail: 'compliance@adavis.com',
+            companyName: 'Aurobindo Pharma Limited (APL)',
+            companyCode: 'APL',
             isActive: true,
             updatedAt: ISODate()
         },
@@ -1163,8 +1135,8 @@ db.mdm_plants.updateOne(
     {
         $set: {
             tenantId: 'TNT-0001',
-            plantName: 'APL-Unit 4 ',
-            plantCode: 'HYD-01',
+            plantName: 'Unit-VII (OSD Formulations)',
+            plantCode: 'UNIT-07',
             type: 'Manufacturing',
             address: {
                 street: 'Plot No. 25, Pharma City',
@@ -1186,36 +1158,7 @@ db.mdm_plants.updateOne(
     }
 );
 
-// Plant 2 - API Plant
-db.mdm_plants.updateOne(
-    {
-        plantId: 'PLNT-0002'
-    },
-    {
-        $set: {
-            tenantId: 'TNT-0001',
-            plantName: 'API Plant - Visakhapatnam',
-            plantCode: 'VZG-01',
-            type: 'Manufacturing',
-            address: {
-                street: 'Survey No. 88, Pharma SEZ',
-                city: 'Visakhapatnam',
-                state: 'Andhra Pradesh',
-                zipCode: '530046',
-                country: 'India'
-            },
-            timezone: 'Asia/Kolkata',
-            isActive: true,
-            updatedAt: ISODate()
-        },
-        $setOnInsert: {
-            createdAt: ISODate('2026-01-15T08:00:00Z')
-        }
-    },
-    {
-        upsert: true
-    }
-);
+db.mdm_plants.deleteMany({ tenantId: 'TNT-0001', plantId: { $ne: 'PLNT-0001' } });
 
 upsertManyWithAutoId('mdm_departments', [
     {
@@ -2962,4 +2905,3 @@ print('========================================');
 print('Database initialization complete');
 print('Collections, validators, sequences and default seed data aligned');
 print('========================================');
-

@@ -1,0 +1,69 @@
+{
+  "source": "API",
+  "asset_id": "10094",
+  "batch_id": "PE0026026",
+  "lot_number": "NA",
+  "product_no": "Paroxetine",
+  "source_timestamp": "2026-10-07T18:59:55",
+  "batch_end_date": null,
+  "batch_status": "LIVE",
+  "last_selected_at": "2026-10-07T13:42:35+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10094, @BatchNo='PE0026026', @LotNo='NA'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\PE0026026_9ac1a6d7\\NA_20ef0f0c\\batch_summary_be152272_20261007T134235132078Z.json",
+      "fetch_timestamp": "2026-10-07T13:42:35+00:00",
+      "status": "SUCCESS",
+      "checksum": "0f9daf8ca9c36f831961d5974f5b9d8747459566a81716d9ae575c748a4c8c2c"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10094, @BatchNo='PE0026026', @LotNo='NA'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\PE0026026_9ac1a6d7\\NA_20ef0f0c\\machine_summary_663b23d8_20261007T134235175512Z.json",
+      "fetch_timestamp": "2026-10-07T13:42:35+00:00",
+      "status": "SUCCESS",
+      "checksum": "aca352b71d6c53ef255c78886d64b2a1903489e0ec5d31af5258088eb199c6d2"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10094, @BatchNo='PE0026026', @LotNo='NA'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\PE0026026_9ac1a6d7\\NA_20ef0f0c\\login_logout_7b250f13_20261007T134236960297Z.json",
+      "fetch_timestamp": "2026-10-07T13:42:36+00:00",
+      "status": "SUCCESS",
+      "checksum": "fc9c732ad82fbb8b83e93a82652679d0422d9fc556a18db130e22af423c8a6e6"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10094, @BatchNo='PE0026026', @LotNo='NA'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\PE0026026_9ac1a6d7\\NA_20ef0f0c\\users_7dfb4cf6_20261007T134238613598Z.json",
+      "fetch_timestamp": "2026-10-07T13:42:38+00:00",
+      "status": "SUCCESS",
+      "checksum": "fc9c732ad82fbb8b83e93a82652679d0422d9fc556a18db130e22af423c8a6e6"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10094, @BatchNo='PE0026026', @LotNo='NA'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\PE0026026_9ac1a6d7\\NA_20ef0f0c\\alarms_423c13f0_20261007T134308663632Z.json",
+      "fetch_timestamp": "2026-10-07T13:43:08+00:00",
+      "status": "SUCCESS",
+      "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail<@AssetId=10094, @BatchNo='PE0026026', @LotNo='NA'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\PE0026026_9ac1a6d7\\NA_20ef0f0c\\audit_trail_35a0293f_20261007T134314848853Z.json",
+      "fetch_timestamp": "2026-10-07T13:43:14+00:00",
+      "status": "SUCCESS",
+      "checksum": "c5e208a483135f9eb81cea346452cbc156558b1c38702fc2cc6452f3cb1f9718"
+    },
+    "rmg_operational_data": {
+      "source_api": "db:HMI.RMG_op_data<@AssetId='10094', @BatchNo='PE0026026', @LotNo='NA'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\PE0026026_9ac1a6d7\\NA_20ef0f0c\\rmg_operational_data_53809943_20261007T134315057634Z.json",
+      "fetch_timestamp": "2026-10-07T13:43:15+00:00",
+      "status": "SUCCESS",
+      "checksum": "cfdce88897edb24a23753cda312dc61c4750132bc511f7f172b838a20c38733f"
+    },
+    "rmg_recipe": {
+      "source_api": "db:HMI.RMG_recipe<@AssetId='10094', @BatchNo='PE0026026', @LotNo='NA'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10094_f7e11a1e\\PE0026026_9ac1a6d7\\NA_20ef0f0c\\rmg_recipe_18884de8_20261007T134315127288Z.json",
+      "fetch_timestamp": "2026-10-07T13:43:15+00:00",
+      "status": "SUCCESS",
+      "checksum": "3eb5c0c4d993f5ddd85844af76fef27b0658fe013ea8bf2829b5f1312d51b92b"
+    }
+  }
+}

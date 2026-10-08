@@ -1,0 +1,68 @@
+{
+  "source": "API",
+  "asset_id": "10012",
+  "batch_id": "PE0026024",
+  "lot_number": "NA  ",
+  "product_no": "PAROXETINE BLEND",
+  "source_timestamp": "2026-09-18T21:16:22",
+  "batch_end_date": "2026-09-18T22:49:09",
+  "batch_status": "COMPLETED",
+  "last_selected_at": "2026-10-07T15:16:21+00:00",
+  "datasets": {
+    "batch_summary": {
+      "source_api": "db:HMI.Batch_summary<@AssetId=10012, @BatchNo='PE0026024', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026024_9c8cee7d\\NA_9cf4a032\\batch_summary_be152272_20261007T151621874316Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:21+00:00",
+      "status": "SUCCESS",
+      "checksum": "48d744f3e35670295cb1e65a8085bb0772d1dc539cc71f6b9c359f4bbb616388"
+    },
+    "machine_summary": {
+      "source_api": "db:HMI.Mach_summary<@AssetId=10012, @BatchNo='PE0026024', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026024_9c8cee7d\\NA_9cf4a032\\machine_summary_663b23d8_20261007T151621919663Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:21+00:00",
+      "status": "SUCCESS",
+      "checksum": "e63ff9523a4d8106e057a3669b02861c8d78a71036208a2910462570b69b179f"
+    },
+    "login_logout": {
+      "source_api": "db:HMI.Login<@AssetId=10012, @BatchNo='PE0026024', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026024_9c8cee7d\\NA_9cf4a032\\login_logout_7b250f13_20261007T151623980351Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:23+00:00",
+      "status": "SUCCESS",
+      "checksum": "2c6e68252f4708da0ff307fa5f674cca1af6f318c06a760820747573e24fc6e2"
+    },
+    "users": {
+      "source_api": "db:HMI.Users<@AssetId=10012, @BatchNo='PE0026024', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026024_9c8cee7d\\NA_9cf4a032\\users_7dfb4cf6_20261007T151625994055Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:26+00:00",
+      "status": "SUCCESS",
+      "checksum": "2c6e68252f4708da0ff307fa5f674cca1af6f318c06a760820747573e24fc6e2"
+    },
+    "alarms": {
+      "source_api": "db:HMI.Alarms<@AssetId=10012, @BatchNo='PE0026024', @LotNo='NA  '>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026024_9c8cee7d\\NA_9cf4a032\\alarms_423c13f0_20261007T151626331586Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:26+00:00",
+      "status": "SUCCESS",
+      "checksum": "8548560a80af8d57ea9538ae685e2e54419d57e84b28ad92e9ae594703890bed"
+    },
+    "audit_trail": {
+      "source_api": "db:HMI.Audit_Trail",
+      "fetch_timestamp": "2026-10-07T15:16:36+00:00",
+      "status": "FAILED",
+      "error_message": "Dataset API returned HTTP 404"
+    },
+    "blend_recipe": {
+      "source_api": "db:HMI.Blend_Recipe<@BatchNo='PE0026024', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026024_9c8cee7d\\NA_9cf4a032\\blend_recipe_278cfc62_20261007T151636470777Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:36+00:00",
+      "status": "SUCCESS",
+      "checksum": "fdb016bc7a4b5176a8467d5ca58a9844b4f231fbfe4bda88bf17df6e4b7e73d0"
+    },
+    "blend_operational_data": {
+      "source_api": "db:HMI.Blend_Op_Data<@BatchNo='PE0026024', @LotNo='NA  ', @AssetId='10012'>",
+      "source_file": "D:\\ADAVIS\\backend\\crtf_bypass\\staging\\api_raw\\10012_3b5d379e\\PE0026024_9c8cee7d\\NA_9cf4a032\\blend_operational_data_50e3ef1a_20261007T151636545439Z.json",
+      "fetch_timestamp": "2026-10-07T15:16:36+00:00",
+      "status": "SUCCESS",
+      "checksum": "067d2a14a8476af2d7f362e706af77405a87e135401fbd33541b3e495168812c"
+    }
+  }
+}

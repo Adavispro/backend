@@ -33,7 +33,7 @@ class TestIngestionConfig(unittest.TestCase):
         self.assertIn("MB004", cfg.get_active_equipment_ids())
         self.assertIn("MB005", cfg.get_active_equipment_ids())
         self.assertIn("MB041", cfg.get_active_equipment_ids())
-        self.assertIn("MB040", cfg.get_active_equipment_ids())
+        self.assertIn("MC081", cfg.get_active_equipment_ids())
         self.assertEqual(len(cfg.equipments), 5)
 
     def test_equipment_details(self):
@@ -65,9 +65,9 @@ class TestIngestionConfig(unittest.TestCase):
         self.assertEqual(coat.equipment_type, "COAT")
 
         # 5. Compression
-        comp = cfg.get_equipment("MB040")
+        comp = cfg.get_equipment("MC081")
         self.assertIsNotNone(comp)
-        self.assertEqual(comp.asset_id, "10040")
+        self.assertEqual(comp.asset_id, "MC081")
         self.assertEqual(comp.source_type, "EXCEL")
 
     def test_mdb_decision_gate(self):

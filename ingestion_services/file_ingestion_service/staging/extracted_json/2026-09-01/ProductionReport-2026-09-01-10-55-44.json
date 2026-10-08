@@ -1,0 +1,179 @@
+{
+  "metadata": {
+    "sourceFile": "ProductionReport-2026-09-01-10-55-44.xls",
+    "parsedAt": "2026-10-08T00:52:06.362154",
+    "softwareVersion": "2.0",
+    "reportTimestamp": "2026-09-01T10:55:44",
+    "reportDate": "2026-09-01 00:00:00"
+  },
+  "batchInfo": {
+    "equipmentId": "MC081",
+    "machineName": "MC081 SEJONG 49D",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "productName": "Amisulpride 200mg",
+    "batchNumber": "ADNC26011",
+    "stationNo": "Station 1",
+    "userId": "pk8943",
+    "operatorName": "p.s.krishna murthy",
+    "printInterval": 125000,
+    "runningTime": "04 Hour   13 Min28 Sec",
+    "totalRunningTime": "207 Hour   38 Min"
+  },
+  "recipeSettings": {
+    "feeder": {
+      "autoPercent": 90,
+      "manualRpm": 13
+    },
+    "fillingCam": "Cam C 8.5-14mm",
+    "targetQuantity": 500000,
+    "airPressureLowLimitKpa": 400,
+    "hydraulicPressureLimits": {
+      "highLimitMpa": 15,
+      "lowLimitMpa": 0.1
+    },
+    "oilLubrication": {
+      "upperPunchS1": {
+        "intervalMin": 300,
+        "supplySec": 3
+      },
+      "lowerPunchS2": {
+        "intervalMin": 300,
+        "supplySec": 3
+      },
+      "lowerHeadS3": {
+        "intervalMin": 999,
+        "supplySec": 0
+      }
+    },
+    "powderSupplyTimeSec": 30,
+    "initialRejectTimeSec": 8.3,
+    "upperPunchTightnessHigh": null,
+    "lowerPunchTightnessHigh": null,
+    "ejectingForceHigh": null,
+    "controlLimits": {
+      "hsp": {
+        "percent": 45,
+        "kn": 30.35,
+        "stop": "Yes"
+      },
+      "hep": {
+        "percent": 30,
+        "kn": 27.21,
+        "rot": 10,
+        "tabs": 10
+      },
+      "hcp": {
+        "percent": 3,
+        "kn": 21.56,
+        "times": 5
+      },
+      "ref": {
+        "kn": 20.93
+      },
+      "lcp": {
+        "percent": 3,
+        "kn": 20.3,
+        "times": 5
+      },
+      "lep": {
+        "percent": 29,
+        "kn": 14.86,
+        "rot": 10,
+        "tabs": 10
+      },
+      "lsp": {
+        "percent": 45,
+        "kn": 11.51,
+        "stop": "Yes"
+      },
+      "sdLimit": {
+        "percent": 15,
+        "stop": "Yes"
+      },
+      "preHsp": {
+        "kn": 33.22,
+        "stop": "Yes"
+      },
+      "meanCalculationRangeRot": 3,
+      "calculationPassRot": 3,
+      "emptyPunchNo": null
+    }
+  },
+  "pressureData": {
+    "prePressure": {
+      "meanKn": 2.32,
+      "sdPercent": 0.9,
+      "minKn": 2.27,
+      "minPunchNo": 40,
+      "maxKn": 2.37,
+      "maxPunchNo": 47
+    },
+    "mainPressure": {
+      "meanKn": 21.12,
+      "sdPercent": 3.4,
+      "minKn": 18.97,
+      "minPunchNo": 34,
+      "maxKn": 23.24,
+      "maxPunchNo": 4
+    },
+    "fillingDepthAdjustments": {
+      "increaseTimes": 21,
+      "decreaseTimes": 30
+    }
+  },
+  "operationValues": {
+    "diskSpeedRpm": 15,
+    "capacityTabsPerHour": 88200,
+    "feeder": {
+      "status": "AUTO",
+      "speedRpm": 13
+    },
+    "prePressure": {
+      "thicknessMm": 11.12,
+      "lowerPunchPositionMm": 13.12,
+      "penetrationDepthMm": 2
+    },
+    "mainPressure": {
+      "thicknessMm": 3.41,
+      "lowerPunchPositionMm": 6.41,
+      "penetrationDepthMm": 3
+    },
+    "fillingDepthMm": 12.11,
+    "currentCam": "Cam C 8.5-14mm",
+    "mainAirPressureKpa": 599,
+    "hydraulicPressureMpa": 7.5,
+    "lubricationRemainingMin": {
+      "upperPunchS1": 227,
+      "lowerPunchS2": 227,
+      "lowerHeadS3": 428
+    },
+    "auxiliaryStatus": {
+      "powderStatus": "Enable",
+      "dustCollector": "ON",
+      "initialReject": "ON",
+      "buzzer": "ON"
+    }
+  },
+  "tabletCounters": {
+    "totalCounter": 375046,
+    "awcCounter": 365050,
+    "hep": {
+      "raw": "7 (0.0%)",
+      "count": 7
+    },
+    "lep": {
+      "raw": "1 (0.0%)",
+      "count": 1
+    },
+    "good": {
+      "raw": "365042 (100.0%)",
+      "count": 365042
+    }
+  },
+  "signatures": {
+    "operatorName": "p.s.krishna murthy",
+    "reportDate": "2026-09-01 00:00:00"
+  }
+}
