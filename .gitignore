@@ -143,3 +143,6 @@ scheduler/
 # Runtime DMS data
 **/data/dms/
 services/*/data/
+
+# Compression server data
+compression_server/

@@ -176,7 +176,7 @@ def clean_operational_row(
         or cleaned.get("DT")
         or cleaned.get("dt")
     )
-    observed_at = parse_datetime(time_val) or datetime.utcnow()
+    observed_at = parse_datetime(time_val) or datetime.now(timezone.utc)
 
     status_val = (
         cleaned.get("STATUS")
@@ -276,7 +276,7 @@ def clean_alarm_row(row: Dict[str, Any], equipment_code: str) -> Dict[str, Any]:
 
     return {
         "alarm_name": alarm_name,
-        "occurred_time": occurred_time or datetime.utcnow(),
+        "occurred_time": occurred_time or datetime.now(timezone.utc),
         "resolved_time": resolved_time,
         "duration": duration_str or "-",
         "state_after": state_after,
@@ -300,7 +300,7 @@ def clean_audit_row(row: Dict[str, Any], equipment_code: str) -> Dict[str, Any]:
         or cleaned.get("DT")
         or cleaned.get("dt")
     )
-    event_time = parse_datetime(dt_val) or datetime.utcnow()
+    event_time = parse_datetime(dt_val) or datetime.now(timezone.utc)
 
     user_name = str(
         cleaned.get("User Name")

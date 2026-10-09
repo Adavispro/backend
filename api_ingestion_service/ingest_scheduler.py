@@ -6,10 +6,13 @@ cleans payload via the cleaning engine, and ingests into MongoDB with multi-stag
 
 from __future__ import annotations
 
+import argparse
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+import signal
 import sys
 import threading
 import time
@@ -150,7 +153,13 @@ def load_env_file(env_path: Optional[Path] = None) -> None:
 
 
 class IngestionSchedulerService:
-    def __init__(self, config_path: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        config_path: Optional[str] = None,
+        use_mock: Optional[bool] = None,
+        ingestion_mode: Optional[str] = None,
+        mock_port: Optional[int] = None,
+    ) -> None:
         load_env_file()
 
         if config_path is None:
@@ -159,12 +168,22 @@ class IngestionSchedulerService:
         with open(config_path, "r", encoding="utf-8") as f:
             self.config = json.load(f)
 
-        # Environment variable overrides
-        env_use_mock = os.getenv("USE_MOCK_API")
-        if env_use_mock is not None:
-            self.use_mock = env_use_mock.lower() in ("true", "1", "yes")
+        # Ingestion Mode & Backup Configuration
+        ingest_cfg = self.config.get("ingestion", {})
+        if ingestion_mode:
+            self.ingestion_mode = ingestion_mode.strip().upper()
         else:
-            self.use_mock = self.config["api"].get("use_mock", False)
+            self.ingestion_mode = os.getenv("INGESTION_MODE", ingest_cfg.get("ingestion_mode", "APPEND")).upper()
+
+        # Environment / CLI variable overrides for mock
+        if use_mock is not None:
+            self.use_mock = use_mock
+        else:
+            env_use_mock = os.getenv("USE_MOCK_API")
+            if env_use_mock is not None:
+                self.use_mock = env_use_mock.lower() in ("true", "1", "yes")
+            else:
+                self.use_mock = self.config["api"].get("use_mock", False)
 
         self.mock_server: Optional[MockServerThread] = None
         auth_cfg = self.config.get("auth", {})
@@ -173,12 +192,12 @@ class IngestionSchedulerService:
         if self.use_mock:
             mock_cfg = self.config.get("mock_server", {})
             mock_host = os.getenv("MOCK_SERVER_HOST", mock_cfg.get("host", "127.0.0.1"))
-            mock_port = int(os.getenv("MOCK_SERVER_PORT", mock_cfg.get("port", 8001)))
+            resolved_port = mock_port or int(os.getenv("MOCK_SERVER_PORT", mock_cfg.get("port", 8001)))
             sample_data_rel = mock_cfg.get("sample_data_path", "./sample_data")
             sample_data_abs = (base_dir / sample_data_rel).resolve()
-            self.mock_server = MockServerThread(host=mock_host, port=mock_port, staging_path=str(sample_data_abs))
+            self.mock_server = MockServerThread(host=mock_host, port=resolved_port, staging_path=str(sample_data_abs))
             self.mock_server.start()
-            api_base_url = f"http://{mock_host}:{mock_port}"
+            api_base_url = f"http://{mock_host}:{resolved_port}"
             verify_tls = False
             token_mgr = OAuth2TokenManager(auth_type="none")
             logger.info(f"Using Mock Server at {api_base_url}")
@@ -225,9 +244,6 @@ class IngestionSchedulerService:
             db_name=db_name,
         )
 
-        # Ingestion Mode & Backup Configuration
-        ingest_cfg = self.config.get("ingestion", {})
-        self.ingestion_mode = os.getenv("INGESTION_MODE", ingest_cfg.get("ingestion_mode", "APPEND")).upper()
         backup_env = os.getenv("BACKUP_BEFORE_TRUNCATE")
         self.backup_before_truncate = backup_env.lower() in ("true", "1", "yes") if backup_env is not None else ingest_cfg.get("backup_before_truncate", True)
 
@@ -239,6 +255,10 @@ class IngestionSchedulerService:
         )
         self.running = True
         self._stop_event = threading.Event()
+        self.last_results: Optional[Dict[str, Any]] = None
+        self.cycle_count: int = 0
+        self.http_server: Optional[HTTPServer] = None
+        self.http_thread: Optional[threading.Thread] = None
 
     def process_asset(self, asset: Dict[str, Any]) -> Dict[str, Any]:
         asset_id = asset["asset_id"]
@@ -401,35 +421,153 @@ class IngestionSchedulerService:
 
         duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         logger.info(f"Ingestion cycle finished in {duration:.2f}s. Results: {results}")
-        return {"cycle_time": start_time.isoformat(), "duration_seconds": duration, "assets": results}
+        cycle_result = {"cycle_time": start_time.isoformat(), "duration_seconds": duration, "assets": results}
+        self.last_results = cycle_result
+        self.cycle_count += 1
+        return cycle_result
+
+    def start_http_server(self, host: str = "0.0.0.0", port: int = 8000) -> None:
+        """Start a lightweight HTTP control server for standalone service monitoring."""
+        service_ref = self
+
+        class IngestionControlHandler(BaseHTTPRequestHandler):
+            def log_message(self, format, *args):
+                logger.debug("%s - [%s] %s" % (self.address_string(), self.log_date_time_string(), format % args))
+
+            def _send_json(self, status_code: int, data: Dict[str, Any]) -> None:
+                body = json.dumps(data, default=str).encode("utf-8")
+                self.send_response(status_code)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def do_GET(self) -> None:
+                path = self.path.split("?")[0].rstrip("/")
+                if path in ("", "/health", "/healthz"):
+                    self._send_json(200, {
+                        "status": "UP",
+                        "service": "api_ingestion_service",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "mode": service_ref.ingestion_mode,
+                        "use_mock": service_ref.use_mock,
+                    })
+                elif path in ("/status", "/metrics"):
+                    self._send_json(200, {
+                        "status": "RUNNING" if service_ref.running else "STOPPED",
+                        "service": "api_ingestion_service",
+                        "cycle_count": service_ref.cycle_count,
+                        "assets_configured": len(service_ref.config.get("assets", [])),
+                        "last_cycle": service_ref.last_results,
+                    })
+                else:
+                    self._send_json(404, {"error": "Not Found", "available_endpoints": ["/health", "/status", "/trigger"]})
+
+            def do_POST(self) -> None:
+                path = self.path.split("?")[0].rstrip("/")
+                if path in ("/trigger", "/run"):
+                    logger.info("Manual ingestion cycle triggered via HTTP POST /trigger")
+                    res = service_ref.run_cycle()
+                    self._send_json(200, {"status": "SUCCESS", "message": "Ingestion cycle executed", "result": res})
+                else:
+                    self._send_json(404, {"error": "Not Found"})
+
+        try:
+            self.http_server = HTTPServer((host, port), IngestionControlHandler)
+            self.http_thread = threading.Thread(target=self.http_server.serve_forever, daemon=True)
+            self.http_thread.start()
+            logger.info(f"Ingestion Service HTTP Control Server running at http://{host}:{port} (/health, /status, /trigger)")
+        except Exception as exc:
+            logger.warning(f"Could not start HTTP control server on port {port}: {exc}")
 
     def stop(self) -> None:
         """Signal the scheduler to gracefully stop."""
         self.running = False
         self._stop_event.set()
+        if self.http_server:
+            self.http_server.shutdown()
+            self.http_server.server_close()
+            logger.info("HTTP Control Server stopped.")
         if self.mock_server:
             self.mock_server.stop()
         logger.info("IngestionSchedulerService stop signal received.")
 
-    def start_scheduler_loop(self) -> None:
-        interval_minutes = int(self.config["ingestion"].get("schedule_minutes", 15))
-        continuous = bool(self.config["ingestion"].get("continuous_run", False))
+    def start_scheduler_loop(
+        self,
+        interval_minutes: Optional[int] = None,
+        continuous: Optional[bool] = None,
+        enable_http_server: bool = False,
+        http_port: int = 8000,
+    ) -> None:
+        if interval_minutes is None:
+            interval_minutes = int(self.config["ingestion"].get("schedule_minutes", 15))
+        if continuous is None:
+            continuous = bool(self.config["ingestion"].get("continuous_run", False))
+
+        if enable_http_server:
+            self.start_http_server(port=http_port)
 
         logger.info(f"Starting scheduler cycle (Interval: {interval_minutes}m, Continuous: {continuous})")
         self.run_cycle()
 
         if continuous:
             while self.running and not self._stop_event.is_set():
-                # Sleep in short increments to respond promptly to stop signals
                 if self._stop_event.wait(timeout=interval_minutes * 60):
                     break
                 if self.running:
                     self.run_cycle()
 
 
-if __name__ == "__main__":
-    scheduler = IngestionSchedulerService()
+def main() -> None:
+    parser = argparse.ArgumentParser(description="ADAVIS Plant API Ingestion Service (Standalone Server)")
+    parser.add_argument("--config", "-c", type=str, default=None, help="Path to custom ingestion_config.json")
+    parser.add_argument("--once", action="store_true", help="Run a single ingestion cycle and exit immediately")
+    parser.add_argument("--continuous", action="store_true", help="Run in continuous schedule loop")
+    parser.add_argument("--interval", "-i", type=int, default=None, help="Override schedule interval in minutes (default 15)")
+    parser.add_argument("--mode", "-m", type=str, choices=["APPEND", "TRUNCATE_AND_LOAD"], default=None, help="Ingestion mode")
+    parser.add_argument("--mock", action="store_true", help="Force local mock server mode")
+    parser.add_argument("--live", action="store_true", help="Force live Plant API mode")
+    parser.add_argument("--mock-port", type=int, default=None, help="Port for local mock server (default 8001)")
+    parser.add_argument("--http-server", action="store_true", default=True, help="Enable HTTP health/status control server")
+    parser.add_argument("--no-http", dest="http_server", action="store_false", help="Disable HTTP control server")
+    parser.add_argument("--http-port", type=int, default=8000, help="Port for HTTP control server (default 8000)")
+
+    args = parser.parse_args()
+
+    use_mock = None
+    if args.mock:
+        use_mock = True
+    elif args.live:
+        use_mock = False
+
+    scheduler = IngestionSchedulerService(
+        config_path=args.config,
+        use_mock=use_mock,
+        ingestion_mode=args.mode,
+        mock_port=args.mock_port,
+    )
+
+    def _sig_handler(sig, frame):
+        logger.info(f"Caught signal {sig}, initiating graceful shutdown...")
+        scheduler.stop()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, _sig_handler)
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, _sig_handler)
+
+    continuous_mode = True if args.continuous else (False if args.once else None)
+
     try:
-        scheduler.start_scheduler_loop()
+        scheduler.start_scheduler_loop(
+            interval_minutes=args.interval,
+            continuous=continuous_mode,
+            enable_http_server=args.http_server,
+            http_port=args.http_port,
+        )
     except KeyboardInterrupt:
         scheduler.stop()
+
+
+if __name__ == "__main__":
+    main()

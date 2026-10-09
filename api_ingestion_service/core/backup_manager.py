@@ -47,7 +47,7 @@ def export_collections(
     if backup_root is None:
         backup_root = Path(__file__).resolve().parent.parent / "backups"
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     export_dir = backup_root / f"{prefix}_{timestamp}"
     export_dir.mkdir(parents=True, exist_ok=True)
 
@@ -61,7 +61,7 @@ def export_collections(
         target_cols = sorted(list(available_cols))
 
     manifest: Dict[str, Any] = {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
         "database": db.name,
         "backup_directory": str(export_dir.resolve()),
         "collections_exported": {},
@@ -128,7 +128,7 @@ def restore_collections(
     json_files = [f for f in json_files if f.name != "manifest.json"]
 
     summary: Dict[str, Any] = {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
         "database": db.name,
         "backup_source": str(backup_dir.resolve()),
         "collections_restored": {},

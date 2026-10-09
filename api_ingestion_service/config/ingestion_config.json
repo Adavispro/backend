@@ -36,7 +36,7 @@
     "ingestion_mode": "APPEND",
     "backup_before_truncate": true,
     "schedule_minutes": 15,
-    "continuous_run": false,
+    "continuous_run": true,
     "max_parallel_assets": 4,
     "max_batches_per_asset_per_cycle": 5,
     "process_live_batches": true,

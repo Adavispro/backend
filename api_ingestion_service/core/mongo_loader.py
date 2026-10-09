@@ -7,47 +7,120 @@ batch multi-stage summary tracking (RMG -> FBD -> Blender -> Coating), and live 
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-import sys
-from pathlib import Path
+# Ensure parent and module directories are in sys.path for robust standalone resolution
+base_dir = Path(__file__).resolve().parent.parent
+if str(base_dir) not in sys.path:
+    sys.path.insert(0, str(base_dir))
+if str(base_dir.parent) not in sys.path:
+    sys.path.insert(0, str(base_dir.parent))
+
 try:
-    from pymongo import MongoClient, UpdateOne
+    # pyrefly: ignore [missing-import]
+    from pymongo import MongoClient, UpdateOne  # type: ignore[import-untyped,import-not-found]
 except ImportError:
     MongoClient = None
     UpdateOne = None
 
-# Resolve common module
-ingestion_services_dir = Path(__file__).resolve().parent.parent.parent
-if str(ingestion_services_dir) not in sys.path:
-    sys.path.insert(0, str(ingestion_services_dir))
-
 try:
-    from common.master_data_sync import (
+    from .master_data_sync import (
+        TENANT_ID,
+        PLANT_ID,
+        BLOCK_ID,
+        AREA_GRANULATION,
+        AREA_BLENDING,
+        AREA_COATING,
         MasterDataSyncManager,
         normalize_batch_size_str,
         sanitize_code,
         EQUIPMENT_DEFINITIONS,
     )
+    from .backup_manager import export_collections
+    from .cleaner import (
+        clean_alarm_row,
+        clean_audit_row,
+        clean_batch_info_row,
+        clean_operational_row,
+        clean_recipe_data,
+        parse_datetime,
+        parse_numeric,
+        strip_tags,
+    )
 except ImportError:
-    MasterDataSyncManager = None
-    normalize_batch_size_str = lambda x: str(x)
-    sanitize_code = lambda x: str(x)
-    EQUIPMENT_DEFINITIONS = []
-
-from .backup_manager import export_collections
-from .cleaner import (
-    clean_alarm_row,
-    clean_audit_row,
-    clean_batch_info_row,
-    clean_operational_row,
-    clean_recipe_data,
-    parse_datetime,
-    parse_numeric,
-    strip_tags,
-)
+    try:
+        from core.master_data_sync import (
+            TENANT_ID,
+            PLANT_ID,
+            BLOCK_ID,
+            AREA_GRANULATION,
+            AREA_BLENDING,
+            AREA_COATING,
+            MasterDataSyncManager,
+            normalize_batch_size_str,
+            sanitize_code,
+            EQUIPMENT_DEFINITIONS,
+        )
+        from core.backup_manager import export_collections
+        from core.cleaner import (
+            clean_alarm_row,
+            clean_audit_row,
+            clean_batch_info_row,
+            clean_operational_row,
+            clean_recipe_data,
+            parse_datetime,
+            parse_numeric,
+            strip_tags,
+        )
+    except ImportError:
+        try:
+            from api_ingestion_service.core.master_data_sync import (
+                TENANT_ID,
+                PLANT_ID,
+                BLOCK_ID,
+                AREA_GRANULATION,
+                AREA_BLENDING,
+                AREA_COATING,
+                MasterDataSyncManager,
+                normalize_batch_size_str,
+                sanitize_code,
+                EQUIPMENT_DEFINITIONS,
+            )
+            from api_ingestion_service.core.backup_manager import export_collections
+            from api_ingestion_service.core.cleaner import (
+                clean_alarm_row,
+                clean_audit_row,
+                clean_batch_info_row,
+                clean_operational_row,
+                clean_recipe_data,
+                parse_datetime,
+                parse_numeric,
+                strip_tags,
+            )
+        except ImportError:
+            TENANT_ID = "TNT-0001"
+            PLANT_ID = "PLNT-0001"
+            BLOCK_ID = "PB1"
+            AREA_GRANULATION = "AREA-GRAN"
+            AREA_BLENDING = "AREA-BLEND"
+            AREA_COATING = "AREA-COAT"
+            MasterDataSyncManager = None
+            normalize_batch_size_str = lambda x: str(x)
+            sanitize_code = lambda x: str(x)
+            EQUIPMENT_DEFINITIONS = []
+            export_collections = lambda **kwargs: {}
+            def clean_alarm_row(r, c): return {}
+            def clean_audit_row(r, c): return {}
+            def clean_batch_info_row(r, c): return {}
+            def clean_operational_row(r, c, **kwargs): return {}
+            def clean_recipe_data(r): return []
+            def parse_datetime(v): return None
+            def parse_numeric(v): return None
+            def strip_tags(v): return str(v)
 
 logger = logging.getLogger("api_ingestion_service.mongo_loader")
 
@@ -78,6 +151,8 @@ class MongoIngestionLoader:
                 self.client = None
                 self.db = None
         else:
+            if MongoClient is None and self.mongo_uri:
+                logger.error("`pymongo` library is not installed in the active Python environment. Run: pip install pymongo")
             self.client = None
             self.db = None
 
@@ -162,8 +237,7 @@ class MongoIngestionLoader:
         else:
             logger.info("Ingestion running in APPEND mode with atomic deduplication.")
             if self.master_sync:
-                self.master_sync.sync_equipment_master()
-                self.master_sync.sync_critical_parameters()
+                self.master_sync.sync_all_master_data()
             self.ensure_indexes(asset_codes)
 
         return report
@@ -225,7 +299,7 @@ class MongoIngestionLoader:
     def upsert_product(self, product_code: str, product_name: str) -> None:
         if self.db is None or not product_code:
             return
-        now_dt = datetime.utcnow()
+        now_dt = datetime.now(timezone.utc)
         self.db.products.update_one(
             {"product_code": product_code},
             {
@@ -295,29 +369,41 @@ class MongoIngestionLoader:
                     "_id": dedup_key,
                     "assetCode": asset_code,
                     "type": "operational",
-                    "createdAt": datetime.utcnow(),
+                    "createdAt": datetime.now(timezone.utc),
                 })
             except Exception:
                 # Deduplication: already ingested
                 continue
 
             doc = {
+                "tenantId": TENANT_ID,
+                "plantId": PLANT_ID,
+                "blockId": BLOCK_ID,
                 "observedAt": observed_at,
                 "event_time": observed_at,
                 "meta": {
+                    "tenantId": TENANT_ID,
+                    "plantId": PLANT_ID,
+                    "blockId": BLOCK_ID,
                     "batchNo": batch_no,
                     "lotNo": lot_no,
                     "equipmentCode": asset_code,
+                    "equipment_code": asset_code,
                     "equipmentId": asset_code,
+                    "equipment_id": asset_code,
                     "equipmentType": equipment_type,
+                    "equipment_type": equipment_type,
                     "operatorName": operator_name,
                     "status": status,
                 },
                 "source": {
+                    "tenantId": TENANT_ID,
+                    "plantId": PLANT_ID,
+                    "blockId": BLOCK_ID,
                     "assetCode": asset_code,
                 },
                 "metrics": metrics,
-                "ingestedAt": datetime.utcnow(),
+                "ingestedAt": datetime.now(timezone.utc),
             }
 
             try:
@@ -365,7 +451,7 @@ class MongoIngestionLoader:
                                 "duration": duration or open_alarm.get("duration") or "-",
                                 "state_after": 1,
                                 "status": "RESOLVED",
-                                "updated_at": datetime.utcnow(),
+                                "updated_at": datetime.now(timezone.utc),
                             }
                         },
                     )
@@ -377,12 +463,15 @@ class MongoIngestionLoader:
                     "_id": dedup_key,
                     "assetCode": asset_code,
                     "type": "alarm",
-                    "createdAt": datetime.utcnow(),
+                    "createdAt": datetime.now(timezone.utc),
                 })
             except Exception:
                 continue
 
             doc = {
+                "tenantId": TENANT_ID,
+                "plantId": PLANT_ID,
+                "blockId": BLOCK_ID,
                 "event_time": occ_time,
                 "alarm_name": alarm_name,
                 "occurred_time": occ_time,
@@ -391,12 +480,16 @@ class MongoIngestionLoader:
                 "state_after": state_after,
                 "status": status,
                 "meta": {
+                    "tenantId": TENANT_ID,
+                    "plantId": PLANT_ID,
+                    "blockId": BLOCK_ID,
                     "equipment_code": asset_code,
                     "equipmentCode": asset_code,
                     "equipmentId": asset_code,
+                    "equipment_id": asset_code,
                     "alarm_name": alarm_name,
                 },
-                "updated_at": datetime.utcnow(),
+                "updated_at": datetime.now(timezone.utc),
             }
 
             try:
@@ -438,12 +531,15 @@ class MongoIngestionLoader:
                     "_id": dedup_key,
                     "assetCode": asset_code,
                     "type": "audit",
-                    "createdAt": datetime.utcnow(),
+                    "createdAt": datetime.now(timezone.utc),
                 })
             except Exception:
                 continue
 
             doc = {
+                "tenantId": TENANT_ID,
+                "plantId": PLANT_ID,
+                "blockId": BLOCK_ID,
                 "event_time": event_time,
                 "record_id": record_id,
                 "user_name": user_name,
@@ -453,15 +549,19 @@ class MongoIngestionLoader:
                 "new_value": new_val,
                 "reason": reason,
                 "meta": {
+                    "tenantId": TENANT_ID,
+                    "plantId": PLANT_ID,
+                    "blockId": BLOCK_ID,
                     "equipment_code": asset_code,
                     "equipmentCode": asset_code,
                     "equipmentId": asset_code,
+                    "equipment_id": asset_code,
                     "batchNo": batch_no,
                     "lotNo": lot_no,
                     "user_name": user_name,
                     "description": description,
                 },
-                "updated_at": datetime.utcnow(),
+                "updated_at": datetime.now(timezone.utc),
             }
 
             try:
@@ -477,10 +577,15 @@ class MongoIngestionLoader:
                     },
                     {
                         "$set": {
+                            "tenantId": TENANT_ID,
+                            "plantId": PLANT_ID,
+                            "blockId": BLOCK_ID,
                             "auditId": f"audit_{asset_code}_{record_id}_{int(event_time.timestamp())}",
                             "batchNo": batch_no,
                             "lotNo": lot_no,
                             "equipmentCode": asset_code,
+                            "equipmentId": asset_code,
+                            "equipment_id": asset_code,
                             "timestamp": event_time.isoformat(),
                             "actionCode": description,
                             "action": description,
@@ -500,8 +605,12 @@ class MongoIngestionLoader:
                 if any(k in desc_lower for k in ["login", "log in", "logout", "log out"]):
                     is_login = "login" in desc_lower or "log in" in desc_lower
                     login_doc = {
+                        "tenantId": TENANT_ID,
+                        "plantId": PLANT_ID,
+                        "blockId": BLOCK_ID,
                         "equipmentCode": asset_code,
                         "equipmentId": asset_code,
+                        "equipment_id": asset_code,
                         "batchNo": batch_no,
                         "lotNo": lot_no,
                         "userName": user_name,
@@ -509,18 +618,18 @@ class MongoIngestionLoader:
                         "eventType": "USER_LOGIN" if is_login else "USER_LOGOUT",
                         "description": description,
                         "timestamp": event_time.isoformat(),
-                        "createdAt": datetime.utcnow(),
+                        "createdAt": datetime.now(timezone.utc),
                     }
                     try:
                         self.db.login_history.update_one(
                             {"equipmentCode": asset_code, "userName": user_name, "timestamp": event_time.isoformat()},
-                            {"$set": login_doc, "$setOnInsert": {"createdAt": datetime.utcnow()}},
+                            {"$set": login_doc, "$setOnInsert": {"createdAt": datetime.now(timezone.utc)}},
                             upsert=True,
                         )
                         login_ts_col = self._ts_collection_name("login", asset_code)
                         self.db[login_ts_col].update_one(
                             {"loginId": f"LOG-{asset_code}-{event_time.strftime('%Y%m%d%H%M%S')}-{idx}"},
-                            {"$set": login_doc, "$setOnInsert": {"createdAt": datetime.utcnow()}},
+                            {"$set": login_doc, "$setOnInsert": {"createdAt": datetime.now(timezone.utc)}},
                             upsert=True,
                         )
                     except Exception:
@@ -542,14 +651,19 @@ class MongoIngestionLoader:
         if self.db is None or not recipe_records:
             return
         sections = clean_recipe_data(recipe_records)
-        now_dt = datetime.utcnow()
+        now_dt = datetime.now(timezone.utc)
         self.db.iiot_batch_recipes.update_one(
             {"batchNo": batch_no, "lotNo": lot_no, "equipmentCode": asset_code},
             {
                 "$set": {
+                    "tenantId": TENANT_ID,
+                    "plantId": PLANT_ID,
+                    "blockId": BLOCK_ID,
                     "batchNo": batch_no,
                     "lotNo": lot_no,
                     "equipmentCode": asset_code,
+                    "equipmentId": asset_code,
+                    "equipment_id": asset_code,
                     "sections": sections,
                     "updatedAt": now_dt,
                 },
@@ -675,12 +789,15 @@ class MongoIngestionLoader:
         all_starts = [s.get("stageStartAt") for s in stages if s.get("stageStartAt") is not None]
         all_ends = [s.get("stageEndAt") for s in stages if s.get("stageEndAt") is not None]
 
-        now_dt = datetime.utcnow()
+        now_dt = datetime.now(timezone.utc)
         norm_size = normalize_batch_size_str(batch_size) if batch_size else ""
         norm_recipe_name = recipe_name or f"{product_name} {stage_name} Recipe"
         norm_recipe_code = recipe_code or f"RCP-{sanitize_code(product_code)}-{equipment_type}"
 
         summary_doc = {
+            "tenantId": TENANT_ID,
+            "plantId": PLANT_ID,
+            "blockId": BLOCK_ID,
             "batchNo": batch_no,
             "lotNo": lot_no,
             "productName": product_name,
@@ -707,8 +824,15 @@ class MongoIngestionLoader:
                 {"equipmentId": asset_code},
                 {
                     "$set": {
+                        "tenantId": TENANT_ID,
+                        "plantId": PLANT_ID,
+                        "blockId": BLOCK_ID,
                         "equipmentId": asset_code,
+                        "equipment_id": asset_code,
+                        "equipmentCode": asset_code,
+                        "equipment_code": asset_code,
                         "equipmentType": equipment_type,
+                        "equipment_type": equipment_type,
                         "currentState": "Running" if overall_status == "IN_PROGRESS" or "START" in stage_status.upper() else "Idle",
                         "stateReason": f"Batch in progress: {batch_no} ({lot_no})",
                         "lastBatchNo": batch_no,
@@ -727,7 +851,7 @@ class MongoIngestionLoader:
     def start_job_run(self, asset_code: str) -> str:
         if self.db is None:
             return ""
-        now_dt = datetime.utcnow()
+        now_dt = datetime.now(timezone.utc)
         job_run_id = f"JOB-{asset_code}-{now_dt.strftime('%Y%m%d%H%M%S')}-{uuid4().hex[:6]}"
         self.db.iiot_ingestion_job_run.insert_one({
             "jobRunId": job_run_id,
@@ -748,7 +872,7 @@ class MongoIngestionLoader:
     ) -> None:
         if self.db is None or not job_run_id:
             return
-        now_dt = datetime.utcnow()
+        now_dt = datetime.now(timezone.utc)
         update_doc: Dict[str, Any] = {
             "status": status,
             "completedAt": now_dt,

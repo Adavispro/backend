@@ -1,0 +1,249 @@
+{
+  "observedAt": "2026-09-21 19:08:43",
+  "event_time": "2026-09-21 19:08:43",
+  "meta": {
+    "batchNo": "MPA26061",
+    "lotNo": "MPA26061-LOT-20260921190843",
+    "derivedLotNo": "MPA26061-LOT-20260921190843",
+    "productCode": "Mirtazapine OD 15mg",
+    "productName": "Mirtazapine OD 15mg",
+    "equipmentCode": "MC081",
+    "equipmentId": "MC081",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "operatorName": "p.s.krishna murthy",
+    "userId": "pk8943",
+    "status": "COMPLETED"
+  },
+  "metrics": {},
+  "compression_details": {
+    "metadata": {
+      "sourceFile": "ProductionReport-2026-09-21-19-08-43.xls",
+      "parsedAt": "2026-10-08T22:25:11.666027+00:00",
+      "softwareVersion": "2.0",
+      "reportTimestamp": "2026-09-21T19:08:43",
+      "reportDate": "2026-09-21 00:00:00"
+    },
+    "batchInfo": {
+      "equipmentId": "MC081",
+      "machineName": "MC081 SEJONG 49D",
+      "equipmentType": "COMP",
+      "stageId": "STAGE-4",
+      "stageName": "Compression",
+      "productName": "Mirtazapine OD 15mg",
+      "batchNo": "MPA26061",
+      "derivedLotNo": "MPA26061-LOT-20260921190843",
+      "stationNo": "Station 1",
+      "userId": "pk8943",
+      "operatorName": "p.s.krishna murthy",
+      "printInterval": 385000,
+      "runningTime": "01 Hour   59 Min08 Sec",
+      "totalRunningTime": "334 Hour   17 Min"
+    },
+    "recipeSettings": {
+      "feeder": {
+        "autoPercent": 40,
+        "manualRpm": 9
+      },
+      "fillingCam": "Cam B 4.5-10mm",
+      "targetQuantity": 1540000,
+      "airPressureLowLimitKpa": 400,
+      "hydraulicPressureLimits": {
+        "highLimitMpa": 15,
+        "lowLimitMpa": 0.1
+      },
+      "oilLubrication": {
+        "upperPunchS1": {
+          "intervalMin": 300,
+          "supplySec": 3
+        },
+        "lowerPunchS2": {
+          "intervalMin": 300,
+          "supplySec": 3
+        },
+        "lowerHeadS3": {
+          "intervalMin": 999,
+          "supplySec": 0
+        }
+      },
+      "powderSupplyTimeSec": 30,
+      "initialRejectTimeSec": 5.8,
+      "upperPunchTightnessHigh": null,
+      "lowerPunchTightnessHigh": null,
+      "ejectingForceHigh": null,
+      "controlLimits": {
+        "hsp": {
+          "percent": 45,
+          "kn": 8.4,
+          "stop": "Yes"
+        },
+        "hep": {
+          "percent": 28,
+          "kn": 7.42,
+          "rot": 10,
+          "tabs": 10
+        },
+        "hcp": {
+          "percent": 3,
+          "kn": 5.97,
+          "times": 5
+        },
+        "ref": {
+          "kn": 5.79
+        },
+        "lcp": {
+          "percent": 3,
+          "kn": 5.62,
+          "times": 5
+        },
+        "lep": {
+          "percent": 27,
+          "kn": 4.23,
+          "rot": 10,
+          "tabs": 10
+        },
+        "lsp": {
+          "percent": 45,
+          "kn": 3.19,
+          "stop": "Yes"
+        },
+        "sdLimit": {
+          "percent": 15,
+          "stop": "Yes"
+        },
+        "preHsp": {
+          "kn": 8.4,
+          "stop": "Yes"
+        },
+        "meanCalculationRangeRot": 3,
+        "calculationPassRot": 3,
+        "emptyPunchNo": null
+      }
+    },
+    "pressureData": {
+      "prePressure": {
+        "meanKn": 2.74,
+        "sdPercent": 0.6,
+        "minKn": 2.69,
+        "minPunchNo": 56,
+        "maxKn": 2.81,
+        "maxPunchNo": 39
+      },
+      "mainPressure": {
+        "meanKn": 5.85,
+        "sdPercent": 1.8,
+        "minKn": 5.49,
+        "minPunchNo": 43,
+        "maxKn": 6.09,
+        "maxPunchNo": 50
+      },
+      "fillingDepthAdjustments": {
+        "increaseTimes": 0,
+        "decreaseTimes": 11
+      }
+    },
+    "operationValues": {
+      "diskSpeedRpm": 22,
+      "capacityTabsPerHour": 192720,
+      "feeder": {
+        "status": "AUTO",
+        "speedRpm": 8
+      },
+      "prePressure": {
+        "thicknessMm": 7.21,
+        "lowerPunchPositionMm": 9.21,
+        "penetrationDepthMm": 2
+      },
+      "mainPressure": {
+        "thicknessMm": 3.53,
+        "lowerPunchPositionMm": 6.53,
+        "penetrationDepthMm": 3
+      },
+      "fillingDepthMm": 7.99,
+      "currentCam": "Cam B 4.5-10mm",
+      "mainAirPressureKpa": 606,
+      "hydraulicPressureMpa": 7.6,
+      "lubricationRemainingMin": {
+        "upperPunchS1": 149,
+        "lowerPunchS2": 149,
+        "lowerHeadS3": 842
+      },
+      "auxiliaryStatus": {
+        "powderStatus": "Enable",
+        "dustCollector": "ON",
+        "initialReject": "ON",
+        "buzzer": "ON"
+      }
+    },
+    "tightness": {
+      "upperPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "lowerPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "ejectionForce": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      }
+    },
+    "tabletChecker": {
+      "weightMg": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "thicknessMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "diameterMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "hardnessN": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      }
+    },
+    "tabletCounters": {
+      "totalCounter": 385116,
+      "awcCounter": 361131,
+      "hep": {
+        "raw": "2376 (0.7%)",
+        "count": 2376
+      },
+      "lep": {
+        "raw": "0 (0%)",
+        "count": 0
+      },
+      "good": {
+        "raw": "358755 (99.3%)",
+        "count": 358755
+      }
+    },
+    "signatures": {
+      "operatorName": "p.s.krishna murthy",
+      "reportDate": "2026-09-21 00:00:00"
+    },
+    "operation_history": [],
+    "login_history": [],
+    "alarm_history": []
+  }
+}
