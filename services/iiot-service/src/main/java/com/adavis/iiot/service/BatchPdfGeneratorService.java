@@ -169,12 +169,16 @@ public class BatchPdfGeneratorService {
                 batchNo, lotNo, equipmentCode, tenantId, plantId);
 
         // 1. Fetch Batch Summary
-        Query query = new Query(Criteria.where("batchNo").is(batchNo));
+        Query query = isCompressionEquipment(equipmentCode) ? compressionScope(batchNo, tenantId, plantId,
+                new Criteria().orOperator(Criteria.where("equipmentId").is(equipmentCode),
+                        Criteria.where("equipmentCode").is(equipmentCode), Criteria.where("stages.equipmentCode").is(equipmentCode),
+                        Criteria.where("stages.equipmentId").is(equipmentCode)))
+                : new Query(Criteria.where("batchNo").is(batchNo));
         if (lotNo != null && !lotNo.isBlank()) {
             query.addCriteria(Criteria.where("lotNo").is(lotNo));
         }
         Document summary = mongoTemplate.findOne(query, Document.class, BATCH_SUMMARY_COLLECTION);
-        if (summary == null) {
+        if (summary == null && !isCompressionEquipment(equipmentCode)) {
             summary = mongoTemplate.findOne(new Query(Criteria.where("batchNo").regex("^" + batchNo + "$", "i")), Document.class, BATCH_SUMMARY_COLLECTION);
         }
         if (summary == null) {
@@ -185,6 +189,12 @@ public class BatchPdfGeneratorService {
         String resolvedLot = lotNo != null && !lotNo.isBlank() ? lotNo : safeString(summary, "lotNo");
         String resolvedEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : safeString(summary, "equipmentId");
         if (resolvedEq.equals("-") || resolvedEq.isBlank()) resolvedEq = "G5RMG";
+
+        List<CompressionLot> compressionLots = isCompressionEquipment(resolvedEq)
+                ? loadCompressionLots(batchNo, resolvedEq, tenantId, plantId) : List.of();
+        if (isCompressionEquipment(resolvedEq)) {
+            requireApprovedCompressionLots(compressionLots);
+        }
 
         String entityId = batchNo + ":" + resolvedLot + ":" + resolvedEq;
         Query instQuery = new Query(Criteria.where("entityId").is(entityId));
@@ -198,7 +208,7 @@ public class BatchPdfGeneratorService {
 
         // 3. Fetch Workflow Action History
         Query histQuery = new Query(Criteria.where("batchNo").is(batchNo));
-        if (lotNo != null && !lotNo.isBlank()) {
+        if (!isCompressionEquipment(resolvedEq) && lotNo != null && !lotNo.isBlank()) {
             histQuery.addCriteria(Criteria.where("lotNo").is(lotNo));
         }
         if (equipmentCode != null && !equipmentCode.isBlank()) {
@@ -210,7 +220,7 @@ public class BatchPdfGeneratorService {
         // 4. Fetch Audit Trail records
         Query auditQuery = new Query(Criteria.where("batchNo").is(batchNo));
         auditQuery.addCriteria(Criteria.where("action").nin("PRINT", "PRINT_BATCH_DOSSIER_PDF"));
-        if (lotNo != null && !lotNo.isBlank()) {
+        if (!isCompressionEquipment(resolvedEq) && lotNo != null && !lotNo.isBlank()) {
             auditQuery.addCriteria(Criteria.where("lotNo").is(lotNo));
         }
         if (equipmentCode != null && !equipmentCode.isBlank()) {
@@ -238,7 +248,14 @@ public class BatchPdfGeneratorService {
         // 6. Generate PDF bytes via OpenPDF
         byte[] pdfBytes;
         if (isCompressionEquipment(resolvedEq)) {
-            pdfBytes = buildCompressionPdfDocument(summary, workflowInstance, historyList, auditList, workflowAuditList, cppSamples, alarms, plcEvents, resolvedEq);
+            Query printQuery = compressionScope(batchNo, tenantId, plantId);
+            printQuery.addCriteria(Criteria.where("equipmentCode").is(resolvedEq));
+            printQuery.addCriteria(Criteria.where("action").in("PRINT", "PRINT_BATCH_DOSSIER_PDF", "DOWNLOAD_BATCH_DOSSIER_PDF"));
+            printQuery.with(Sort.by(Sort.Direction.ASC, "timestamp"));
+            List<Document> printHistory = mongoTemplate.find(printQuery, Document.class, AUDIT_TRAIL_COLLECTION);
+            pdfBytes = new CompressionBatchPdfRenderer().render(batchNo, resolvedEq, compressionLots,
+                    printHistory, approvedBy, approvedRole, getLogoBytes());
+            resolvedLot = "CONSOLIDATED";
         } else {
             pdfBytes = buildPdfDocument(summary, workflowInstance, historyList, auditList, workflowAuditList, cppSamples, alarms, plcEvents, resolvedEq);
         }
@@ -250,6 +267,7 @@ public class BatchPdfGeneratorService {
         String checksum = computeSha256(pdfBytes);
         String documentId = "DOC-BATCH-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
         String fileName = String.format("Batch_Dossier_%s_%s_%s.pdf", safeFileString(batchNo), safeFileString(resolvedLot), safeFileString(resolvedEq));
+        if (isCompressionEquipment(resolvedEq)) fileName = compressionFileName(batchNo, resolvedEq);
 
         String effectiveTenantId = tenantId != null && !tenantId.isBlank() ? tenantId : safeString(summary, "tenantId");
         if (effectiveTenantId.equals("-") || effectiveTenantId.isBlank()) effectiveTenantId = "TNT-0001";
@@ -277,12 +295,31 @@ public class BatchPdfGeneratorService {
         dmsDoc.put("plantId", effectivePlantId);
         dmsDoc.put("batchNo", batchNo);
         dmsDoc.put("lotNo", resolvedLot);
+        if (isCompressionEquipment(resolvedEq)) {
+            dmsDoc.put("reportScope", "COMPRESSION_BATCH");
+            dmsDoc.put("reportLayoutVersion", 2);
+            dmsDoc.put("includedLots", compressionLots.stream().map(CompressionLot::lotNo).toList());
+        }
         dmsDoc.put("equipmentCode", resolvedEq);
         dmsDoc.put("datasetId", resolvedEq);
         dmsDoc.put("workflowInstanceId", workflowInstance != null ? safeString(workflowInstance, "instanceId") : null);
         dmsDoc.put("workflowVersion", workflowInstance != null ? safeString(workflowInstance, "workflowVersion") : "1.0");
         dmsDoc.put("approvedBy", effectiveApprovedBy);
         dmsDoc.put("approvedAt", now);
+        if (isCompressionEquipment(resolvedEq)) {
+            String compressionEquipmentCode = resolvedEq;
+            List<Document> lotApprovals = compressionLots.stream().map(lot -> {
+                Document approval = CompressionBatchPdfRenderer.approval(lot, compressionEquipmentCode);
+                return new Document("lotNo", lot.lotNo()).append("status", lot.status())
+                        .append("approvedBy", approval.get("approvedBy")).append("approvedAt", approval.get("approvedAt"));
+            }).toList();
+            dmsDoc.put("lotApprovals", lotApprovals);
+            dmsDoc.put("generatedBy", effectiveApprovedBy);
+            dmsDoc.put("approvedBy", lotApprovals.stream().map(a -> safeString(a, "approvedBy"))
+                    .filter(a -> !"-".equals(a)).distinct().collect(java.util.stream.Collectors.joining(", ")));
+            dmsDoc.put("approvedAt", lotApprovals.stream().map(a -> CompressionBatchPdfRenderer.text(a, "approvedAt"))
+                    .filter(a -> !"-".equals(a)).max(String::compareTo).orElse(null));
+        }
         dmsDoc.put("generatedAt", now);
         dmsDoc.put("generationStatus", "READY");
         dmsDoc.put("status", "ACTIVE");
@@ -379,6 +416,12 @@ public class BatchPdfGeneratorService {
 
     public PdfGenerationResult findStoredBatchPdf(String batchNo, String lotNo, String equipmentCode, String tenantId, String plantId) {
         if (batchNo == null || batchNo.isBlank()) return null;
+        List<CompressionLot> compressionLots = List.of();
+        if (isCompressionEquipment(equipmentCode)) {
+            compressionLots = loadCompressionLots(batchNo, equipmentCode, tenantId, plantId);
+            requireApprovedCompressionLots(compressionLots);
+            lotNo = "CONSOLIDATED";
+        }
 
         // Try exact match query on dms_documents
         Query query = new Query(Criteria.where("batchNo").is(batchNo).and("status").is("ACTIVE"));
@@ -394,6 +437,12 @@ public class BatchPdfGeneratorService {
         if (tenantId != null && !tenantId.isBlank()) {
             query.addCriteria(Criteria.where("tenantId").is(tenantId));
         }
+        if (isCompressionEquipment(equipmentCode)) {
+            query.addCriteria(Criteria.where("reportScope").is("COMPRESSION_BATCH"));
+            query.addCriteria(Criteria.where("reportLayoutVersion").is(2));
+            query.addCriteria(Criteria.where("includedLots").is(compressionLots.stream().map(CompressionLot::lotNo).toList()));
+            if (plantId != null && !plantId.isBlank()) query.addCriteria(Criteria.where("plantId").is(plantId));
+        }
         query.with(Sort.by(Sort.Direction.DESC, "generatedAt", "createdAt"));
 
         Document doc = mongoTemplate.findOne(query, Document.class, DMS_DOCUMENTS_COLLECTION);
@@ -403,7 +452,7 @@ public class BatchPdfGeneratorService {
         }
 
         // If still null, check if batch summary has a specific pdfDocumentId for this stage
-        if (doc == null) {
+        if (doc == null && !isCompressionEquipment(equipmentCode)) {
             Query summaryQuery = new Query(Criteria.where("batchNo").is(batchNo));
             if (lotNo != null && !lotNo.isBlank()) {
                 summaryQuery.addCriteria(Criteria.where("lotNo").is(lotNo));
@@ -992,10 +1041,135 @@ public class BatchPdfGeneratorService {
         }
     }
 
-    private boolean isCompressionEquipment(String eq) {
-        if (eq == null) return false;
-        String upper = eq.toUpperCase(Locale.ROOT);
-        return upper.contains("MC081") || upper.contains("COMP") || upper.contains("SEJONG") || upper.contains("MB040");
+    record CompressionLot(String lotNo, Document sample, Document summary,
+                          Document workflow, List<Document> history, String status) {}
+
+    private Query compressionScope(String batchNo, String tenantId, String plantId, Criteria... additional) {
+        List<Criteria> criteria = new ArrayList<>();
+        criteria.addAll(Arrays.asList(additional));
+        criteria.add(Criteria.where("batchNo").is(batchNo));
+        for (Map.Entry<String, String> scope : Map.of(
+                "tenantId", tenantId == null ? "" : tenantId,
+                "plantId", plantId == null ? "" : plantId).entrySet()) {
+            if (!scope.getValue().isBlank()) {
+                criteria.add(new Criteria().orOperator(Criteria.where(scope.getKey()).is(scope.getValue()),
+                        Criteria.where(scope.getKey()).exists(false), Criteria.where(scope.getKey()).is(null)));
+            }
+        }
+        return new Query(new Criteria().andOperator(criteria.toArray(new Criteria[0])));
+    }
+
+    private List<CompressionLot> loadCompressionLots(String batchNo, String equipmentCode, String tenantId, String plantId) {
+        List<Document> summaries = mongoTemplate.find(compressionScope(batchNo, tenantId, plantId),
+                Document.class, BATCH_SUMMARY_COLLECTION);
+        Query instancesQuery = compressionScope(batchNo, tenantId, plantId);
+        instancesQuery.addCriteria(Criteria.where("equipmentCode").is(equipmentCode));
+        List<Document> instances = mongoTemplate.find(instancesQuery, Document.class, INSTANCE_COLLECTION);
+        Query historyQuery = compressionScope(batchNo, tenantId, plantId);
+        historyQuery.addCriteria(Criteria.where("equipmentCode").is(equipmentCode));
+        historyQuery.with(Sort.by(Sort.Direction.ASC, "timestamp"));
+        List<Document> histories = mongoTemplate.find(historyQuery, Document.class, HISTORY_COLLECTION);
+        Map<String, Document> samples = new TreeMap<>();
+        String collection = "iiot_ts_batch_" + equipmentCode;
+        if (mongoTemplate.collectionExists(collection)) {
+            List<Criteria> sampleCriteria = new ArrayList<>();
+            sampleCriteria.add(Criteria.where("meta.batchNo").is(batchNo));
+            for (String key : List.of("tenantId", "plantId")) {
+                String scope = "tenantId".equals(key) ? tenantId : plantId;
+                if (scope != null && !scope.isBlank()) {
+                    sampleCriteria.add(new Criteria().orOperator(Criteria.where("meta." + key).is(scope),
+                            Criteria.where("meta." + key).exists(false), Criteria.where("meta." + key).is(null)));
+                }
+            }
+            Query sampleQuery = new Query(new Criteria().andOperator(sampleCriteria.toArray(new Criteria[0])))
+                    .with(Sort.by(Sort.Direction.ASC, "observedAt"));
+            for (Document sample : mongoTemplate.find(sampleQuery, Document.class, collection)) {
+                if (!(sample.get("compression_details") instanceof Document details)) continue;
+                Document meta = sample.get("meta", Document.class);
+                String lot = safeString(meta, "derivedLotNo");
+                if ("-".equals(lot)) lot = safeString(meta, "lotNo");
+                if ("-".equals(lot)) throw new BusinessException("Compression report has no derived lot identity.", "COMPRESSION_LOT_MISSING");
+                Document previous = samples.put(lot, sample);
+                if (previous != null) {
+                    String previousSource = CompressionBatchPdfRenderer.text(
+                            previous.get("compression_details", Document.class), "metadata.sourceFile");
+                    String source = CompressionBatchPdfRenderer.text(details, "metadata.sourceFile");
+                    if (!previousSource.equals(source) || "-".equals(source)) {
+                        throw new BusinessException("Multiple compression executions share " + lot + ". Correct lot identities before printing.",
+                                "COMPRESSION_LOT_CONFLICT");
+                    }
+                }
+            }
+        }
+        for (Document summary : summaries) {
+            boolean matches = equipmentCode.equalsIgnoreCase(safeString(summary, "equipmentId"))
+                    || equipmentCode.equalsIgnoreCase(safeString(summary, "equipmentCode"));
+            if (summary.get("stages") instanceof List<?> stages) {
+                matches |= stages.stream().anyMatch(value -> value instanceof Document stage
+                        && (equipmentCode.equalsIgnoreCase(safeString(stage, "equipmentCode"))
+                        || equipmentCode.equalsIgnoreCase(safeString(stage, "equipmentId"))));
+            }
+            if (matches) samples.putIfAbsent(safeString(summary, "lotNo"), new Document());
+        }
+        List<CompressionLot> lots = new ArrayList<>();
+        for (Map.Entry<String, Document> entry : samples.entrySet()) {
+            String lot = entry.getKey();
+            Document summary = summaries.stream().filter(s -> lot.equals(safeString(s, "lotNo")))
+                    .findFirst().orElse(new Document());
+            Document instance = instances.stream().filter(i -> lot.equals(safeString(i, "lotNo")))
+                    .findFirst().orElse(null);
+            List<Document> history = histories.stream().filter(h -> lot.equals(safeString(h, "lotNo"))).toList();
+            String status = summary.isEmpty() ? "MISSING_SUMMARY" : compressionApprovalStatus(summary, instance, equipmentCode);
+            if (!(entry.getValue().get("compression_details") instanceof Document)) status = "MISSING_REPORT";
+            lots.add(new CompressionLot(lot, entry.getValue(), summary, instance, history, status));
+        }
+        return lots;
+    }
+
+    private String compressionApprovalStatus(Document summary, Document instance, String equipmentCode) {
+        if (instance != null && instance.get("currentStatus") != null) {
+            String state = safeString(instance, "currentStatus");
+            return List.of("APPROVED", "QA_APPROVED", "COMPLETED").contains(state.toUpperCase(Locale.ROOT)) ? "QA_APPROVED" : state;
+        }
+        if (summary.get("stages") instanceof List<?> stages) {
+            for (Object value : stages) {
+                if (value instanceof Document stage && (equipmentCode.equalsIgnoreCase(safeString(stage, "equipmentCode"))
+                        || equipmentCode.equalsIgnoreCase(safeString(stage, "equipmentId")))) {
+                    String state = CompressionBatchPdfRenderer.text(stage, "approval.status");
+                    return List.of("APPROVED", "QA_APPROVED").contains(state.toUpperCase(Locale.ROOT)) ? "QA_APPROVED" : state;
+                }
+            }
+        }
+        // Ingested execution status COMPLETED is not a QA approval.
+        return "PENDING_QA_APPROVAL";
+    }
+
+    private void requireApprovedCompressionLots(List<CompressionLot> lots) {
+        List<String> pending = lots.stream().filter(l -> !"QA_APPROVED".equals(l.status())).map(CompressionLot::lotNo).toList();
+        if (lots.isEmpty() || !pending.isEmpty()) {
+            throw new BusinessException("Final compression PDF requires QA approval and a production report for every lot. Pending: "
+                    + (lots.isEmpty() ? "no production lots found" : String.join(", ", pending)), "COMPRESSION_LOTS_NOT_APPROVED");
+        }
+    }
+
+    public Document compressionPdfReadiness(String batchNo, String equipmentCode, String tenantId, String plantId) {
+        List<CompressionLot> lots = loadCompressionLots(batchNo, equipmentCode, tenantId, plantId);
+        List<String> pending = lots.stream().filter(l -> !"QA_APPROVED".equals(l.status())).map(CompressionLot::lotNo).toList();
+        return new Document("ready", !lots.isEmpty() && pending.isEmpty())
+                .append("totalLots", lots.size()).append("pendingLots", pending);
+    }
+
+    public boolean isCompressionEquipment(String eq) {
+        return isCompressionCode(eq);
+    }
+
+    public static boolean isCompressionCode(String eq) {
+        return eq != null && "MC081".equalsIgnoreCase(eq.trim());
+    }
+
+    public static String compressionFileName(String batchNo, String equipmentCode) {
+        return "Compression_Consolidated_Production_Report_" + batchNo.replaceAll("[^a-zA-Z0-9.-]", "_")
+                + "_" + equipmentCode.replaceAll("[^a-zA-Z0-9.-]", "_") + "_QA_Approved.pdf";
     }
 
     private String safeString(Document doc, String key, String defaultVal) {
@@ -1004,6 +1178,16 @@ public class BatchPdfGeneratorService {
         // Keep this overload for layout compatibility, but render unavailable source
         // values explicitly rather than using the historical sample fallback.
         return (val == null || "-".equals(val) || val.isBlank()) ? "Not available" : val;
+    }
+
+    private long parseLongSafe(Object val, long fallback) {
+        if (val == null) return fallback;
+        if (val instanceof Number n) return n.longValue();
+        try {
+            return Long.parseLong(String.valueOf(val).replaceAll("[^0-9]", ""));
+        } catch (Exception e) {
+            return fallback;
+        }
     }
 
     private byte[] buildCompressionPdfDocument(
@@ -1094,16 +1278,16 @@ public class BatchPdfGeneratorService {
             String userId = safeString(bInfo, "userId", "mr11358");
 
             // ==========================================
-            // PAGE 1: Product Info, Settings, Pressure
+            // PAGE 1: Product Info, Multi-Lot Overview, Settings, Pressure
             // ==========================================
-            addSejongPageHeader(doc, "1/2", safeString(meta, "softwareVersion", "2.0"), "PRODUCTION REPORT");
+            addSejongPageHeader(doc, "1/2", safeString(meta, "softwareVersion", "2.0"), "PRODUCTION REPORT & CONSOLIDATED DOSSIER");
 
             // Section 1: Product Information
             addSejongSectionHeading(doc, "Product Information");
             PdfPTable tProd = new PdfPTable(4);
             tProd.setWidthPercentage(100);
             tProd.setWidths(new float[]{22f, 28f, 22f, 28f});
-            tProd.setSpacingAfter(6f);
+            tProd.setSpacingAfter(4f);
 
             addSejongFieldRow(tProd, "Station No :", safeString(bInfo, "stationNo", "Station 1"), "", "");
             String effectiveEq = equipmentCode != null && !equipmentCode.isBlank() ? equipmentCode : "MC081";
@@ -1117,6 +1301,54 @@ public class BatchPdfGeneratorService {
             addSejongFieldRow(tProd, "Print Interval :", safeString(bInfo, "printInterval", "243750") + " Tabs", "Running Time :", safeString(bInfo, "runningTime", "01 Hour   31 Min34 Sec"));
             addSejongFieldRow(tProd, "Total Counter :", safeString(bInfo, "totalCounter", "243880") + " Tabs", "Total Running Time :", safeString(bInfo, "totalRunningTime", "394 Hour   2 Min"));
             doc.add(tProd);
+
+            // Section 1.1: Multi-Lot Periodic Report Consolidation Summary
+            if (cppSamples != null && !cppSamples.isEmpty()) {
+                addSejongSectionHeading(doc, "Consolidated Derived Lots Summary (" + cppSamples.size() + " Periodic Reports)");
+                PdfPTable tLots = new PdfPTable(7);
+                tLots.setWidthPercentage(100);
+                tLots.setWidths(new float[]{14f, 16f, 20f, 13f, 13f, 12f, 12f});
+                tLots.setSpacingAfter(4f);
+                addSejongTableHeader(tLots, "Derived Lot", "Station No", "Report Time", "Good (Tabs)", "Reject (Tabs)", "Total (Tabs)", "Yield %");
+
+                long sumGood = 0;
+                long sumReject = 0;
+                long sumTotal = 0;
+
+                for (Document sample : cppSamples) {
+                    Document sMeta = sample.get("meta") instanceof Document d ? d : new Document();
+                    Document sDetails = sample.get("compression_details") instanceof Document d ? d : new Document();
+                    Document sBInfo = sDetails.get("batchInfo") instanceof Document d ? d : new Document();
+                    Document sCounters = sDetails.get("tabletCounters") instanceof Document d ? d : new Document();
+                    Document sHep = sCounters.get("hep") instanceof Document d ? d : new Document();
+                    Document sLep = sCounters.get("lep") instanceof Document d ? d : new Document();
+                    Document sGood = sCounters.get("good") instanceof Document d ? d : new Document();
+                    Document sReportMeta = sDetails.get("metadata") instanceof Document d ? d : new Document();
+
+                    String lotName = safeString(sMeta, "derivedLotNo", safeString(sBInfo, "derivedLotNo", safeString(sMeta, "lotNo", "Lot-01")));
+                    String station = safeString(sBInfo, "stationNo", "Station 1");
+                    String rTime = safeString(sReportMeta, "reportTimestamp", safeString(sReportMeta, "reportDate", "-"));
+                    
+                    long goodCnt = parseLongSafe(sGood.get("count"), parseLongSafe(sCounters.get("goodTablets"), 0));
+                    long hepCnt = parseLongSafe(sHep.get("count"), 0);
+                    long lepCnt = parseLongSafe(sLep.get("count"), 0);
+                    long rejCnt = hepCnt + lepCnt;
+                    long totCnt = parseLongSafe(sCounters.get("totalCounter"), goodCnt + rejCnt);
+
+                    sumGood += goodCnt;
+                    sumReject += rejCnt;
+                    sumTotal += totCnt;
+
+                    String yieldStr = totCnt > 0 ? String.format("%.2f %%", (goodCnt * 100.0) / totCnt) : "-";
+                    addSejongTableRow(tLots, lotName, station, rTime, String.format("%,d", goodCnt), String.format("%,d", rejCnt), String.format("%,d", totCnt), yieldStr);
+                }
+
+                if (cppSamples.size() > 1) {
+                    String overallYield = sumTotal > 0 ? String.format("%.2f %%", (sumGood * 100.0) / sumTotal) : "-";
+                    addSejongTableHeader(tLots, "BATCH TOTAL", String.valueOf(cppSamples.size()) + " Lots", "-", String.format("%,d", sumGood), String.format("%,d", sumReject), String.format("%,d", sumTotal), overallYield);
+                }
+                doc.add(tLots);
+            }
 
             // Section 2: Setting Value
             addSejongSectionHeading(doc, "Setting Value");
@@ -1282,10 +1514,16 @@ public class BatchPdfGeneratorService {
                 Object sectionValue = details.get(section);
                 if (!(sectionValue instanceof Document sectionDoc)) continue;
                 addSejongSectionHeading(doc, compressionSectionTitle(section));
-                PdfPTable table = new PdfPTable(2);
+                List<String[]> pairs = new ArrayList<>();
+                collectCompressionValues(pairs, "", sectionDoc);
+                PdfPTable table = new PdfPTable(4);
                 table.setWidthPercentage(100);
-                table.setWidths(new float[]{46f, 54f});
-                appendCompressionValues(table, "", sectionDoc);
+                table.setWidths(new float[]{23f, 27f, 23f, 27f});
+                for (int i = 0; i < pairs.size(); i += 2) {
+                    String[] first = pairs.get(i);
+                    String[] second = i + 1 < pairs.size() ? pairs.get(i + 1) : new String[]{"", ""};
+                    addSejongFieldRow(table, first[0], first[1], second[0], second[1]);
+                }
                 doc.add(table);
             }
         }
@@ -1304,13 +1542,13 @@ public class BatchPdfGeneratorService {
         };
     }
 
-    private void appendCompressionValues(PdfPTable table, String prefix, Document values) {
+    private void collectCompressionValues(List<String[]> pairs, String prefix, Document values) {
         for (Map.Entry<String, Object> entry : values.entrySet()) {
             String label = prefix.isBlank() ? entry.getKey() : prefix + " / " + entry.getKey();
             if (entry.getValue() instanceof Document child) {
-                appendCompressionValues(table, label, child);
+                collectCompressionValues(pairs, label, child);
             } else if (!(entry.getValue() instanceof List<?>)) {
-                addSejongTableRow(table, label, entry.getValue() == null ? "Not available" : String.valueOf(entry.getValue()));
+                pairs.add(new String[]{label, entry.getValue() == null ? "Not available" : String.valueOf(entry.getValue())});
             }
         }
     }

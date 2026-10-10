@@ -7,7 +7,7 @@
   },
   "source": {
     "remote_source_path": "",
-    "local_backup_path": "../compression_server",
+    "local_backup_path": "../../sample_data/Sample Data - 071026 2139/Sejong Data/pb1 Compression Backup",
     "staging_path": "./staging",
     "include_extensions": [
       ".xls",
@@ -29,7 +29,7 @@
     "ingestion_mode": "APPEND",
     "auto_discover_dates": true,
     "start_date": "2026-09-01",
-    "end_date": "2026-09-30",
+    "end_date": "",
     "schedule_minutes": 15,
     "continuous_run": true,
     "max_batches_per_run": 5,

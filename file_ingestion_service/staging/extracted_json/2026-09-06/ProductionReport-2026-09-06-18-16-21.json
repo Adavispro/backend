@@ -3,8 +3,8 @@
   "event_time": "2026-09-06 18:16:21",
   "meta": {
     "batchNo": "ADNB26004",
-    "lotNo": "ADNB26004-LOT-20260906181621",
-    "derivedLotNo": "ADNB26004-LOT-20260906181621",
+    "lotNo": "Lot-03",
+    "derivedLotNo": "Lot-03",
     "productCode": "Amisulpride 100mg",
     "productName": "Amisulpride 100mg",
     "equipmentCode": "MC081",
@@ -20,7 +20,7 @@
   "compression_details": {
     "metadata": {
       "sourceFile": "ProductionReport-2026-09-06-18-16-21.xls",
-      "parsedAt": "2026-10-08T22:25:09.835687+00:00",
+      "parsedAt": "2026-10-09T13:11:41.888179+00:00",
       "softwareVersion": "2.0",
       "reportTimestamp": "2026-09-06T18:16:21",
       "reportDate": "2026-09-06 00:00:00"
@@ -33,7 +33,7 @@
       "stageName": "Compression",
       "productName": "Amisulpride 100mg",
       "batchNo": "ADNB26004",
-      "derivedLotNo": "ADNB26004-LOT-20260906181621",
+      "derivedLotNo": "Lot-03",
       "stationNo": "Station 2",
       "userId": "mr11358",
       "operatorName": "mahaboob ramzan",

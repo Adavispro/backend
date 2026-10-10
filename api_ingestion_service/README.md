@@ -204,3 +204,6 @@ python backend/api_ingestion_service/ingest_scheduler.py
 
 
 
+python backend/api_ingestion_service/ingest_scheduler.py --continuous --interval 15 --live
+
+

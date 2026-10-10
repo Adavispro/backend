@@ -155,13 +155,48 @@ def ingest_single_date(
     batch_results = []
     last_processed_file = ""
     
+    # Track sequence of lots per batch across existing DB records + current run
+    batch_lot_counters = {}
+
     # 3. Parse and ingest each ProductionReport-*.xls
     for xls_path in files_to_process:
         fn = os.path.basename(xls_path)
         logger.info(f"--> Processing Production Report: {fn}")
         try:
-            report_data = parse_production_report_xls(xls_path)
-            batch_no = report_data.get("meta", {}).get("batchNo")
+            # Check if this file was already ingested and has an assigned lot
+            existing_doc = None
+            if mongo_loader.db is not None:
+                existing_doc = mongo_loader.db["iiot_ts_batch_MC081"].find_one({
+                    "$or": [
+                        {"compression_details.metadata.sourceFile": fn},
+                        {"metadata.sourceFile": fn}
+                    ]
+                })
+
+            # Temporary parse to get batch_no
+            temp_report = parse_production_report_xls(xls_path)
+            batch_no = temp_report.get("meta", {}).get("batchNo") or "UNKNOWN"
+
+            if existing_doc and (existing_doc.get("meta", {}).get("lotNo") or existing_doc.get("meta", {}).get("derivedLotNo")):
+                assigned_lot = existing_doc.get("meta", {}).get("derivedLotNo") or existing_doc.get("meta", {}).get("lotNo")
+                if not str(assigned_lot).startswith("Lot-"):
+                    if batch_no not in batch_lot_counters:
+                        batch_lot_counters[batch_no] = 0
+                    batch_lot_counters[batch_no] += 1
+                    assigned_lot = f"Lot-{batch_lot_counters[batch_no]:02d}"
+            else:
+                if batch_no not in batch_lot_counters:
+                    existing_count = 0
+                    if mongo_loader.db is not None:
+                        existing_count = mongo_loader.db["iiot_ts_batch_MC081"].count_documents({
+                            "meta.batchNo": batch_no,
+                            "compression_details.metadata.sourceFile": {"$ne": fn}
+                        })
+                    batch_lot_counters[batch_no] = existing_count
+                batch_lot_counters[batch_no] += 1
+                assigned_lot = f"Lot-{batch_lot_counters[batch_no]:02d}"
+
+            report_data = parse_production_report_xls(xls_path, lot_no_override=assigned_lot)
 
             # Embed date-level operation, login, and alarm history inside compression_details
             if "compression_details" in report_data:

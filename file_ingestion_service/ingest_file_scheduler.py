@@ -142,16 +142,25 @@ def main():
     logger.info(f"Interval: {schedule_min} minutes | Mode: {'CONTINUOUS' if continuous else 'SINGLE PASS'}")
     logger.info("=================================================================")
 
-    run_scheduler_cycle(config)
+    try:
+        run_scheduler_cycle(config)
 
-    while continuous:
-        logger.info(f"Sleeping for {schedule_min} minutes until next scheduled check...")
-        time.sleep(schedule_min * 60)
-        try:
-            run_scheduler_cycle(config)
-        except Exception as e:
-            logger.error(f"Error during scheduled cycle: {e}", exc_info=True)
+        if continuous:
+            logger.info("Continuous mode active. Press Ctrl+C at any time to exit.")
+        while continuous:
+            logger.info(f"Sleeping for {schedule_min} minutes until next scheduled check (Press Ctrl+C to stop)...")
+            end_time = time.time() + (schedule_min * 60)
+            while time.time() < end_time:
+                time.sleep(0.5)
+            try:
+                run_scheduler_cycle(config)
+            except Exception as e:
+                logger.error(f"Error during scheduled cycle: {e}", exc_info=True)
+    except KeyboardInterrupt:
+        logger.info("\nCtrl+C detected, shutting down File Ingestion Scheduler...")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
     main()
+

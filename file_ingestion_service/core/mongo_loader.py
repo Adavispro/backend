@@ -399,29 +399,31 @@ class MongoCompressionLoader:
             }
         }
 
-        existing_summary = self.db["iiot_batch_summary"].find_one({"batchNo": batch_no})
+        summary_filter = {"batchNo": batch_no, "lotNo": lot_no}
+        existing_summary = self.db["iiot_batch_summary"].find_one(summary_filter)
         if existing_summary:
             stages = existing_summary.get("stages", [])
             stage_idx = next((i for i, s in enumerate(stages)
-                              if (s.get("equipmentCode") == "MC081" or s.get("equipmentId") == "MC081") and
-                              (s.get("derivedLotNo") or s.get("lotNo")) == lot_no), None)
+                              if s.get("equipmentCode") == "MC081" or s.get("equipmentId") == "MC081"), None)
             if stage_idx is not None:
                 stages[stage_idx] = stage_comp_data
             else:
                 stages.append(stage_comp_data)
 
             self.db["iiot_batch_summary"].update_one(
-                {"batchNo": batch_no},
+                summary_filter,
                 {
                     "$set": {
+                        "lotNo": lot_no,
                         "stages": stages,
                         "updatedAt": datetime.now(timezone.utc),
+                        "productCode": product_code,
                         "productName": product_name or existing_summary.get("productName", ""),
                         "batchSize": batch_size_str,
                         "recipeName": recipe_name,
                         "recipeCode": recipe_code,
-                        "derivedLots": sorted(set((existing_summary.get("derivedLots") or []) + [lot_no])),
-                        "productionReportCount": len(set((existing_summary.get("derivedLots") or []) + [lot_no])),
+                        "derivedLots": [lot_no],
+                        "productionReportCount": 1,
                     }
                 }
             )
@@ -431,7 +433,7 @@ class MongoCompressionLoader:
                 "plantId": PLANT_ID,
                 "blockId": BLOCK_ID,
                 "batchNo": batch_no,
-                "lotNo": batch_no,
+                "lotNo": lot_no,
                 "derivedLots": [lot_no],
                 "productionReportCount": 1,
                 "productCode": product_code,
@@ -502,25 +504,49 @@ class MongoCompressionLoader:
         if not alarms:
             return 0
         ops = []
+        event_ops = []
         now_dt = datetime.now(timezone.utc)
         for alm in alarms:
             aid = alm.get("alarmId")
             if not aid:
                 continue
 
-            ts_raw = alm.get("timestamp") or alm.get("occurred_time") or alm.get("time")
+            ts_raw = alm.get("timestamp") or alm.get("occurred_time") or alm.get("time") or alm.get("event_time")
             parsed_dt = parse_datetime(ts_raw) or now_dt
             event_iso = parsed_dt.isoformat() if hasattr(parsed_dt, "isoformat") else str(ts_raw)
 
+            b_no = alm.get("batchNo") or alm.get("batchNumber") or alm.get("batch_no") or ""
+            p_name = alm.get("productName") or alm.get("product") or ""
+            u_id = alm.get("userId") or alm.get("user_id") or ""
+            op_name = alm.get("operatorName") or alm.get("operator") or u_id
+            alm_msg = alm.get("alarmName") or alm.get("message") or alm.get("alarm_name") or alm.get("description") or "Compression Alarm"
+            sev = alm.get("severity") or ("CRITICAL" if any(x in str(alm_msg).lower() for x in ["e.m.g", "overload", "air", "stop", "safety"]) else "WARNING")
+
             doc = dict(alm)
             doc["alarmId"] = aid
+            doc["alarm_id"] = aid
             doc["event_time"] = event_iso
             doc["eventAt"] = event_iso
             doc["timestamp"] = event_iso
+            doc["occurred_time"] = event_iso
+            doc["occurredTime"] = event_iso
             doc["eventCategory"] = "ALARM"
-            doc["severity"] = alm.get("severity", "WARNING")
-            doc["alarmName"] = alm.get("alarmName") or alm.get("message") or alm.get("alarm_name") or "Compression Alarm"
-            doc["description"] = alm.get("description") or alm.get("message") or doc["alarmName"]
+            doc["severity"] = sev
+            doc["alarmName"] = alm_msg
+            doc["alarm_name"] = alm_msg
+            doc["msg_text"] = alm_msg
+            doc["description"] = alm_msg
+            doc["batchNo"] = b_no
+            doc["batchNumber"] = b_no
+            doc["batch_no"] = b_no
+            doc["productName"] = p_name
+            doc["product"] = p_name
+            doc["userId"] = u_id
+            doc["user_id"] = u_id
+            doc["operatorName"] = op_name
+            doc["equipmentId"] = "MC081"
+            doc["equipmentCode"] = "MC081"
+            doc["equipmentType"] = "CMP"
             doc["meta"] = {
                 "tenantId": TENANT_ID,
                 "plantId": PLANT_ID,
@@ -536,6 +562,8 @@ class MongoCompressionLoader:
                 "stageId": "STAGE-3",
                 "stageOrder": 3,
                 "stageName": "Compression",
+                "batchNo": b_no,
+                "productName": p_name,
             }
             doc["source"] = {"equipmentCode": "MC081", "equipmentId": "MC081", "sourceType": "FILE"}
 
@@ -546,33 +574,80 @@ class MongoCompressionLoader:
                     upsert=True
                 )
             )
+            event_ops.append(
+                UpdateOne(
+                    {"alarmId": aid},
+                    {"$set": doc, "$setOnInsert": {"createdAt": now_dt}},
+                    upsert=True
+                )
+            )
+        count = 0
         if ops:
             res = self.db["iiot_ts_alarm_MC081"].bulk_write(ops, ordered=False)
-            return (res.upserted_count or 0) + (res.modified_count or 0)
-        return 0
+            count = (res.upserted_count or 0) + (res.modified_count or 0)
+        if event_ops:
+            try:
+                self.db["iiot_alarm_events"].bulk_write(event_ops, ordered=False)
+            except Exception:
+                pass
+        return count
 
     def load_audits(self, audits: List[Dict[str, Any]]) -> int:
-        """Ingests audit trail / parameter changes into iiot_ts_audit_MC081 with metadata alignment and deduplication."""
+        """Ingests audit trail / parameter changes into iiot_ts_audit_MC081 and iiot_batch_audit_trail with deduplication."""
         if not audits:
             return 0
         ops = []
+        batch_audit_ops = []
         now_dt = datetime.now(timezone.utc)
         for aud in audits:
             aid = aud.get("auditId")
             if not aid:
                 continue
 
-            ts_raw = aud.get("timestamp") or aud.get("time") or aud.get("event_time")
+            ts_raw = aud.get("timestamp") or aud.get("time") or aud.get("event_time") or aud.get("eventAt")
             parsed_dt = parse_datetime(ts_raw) or now_dt
             event_iso = parsed_dt.isoformat() if hasattr(parsed_dt, "isoformat") else str(ts_raw)
 
+            b_no = aud.get("batchNo") or aud.get("batchNumber") or aud.get("batch_no") or ""
+            p_name = aud.get("productName") or aud.get("product") or ""
+            u_id = aud.get("userId") or aud.get("user_id") or ""
+            op_name = aud.get("operatorName") or aud.get("operator") or u_id
+            desc = aud.get("description") or aud.get("action") or aud.get("parameterName") or "Parameter Change"
+            old_v = aud.get("previousValue") or aud.get("old_value") or aud.get("oldValue") or aud.get("previousState") or "-"
+            new_v = aud.get("newValue") or aud.get("new_value") or aud.get("newState") or "-"
+
             doc = dict(aud)
             doc["auditId"] = aid
+            doc["audit_id"] = aid
+            doc["record_id"] = aid
             doc["event_time"] = event_iso
             doc["eventAt"] = event_iso
             doc["timestamp"] = event_iso
+            doc["dateTime"] = event_iso
+            doc["dt"] = event_iso
             doc["eventCategory"] = "EVENT"
-            doc["description"] = aud.get("description") or aud.get("action") or aud.get("parameterName") or "Parameter Change"
+            doc["action"] = desc
+            doc["actionCode"] = desc
+            doc["description"] = desc
+            doc["previousValue"] = old_v
+            doc["old_value"] = old_v
+            doc["oldValue"] = old_v
+            doc["previousState"] = old_v
+            doc["newValue"] = new_v
+            doc["new_value"] = new_v
+            doc["newState"] = new_v
+            doc["batchNo"] = b_no
+            doc["batchNumber"] = b_no
+            doc["batch_no"] = b_no
+            doc["productName"] = p_name
+            doc["product"] = p_name
+            doc["userId"] = u_id
+            doc["user_id"] = u_id
+            doc["userName"] = op_name
+            doc["operatorName"] = op_name
+            doc["equipmentId"] = "MC081"
+            doc["equipmentCode"] = "MC081"
+            doc["equipmentType"] = "CMP"
             doc["meta"] = {
                 "tenantId": TENANT_ID,
                 "plantId": PLANT_ID,
@@ -588,6 +663,8 @@ class MongoCompressionLoader:
                 "stageId": "STAGE-3",
                 "stageOrder": 3,
                 "stageName": "Compression",
+                "batchNo": b_no,
+                "productName": p_name,
             }
             doc["source"] = {"equipmentCode": "MC081", "equipmentId": "MC081", "sourceType": "FILE"}
 
@@ -598,30 +675,69 @@ class MongoCompressionLoader:
                     upsert=True
                 )
             )
+
+            if b_no:
+                batch_audit_ops.append(
+                    UpdateOne(
+                        {"auditId": aid},
+                        {"$set": doc, "$setOnInsert": {"createdAt": now_dt}},
+                        upsert=True
+                    )
+                )
+
+        count = 0
         if ops:
             res = self.db["iiot_ts_audit_MC081"].bulk_write(ops, ordered=False)
-            return (res.upserted_count or 0) + (res.modified_count or 0)
-        return 0
+            count = (res.upserted_count or 0) + (res.modified_count or 0)
+        if batch_audit_ops:
+            try:
+                self.db["iiot_batch_audit_trail"].bulk_write(batch_audit_ops, ordered=False)
+            except Exception:
+                pass
+        return count
 
     def load_logins(self, logins: List[Dict[str, Any]]) -> int:
-        """Ingests login / logout events into iiot_ts_login_MC081 with deduplication."""
+        """Ingests login / logout events into iiot_ts_login_MC081 and login_history with deduplication."""
         if not logins:
             return 0
         ops = []
+        hist_ops = []
         now_dt = datetime.now(timezone.utc)
         for log_ev in logins:
             lid = log_ev.get("loginId") or log_ev.get("auditId")
             if not lid:
                 continue
 
-            ts_raw = log_ev.get("timestamp") or log_ev.get("loginTime") or log_ev.get("time")
+            ts_raw = log_ev.get("timestamp") or log_ev.get("loginTime") or log_ev.get("time") or log_ev.get("event_time")
             parsed_dt = parse_datetime(ts_raw) or now_dt
             event_iso = parsed_dt.isoformat() if hasattr(parsed_dt, "isoformat") else str(ts_raw)
 
+            b_no = log_ev.get("batchNo") or log_ev.get("batchNumber") or log_ev.get("batch_no") or ""
+            p_name = log_ev.get("productName") or log_ev.get("product") or ""
+            u_id = log_ev.get("userId") or log_ev.get("user_id") or ""
+            op_name = log_ev.get("operatorName") or log_ev.get("operator") or u_id
+            action_desc = log_ev.get("action") or log_ev.get("eventType") or "USER_LOGIN"
+
             doc = dict(log_ev)
             doc["loginId"] = lid
+            doc["auditId"] = lid
+            doc["record_id"] = lid
             doc["event_time"] = event_iso
+            doc["eventAt"] = event_iso
             doc["timestamp"] = event_iso
+            doc["dateTime"] = event_iso
+            doc["dt"] = event_iso
+            doc["action"] = action_desc
+            doc["eventType"] = log_ev.get("eventType") or action_desc
+            doc["userId"] = u_id
+            doc["user_id"] = u_id
+            doc["userName"] = op_name
+            doc["operatorName"] = op_name
+            doc["batchNo"] = b_no
+            doc["productName"] = p_name
+            doc["equipmentId"] = "MC081"
+            doc["equipmentCode"] = "MC081"
+            doc["equipmentType"] = "CMP"
             doc["meta"] = {
                 "tenantId": TENANT_ID,
                 "plantId": PLANT_ID,
@@ -637,6 +753,8 @@ class MongoCompressionLoader:
                 "stageId": "STAGE-3",
                 "stageOrder": 3,
                 "stageName": "Compression",
+                "batchNo": b_no,
+                "productName": p_name,
             }
 
             ops.append(
@@ -646,7 +764,36 @@ class MongoCompressionLoader:
                     upsert=True
                 )
             )
+            hist_doc = {
+                "tenantId": TENANT_ID,
+                "userId": u_id or "UNKNOWN",
+                "userName": op_name or u_id or "Operator",
+                "status": "SUCCESS",
+                "timestamp": parsed_dt,
+                "equipmentId": "MC081",
+                "equipmentCode": "MC081",
+                "action": action_desc,
+                "loginId": lid,
+                "batchNo": b_no,
+                "productName": p_name,
+                "ipAddress": "127.0.0.1",
+                "userAgent": "Compression SCADA HMI"
+            }
+            hist_ops.append(
+                UpdateOne(
+                    {"loginId": lid},
+                    {"$set": hist_doc, "$setOnInsert": {"createdAt": now_dt}},
+                    upsert=True
+                )
+            )
+
+        count = 0
         if ops:
             res = self.db["iiot_ts_login_MC081"].bulk_write(ops, ordered=False)
-            return (res.upserted_count or 0) + (res.modified_count or 0)
-        return 0
+            count = (res.upserted_count or 0) + (res.modified_count or 0)
+        if hist_ops:
+            try:
+                self.db["login_history"].bulk_write(hist_ops, ordered=False)
+            except Exception:
+                pass
+        return count

@@ -1652,8 +1652,16 @@ public class IiotOperationsService {
         int limit = toInteger(filter.get("limit"), 500, 5000);
         int offset = toNonNegativeInteger(filter.get("offset"));
         List<Document> summaries = mongoTemplate.find(query, Document.class, BATCH_SUMMARY_COLLECTION);
+        Map<String, Document> compressionReadiness = new HashMap<>();
         for (Document summaryDoc : summaries) {
             enrichPrintHistoryIfMissing(summaryDoc);
+            String summaryEquipment = equipmentId.isBlank() ? summaryDoc.getString("equipmentId") : equipmentId;
+            if (!batchNo.isBlank() && batchPdfGeneratorService.isCompressionEquipment(summaryEquipment)) {
+                String scope = summaryDoc.getString("batchNo") + ":" + summaryEquipment;
+                summaryDoc.put("compressionPdfReadiness", compressionReadiness.computeIfAbsent(scope,
+                        ignored -> batchPdfGeneratorService.compressionPdfReadiness(summaryDoc.getString("batchNo"),
+                                summaryEquipment, tenantId, plantId.isBlank() ? summaryDoc.getString("plantId") : plantId)));
+            }
         }
         return summaries.stream().map(this::toMap).toList();
     }
@@ -1799,6 +1807,10 @@ public class IiotOperationsService {
 
         byte[] pdfBytes = null;
         boolean hasExistingValidPdf = existing != null && existing.getPdfBytes() != null && existing.getPdfBytes().length > 0;
+        if (batchPdfGeneratorService.isCompressionEquipment(effectiveEq)) {
+            // Each final download records its actual actor and current generation time.
+            hasExistingValidPdf = false;
+        }
 
         // Verify that the stored PDF actually contains the Controlled Print Summary for this particular batch
         if (hasExistingValidPdf && !batchPdfGeneratorService.pdfContainsPrintSummary(existing.getPdfBytes())) {
@@ -1994,6 +2006,15 @@ public class IiotOperationsService {
             effectivePlantId = "PLNT-0001";
         }
 
+        if (batchPdfGeneratorService.isCompressionEquipment(effectiveEq)) {
+            Document readiness = batchPdfGeneratorService.compressionPdfReadiness(summary != null ? summary.getString("batchNo") : batchNo,
+                    effectiveEq, effectiveTenantId, effectivePlantId);
+            if (!Boolean.TRUE.equals(readiness.get("ready"))) {
+                throw new BusinessException("All compression lots must be QA approved before printing. Pending: "
+                        + readiness.get("pendingLots"), "COMPRESSION_LOTS_NOT_APPROVED");
+            }
+        }
+
         // 1. Increment persistent Print Count and record Controlled Print History
         Date serverNow = Date.from(Instant.now());
         Query batchQuery = new Query();
@@ -2160,6 +2181,10 @@ public class IiotOperationsService {
                 pdfBytes = res.getPdfBytes();
             }
         } catch (Exception ex) {
+            if (batchPdfGeneratorService.isCompressionEquipment(effectiveEq)) {
+                log.error("Final compression PDF generation failed for batch={}", canonicalBatchNo, ex);
+                throw ex;
+            }
             log.warn("Direct PDF generation on print failed: {}. Falling back to stored document.", ex.getMessage());
         }
 
@@ -2230,6 +2255,17 @@ public class IiotOperationsService {
                 approval.put("approvedBy", approvedBy);
                 approval.put("approvedAt", now);
                 if ("APPROVED".equals(requestedStatus)) {
+                    if (batchPdfGeneratorService.isCompressionEquipment(equipmentCode)) {
+                        stage.put("approval", approval);
+                        summary.put("overallStatus", deriveBatchOverallStatus(stages));
+                        mongoTemplate.save(summary, BATCH_SUMMARY_COLLECTION);
+                    }
+                    boolean waitingForCompressionLots = batchPdfGeneratorService.isCompressionEquipment(equipmentCode)
+                            && !Boolean.TRUE.equals(batchPdfGeneratorService.compressionPdfReadiness(batchNo, equipmentCode,
+                                    stringValue(summary.get("tenantId")), stringValue(summary.get("plantId"))).get("ready"));
+                    if (waitingForCompressionLots) {
+                        approval.put("pdfStatus", "WAITING_FOR_ALL_LOTS");
+                    } else {
                     try {
                         BatchPdfGeneratorService.PdfGenerationResult pdfRes = batchPdfGeneratorService.generateAndStoreBatchPdf(
                                 batchNo, lotNo, equipmentCode, stringValue(summary.get("tenantId")), stringValue(summary.get("plantId")), approvedBy, "QA_APPROVER");
@@ -2241,6 +2277,7 @@ public class IiotOperationsService {
                     } catch (Exception ex) {
                         log.warn("Failed to generate PDF on approval for batch={}, stage={}: {}", batchNo, equipmentCode, ex.getMessage());
                         approval.put("pdfStatus", "FAILED");
+                    }
                     }
                 }
             } else {
@@ -2881,11 +2918,33 @@ public class IiotOperationsService {
                                                    String equipmentId,
                                                    boolean includeBatchCriteria) {
         Query query = new Query();
-        applyEquipmentCriteria(query, equipmentId);
+        List<Criteria> andCriteria = new ArrayList<>();
+        if (equipmentId != null && !equipmentId.isBlank()) {
+            andCriteria.add(new Criteria().orOperator(
+                    Criteria.where("meta.equipmentId").is(equipmentId),
+                    Criteria.where("meta.equipmentCode").is(equipmentId),
+                    Criteria.where("meta.equipment_code").is(equipmentId)
+            ));
+        }
         if (includeBatchCriteria) {
-            applyMetaCriteria(query, "meta.batchNo", stringValue(filter.get("batchNo")));
-            applyMetaCriteria(query, "meta.lotNo", stringValue(filter.get("lotNo")));
-            applyMetaCriteria(query, "meta.productName", stringValue(filter.get("productName")));
+            String batchNo = stringValue(filter.get("batchNo"));
+            if (batchNo != null && !batchNo.isBlank()) {
+                andCriteria.add(Criteria.where("meta.batchNo").is(batchNo));
+            }
+            String lotNo = stringValue(filter.get("lotNo"));
+            if (lotNo != null && !lotNo.isBlank() && !"NA".equalsIgnoreCase(lotNo) && !"null".equalsIgnoreCase(lotNo) && !lotNo.equalsIgnoreCase(batchNo)) {
+                andCriteria.add(new Criteria().orOperator(
+                        Criteria.where("meta.lotNo").is(lotNo),
+                        Criteria.where("meta.derivedLotNo").is(lotNo)
+                ));
+            }
+            String productName = stringValue(filter.get("productName"));
+            if (productName != null && !productName.isBlank()) {
+                andCriteria.add(Criteria.where("meta.productName").is(productName));
+            }
+        }
+        if (!andCriteria.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(andCriteria.toArray(new Criteria[0])));
         }
         applyDateRangeCriteria(query, filter, "observedAt", "fromDate", "toDate");
         int limit = toInteger(filter.get("limit"), 1000, 100000);

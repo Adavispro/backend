@@ -20,22 +20,11 @@ from .cleaner import clean_str, parse_numeric, parse_datetime_val, parse_datetim
 logger = logging.getLogger("compression.parser")
 
 
-def derive_lot_number(batch_no: str, filename: str, report_timestamp: Optional[datetime]) -> str:
-    """Return a stable report-level lot identifier without changing the source batch number.
-
-    Sejong exports do not contain a separate lot field.  The timestamp embedded in the
-    production-report filename is the most reliable report identity available in the
-    supplied files.  A content-independent filename digest is used only for legacy files
-    that do not follow the timestamp convention, so re-ingesting the same file produces
-    the same lot number.
-    """
-    batch = clean_str(batch_no) or "UNKNOWN"
-    if report_timestamp:
-        suffix = report_timestamp.strftime("%Y%m%d%H%M%S")
-    else:
-        stem = os.path.splitext(os.path.basename(filename))[0].casefold()
-        suffix = hashlib.sha256(stem.encode("utf-8")).hexdigest()[:12].upper()
-    return f"{batch}-LOT-{suffix}"
+def derive_lot_number(batch_no: str, filename: str, report_timestamp: Optional[datetime], lot_index: Optional[int] = None) -> str:
+    """Return a clean derived lot number (e.g. Lot-01, Lot-02) for the batch report."""
+    if lot_index is not None and lot_index > 0:
+        return f"Lot-{lot_index:02d}"
+    return "Lot-01"
 
 
 def _get_cell_value(sh: xlrd.sheet.Sheet, r: int, c: int, wb: Optional[xlrd.Book] = None) -> Any:
@@ -56,7 +45,7 @@ def _get_cell_value(sh: xlrd.sheet.Sheet, r: int, c: int, wb: Optional[xlrd.Book
     return cell.value
 
 
-def parse_production_report_xls(file_path: str) -> Dict[str, Any]:
+def parse_production_report_xls(file_path: str, lot_index: Optional[int] = None, lot_no_override: Optional[str] = None) -> Dict[str, Any]:
     """
     Parses a Sejong Tablet Press Excel Production Report.
     Returns standardized format with 'meta', empty 'metrics', and 'compression_details'.
@@ -265,7 +254,7 @@ def parse_production_report_xls(file_path: str) -> Dict[str, Any]:
     operator_name = operator_name_p2 or operator_name_p1 or user_id
     report_date = page2_date or page1_date or (report_timestamp.strftime("%Y-%m-%d") if report_timestamp else "")
     observed_at_str = report_timestamp.strftime("%Y-%m-%d %H:%M:%S") if report_timestamp else str(report_date)
-    derived_lot_no = derive_lot_number(batch_no, filename, report_timestamp)
+    derived_lot_no = lot_no_override or (f"Lot-{lot_index:02d}" if lot_index is not None and lot_index > 0 else derive_lot_number(batch_no, filename, report_timestamp, lot_index))
 
     # Complete compression_details dictionary
     compression_details = {

@@ -1,0 +1,249 @@
+{
+  "observedAt": "2026-09-05 18:20:52",
+  "event_time": "2026-09-05 18:20:52",
+  "meta": {
+    "batchNo": "RTB26011",
+    "lotNo": "Lot-03",
+    "derivedLotNo": "Lot-03",
+    "productCode": "Carvedilol 6.25mg",
+    "productName": "Carvedilol 6.25mg",
+    "equipmentCode": "MC081",
+    "equipmentId": "MC081",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "operatorName": "B Nagaraju",
+    "userId": "bn96881",
+    "status": "COMPLETED"
+  },
+  "metrics": {},
+  "compression_details": {
+    "metadata": {
+      "sourceFile": "ProductionReport-2026-09-05-18-20-52.xls",
+      "parsedAt": "2026-10-09T11:17:35.271022+00:00",
+      "softwareVersion": "2.0",
+      "reportTimestamp": "2026-09-05T18:20:52",
+      "reportDate": "2026-09-05 00:00:00"
+    },
+    "batchInfo": {
+      "equipmentId": "MC081",
+      "machineName": "MB040 SEJONG-49D",
+      "equipmentType": "COMP",
+      "stageId": "STAGE-4",
+      "stageName": "Compression",
+      "productName": "Carvedilol 6.25mg",
+      "batchNo": "RTB26011",
+      "derivedLotNo": "Lot-03",
+      "stationNo": "Station 1",
+      "userId": "bn96881",
+      "operatorName": "B Nagaraju",
+      "printInterval": 950000,
+      "runningTime": "12 Hour   51 Min27 Sec",
+      "totalRunningTime": "856 Hour   40 Min"
+    },
+    "recipeSettings": {
+      "feeder": {
+        "autoPercent": 45,
+        "manualRpm": 16
+      },
+      "fillingCam": "Cam B 4.5-10mm",
+      "targetQuantity": 3800000,
+      "airPressureLowLimitKpa": 400,
+      "hydraulicPressureLimits": {
+        "highLimitMpa": 15,
+        "lowLimitMpa": 0.2
+      },
+      "oilLubrication": {
+        "upperPunchS1": {
+          "intervalMin": 130,
+          "supplySec": 3
+        },
+        "lowerPunchS2": {
+          "intervalMin": 130,
+          "supplySec": 3
+        },
+        "lowerHeadS3": {
+          "intervalMin": 0,
+          "supplySec": 0
+        }
+      },
+      "powderSupplyTimeSec": 35,
+      "initialRejectTimeSec": 5,
+      "upperPunchTightnessHigh": null,
+      "lowerPunchTightnessHigh": null,
+      "ejectingForceHigh": null,
+      "controlLimits": {
+        "hsp": {
+          "percent": 45,
+          "kn": 14.47,
+          "stop": "Yes"
+        },
+        "hep": {
+          "percent": 29,
+          "kn": 12.87,
+          "rot": 10,
+          "tabs": 10
+        },
+        "hcp": {
+          "percent": 3,
+          "kn": 10.28,
+          "times": 5
+        },
+        "ref": {
+          "kn": 9.98
+        },
+        "lcp": {
+          "percent": 3,
+          "kn": 9.68,
+          "times": 5
+        },
+        "lep": {
+          "percent": 29,
+          "kn": 7.09,
+          "rot": 10,
+          "tabs": 10
+        },
+        "lsp": {
+          "percent": 45,
+          "kn": 5.49,
+          "stop": "Yes"
+        },
+        "sdLimit": {
+          "percent": 15,
+          "stop": "Yes"
+        },
+        "preHsp": {
+          "kn": 14.47,
+          "stop": "Yes"
+        },
+        "meanCalculationRangeRot": 3,
+        "calculationPassRot": 3,
+        "emptyPunchNo": null
+      }
+    },
+    "pressureData": {
+      "prePressure": {
+        "meanKn": 0,
+        "sdPercent": 0,
+        "minKn": 0,
+        "minPunchNo": 0,
+        "maxKn": 0,
+        "maxPunchNo": 0
+      },
+      "mainPressure": {
+        "meanKn": 10.12,
+        "sdPercent": 4,
+        "minKn": 8.82,
+        "minPunchNo": 26,
+        "maxKn": 11.02,
+        "maxPunchNo": 41
+      },
+      "fillingDepthAdjustments": {
+        "increaseTimes": 84,
+        "decreaseTimes": 94
+      }
+    },
+    "operationValues": {
+      "diskSpeedRpm": 27,
+      "capacityTabsPerHour": 236520,
+      "feeder": {
+        "status": "AUTO",
+        "speedRpm": 12
+      },
+      "prePressure": {
+        "thicknessMm": 7.36,
+        "lowerPunchPositionMm": 9.36,
+        "penetrationDepthMm": 2
+      },
+      "mainPressure": {
+        "thicknessMm": 2.34,
+        "lowerPunchPositionMm": 5.34,
+        "penetrationDepthMm": 3
+      },
+      "fillingDepthMm": 7.31,
+      "currentCam": "Cam B 4.5-10mm",
+      "mainAirPressureKpa": 586,
+      "hydraulicPressureMpa": 7.5,
+      "lubricationRemainingMin": {
+        "upperPunchS1": 111,
+        "lowerPunchS2": 110,
+        "lowerHeadS3": 0
+      },
+      "auxiliaryStatus": {
+        "powderStatus": "Enable",
+        "dustCollector": "ON",
+        "initialReject": "ON",
+        "buzzer": "ON"
+      }
+    },
+    "tightness": {
+      "upperPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "lowerPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "ejectionForce": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      }
+    },
+    "tabletChecker": {
+      "weightMg": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "thicknessMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "diameterMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "hardnessN": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      }
+    },
+    "tabletCounters": {
+      "totalCounter": 2850128,
+      "awcCounter": 2968326,
+      "hep": {
+        "raw": "2088 (0.1%)",
+        "count": 2088
+      },
+      "lep": {
+        "raw": "174 (0.0%)",
+        "count": 174
+      },
+      "good": {
+        "raw": "2966064 (99.9%)",
+        "count": 2966064
+      }
+    },
+    "signatures": {
+      "operatorName": "B Nagaraju",
+      "reportDate": "2026-09-05 00:00:00"
+    },
+    "operation_history": [],
+    "login_history": [],
+    "alarm_history": []
+  }
+}

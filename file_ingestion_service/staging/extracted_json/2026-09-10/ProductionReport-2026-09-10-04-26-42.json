@@ -1,0 +1,249 @@
+{
+  "observedAt": "2026-09-10 04:26:42",
+  "event_time": "2026-09-10 04:26:42",
+  "meta": {
+    "batchNo": "WWC26002",
+    "lotNo": "Lot-03",
+    "derivedLotNo": "Lot-03",
+    "productCode": "Carvedilol 12.5 mg",
+    "productName": "Carvedilol 12.5 mg",
+    "equipmentCode": "MC081",
+    "equipmentId": "MC081",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "operatorName": "K Venkat Reddy",
+    "userId": "kv11174",
+    "status": "COMPLETED"
+  },
+  "metrics": {},
+  "compression_details": {
+    "metadata": {
+      "sourceFile": "ProductionReport-2026-09-10-04-26-42.xls",
+      "parsedAt": "2026-10-09T12:52:08.943811+00:00",
+      "softwareVersion": "2.0",
+      "reportTimestamp": "2026-09-10T04:26:42",
+      "reportDate": "2026-09-10 00:00:00"
+    },
+    "batchInfo": {
+      "equipmentId": "MC081",
+      "machineName": "MB040 SEJONG-49D",
+      "equipmentType": "COMP",
+      "stageId": "STAGE-4",
+      "stageName": "Compression",
+      "productName": "Carvedilol 12.5 mg",
+      "batchNo": "WWC26002",
+      "derivedLotNo": "Lot-03",
+      "stationNo": "Station 2",
+      "userId": "kv11174",
+      "operatorName": "K Venkat Reddy",
+      "printInterval": 475000,
+      "runningTime": "07 Hour   27 Min08 Sec",
+      "totalRunningTime": "898 Hour   56 Min"
+    },
+    "recipeSettings": {
+      "feeder": {
+        "autoPercent": 46,
+        "manualRpm": 15
+      },
+      "fillingCam": "Cam B 4.5-10mm",
+      "targetQuantity": 1900000,
+      "airPressureLowLimitKpa": 400,
+      "hydraulicPressureLimits": {
+        "highLimitMpa": 15,
+        "lowLimitMpa": 0.2
+      },
+      "oilLubrication": {
+        "upperPunchS1": {
+          "intervalMin": 130,
+          "supplySec": 3
+        },
+        "lowerPunchS2": {
+          "intervalMin": 130,
+          "supplySec": 3
+        },
+        "lowerHeadS3": {
+          "intervalMin": 0,
+          "supplySec": 0
+        }
+      },
+      "powderSupplyTimeSec": 35,
+      "initialRejectTimeSec": 6.2,
+      "upperPunchTightnessHigh": null,
+      "lowerPunchTightnessHigh": null,
+      "ejectingForceHigh": null,
+      "controlLimits": {
+        "hsp": {
+          "percent": 45,
+          "kn": 16.08,
+          "stop": "Yes"
+        },
+        "hep": {
+          "percent": 28,
+          "kn": 14.19,
+          "rot": 10,
+          "tabs": 10
+        },
+        "hcp": {
+          "percent": 3,
+          "kn": 11.42,
+          "times": 5
+        },
+        "ref": {
+          "kn": 11.09
+        },
+        "lcp": {
+          "percent": 3,
+          "kn": 10.76,
+          "times": 5
+        },
+        "lep": {
+          "percent": 26,
+          "kn": 8.21,
+          "rot": 10,
+          "tabs": 10
+        },
+        "lsp": {
+          "percent": 45,
+          "kn": 6.1,
+          "stop": "Yes"
+        },
+        "sdLimit": {
+          "percent": 15,
+          "stop": "Yes"
+        },
+        "preHsp": {
+          "kn": 15.84,
+          "stop": "Yes"
+        },
+        "meanCalculationRangeRot": 3,
+        "calculationPassRot": 3,
+        "emptyPunchNo": null
+      }
+    },
+    "pressureData": {
+      "prePressure": {
+        "meanKn": 0,
+        "sdPercent": 0,
+        "minKn": 0,
+        "minPunchNo": 0,
+        "maxKn": 0,
+        "maxPunchNo": 0
+      },
+      "mainPressure": {
+        "meanKn": 12.45,
+        "sdPercent": 3.3,
+        "minKn": 10.77,
+        "minPunchNo": 21,
+        "maxKn": 13.38,
+        "maxPunchNo": 66
+      },
+      "fillingDepthAdjustments": {
+        "increaseTimes": 59,
+        "decreaseTimes": 65
+      }
+    },
+    "operationValues": {
+      "diskSpeedRpm": 22,
+      "capacityTabsPerHour": 0,
+      "feeder": {
+        "status": "AUTO",
+        "speedRpm": 10
+      },
+      "prePressure": {
+        "thicknessMm": 4.72,
+        "lowerPunchPositionMm": 6.71,
+        "penetrationDepthMm": 1.99
+      },
+      "mainPressure": {
+        "thicknessMm": 2.82,
+        "lowerPunchPositionMm": 5.82,
+        "penetrationDepthMm": 3
+      },
+      "fillingDepthMm": 6.51,
+      "currentCam": "Cam B 4.5-10mm",
+      "mainAirPressureKpa": 669,
+      "hydraulicPressureMpa": 7.5,
+      "lubricationRemainingMin": {
+        "upperPunchS1": 56,
+        "lowerPunchS2": 55,
+        "lowerHeadS3": 0
+      },
+      "auxiliaryStatus": {
+        "powderStatus": "Enable",
+        "dustCollector": "ON",
+        "initialReject": "ON",
+        "buzzer": "ON"
+      }
+    },
+    "tightness": {
+      "upperPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "lowerPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "ejectionForce": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      }
+    },
+    "tabletChecker": {
+      "weightMg": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "thicknessMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "diameterMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "hardnessN": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      }
+    },
+    "tabletCounters": {
+      "totalCounter": 1425074,
+      "awcCounter": 1371743,
+      "hep": {
+        "raw": "2540 (0.2%)",
+        "count": 2540
+      },
+      "lep": {
+        "raw": "82 (0.0%)",
+        "count": 82
+      },
+      "good": {
+        "raw": "1369121 (99.8%)",
+        "count": 1369121
+      }
+    },
+    "signatures": {
+      "operatorName": "K Venkat Reddy",
+      "reportDate": "2026-09-10 00:00:00"
+    },
+    "operation_history": [],
+    "login_history": [],
+    "alarm_history": []
+  }
+}

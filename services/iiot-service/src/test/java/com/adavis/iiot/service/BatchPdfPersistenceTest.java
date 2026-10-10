@@ -189,6 +189,10 @@ public class BatchPdfPersistenceTest {
 
         Document first = compressionSample("NL0026008-LOT-20260930120217", "ProductionReport-2026-09-30-12-02-17.xls");
         Document second = compressionSample("NL0026008-LOT-20260930133357", "ProductionReport-2026-09-30-13-33-57.xls");
+        testSummary.put("lotNo", "NL0026008-LOT-20260930120217");
+        Document secondSummary = new Document(testSummary).append("lotNo", "NL0026008-LOT-20260930133357");
+        when(mongoTemplate.find(any(Query.class), eq(Document.class), eq("iiot_batch_summary")))
+                .thenReturn(List.of(testSummary, secondSummary));
         when(mongoTemplate.collectionExists("iiot_ts_batch_MC081")).thenReturn(true);
         when(mongoTemplate.find(any(Query.class), eq(Document.class), eq("iiot_ts_batch_MC081")))
                 .thenReturn(List.of(first, second));
@@ -208,7 +212,8 @@ public class BatchPdfPersistenceTest {
         assertTrue(text.toString().contains("NL0026008-LOT-20260930133357"));
         assertTrue(text.toString().contains("Tightness"));
         assertTrue(text.toString().contains("Tablet Checker"));
-        assertTrue(text.toString().contains("QA Approved Print Time"));
+        assertTrue(text.toString().contains("QA Approved At"));
+        assertTrue(text.toString().contains("Controlled Print Summary"));
     }
 
     private Document compressionSample(String lotNo, String sourceFile) {
@@ -617,6 +622,17 @@ public class BatchPdfPersistenceTest {
         for (int idx = 0; idx < equipments.length; idx++) {
             String eq = equipments[idx];
             String expectedType = expectedTypeNames[idx];
+            if ("MC081".equals(eq)) {
+                Document compressionSummary = new Document(testSummary).append("batchNo", "BATCH-TARGET-01")
+                        .append("lotNo", "01").append("equipmentId", "MC081")
+                        .append("stages", List.of(new Document("equipmentCode", "MC081")
+                                .append("approval", new Document("status", "APPROVED"))));
+                when(mongoTemplate.find(any(Query.class), eq(Document.class), eq("iiot_batch_summary")))
+                        .thenReturn(List.of(compressionSummary));
+                when(mongoTemplate.collectionExists("iiot_ts_batch_MC081")).thenReturn(true);
+                when(mongoTemplate.find(any(Query.class), eq(Document.class), eq("iiot_ts_batch_MC081")))
+                        .thenReturn(List.of(compressionSample("01", "Target-production-report.xls")));
+            }
 
             BatchPdfGeneratorService.PdfGenerationResult result = pdfGeneratorService.generateAndStoreBatchPdf(
                     "BATCH-TARGET-01", "01", eq, "TNT-0001", "PLNT-0001", "QA-001", "APPROVER");

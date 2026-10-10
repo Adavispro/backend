@@ -144,7 +144,7 @@ def clean_batch_info_row(row: Dict[str, Any]) -> Dict[str, Any]:
     start_dt = parse_datetime(cleaned.get("BatchStartDate") or cleaned.get("Start Time") or cleaned.get("batch_start_date"))
     end_dt = parse_datetime(cleaned.get("BatchEndDate") or cleaned.get("End Time") or cleaned.get("batch_end_date"))
 
-    is_completed = end_dt is not None
+    is_completed = (start_dt is not None) and (end_dt is not None)
     status = "COMPLETED" if is_completed else "IN_PROGRESS"
 
     return {
@@ -154,6 +154,7 @@ def clean_batch_info_row(row: Dict[str, Any]) -> Dict[str, Any]:
         "product_code": product_no if product_no and product_no != "NA" else "PROD-GEN",
         "start_time": start_dt,
         "end_time": end_dt,
+        "is_completed": is_completed,
         "status": status,
         "raw": row,
     }

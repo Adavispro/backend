@@ -2,6 +2,7 @@ package com.adavis.iiot.controller;
 
 import com.adavis.common.dto.ApiResponse;
 import com.adavis.iiot.service.BatchWorkflowService;
+import com.adavis.iiot.service.BatchPdfGeneratorService;
 import com.adavis.iiot.service.DynamicWorkflowEngine;
 import com.adavis.iiot.service.IiotOperationsService;
 import lombok.RequiredArgsConstructor;
@@ -407,6 +408,9 @@ public class IiotOperationsController {
         String cleanBatch = batchNo != null ? batchNo.replaceAll("[^a-zA-Z0-9.-]", "_") : "Report";
         String cleanLot = lotNo != null && !lotNo.isBlank() ? "_" + lotNo.replaceAll("[^a-zA-Z0-9.-]", "_") : "";
         String filename = String.format("Batch_Dossier_%s%s.pdf", cleanBatch, cleanLot);
+        if (BatchPdfGeneratorService.isCompressionCode(equipmentCode)) {
+            filename = BatchPdfGeneratorService.compressionFileName(batchNo, equipmentCode);
+        }
         headers.setContentDisposition(org.springframework.http.ContentDisposition.attachment().filename(filename).build());
         headers.setContentLength(pdfBytes.length);
 
@@ -463,6 +467,9 @@ public class IiotOperationsController {
         String cleanBatch = batchNo != null ? batchNo.replaceAll("[^a-zA-Z0-9.-]", "_") : "Report";
         String cleanLot = lotNo != null && !lotNo.isBlank() ? "_" + lotNo.replaceAll("[^a-zA-Z0-9.-]", "_") : "";
         String filename = String.format("Batch_Dossier_%s%s.pdf", cleanBatch, cleanLot);
+        if (BatchPdfGeneratorService.isCompressionCode(equipmentCode)) {
+            filename = BatchPdfGeneratorService.compressionFileName(batchNo, equipmentCode);
+        }
         headers.setContentDisposition(org.springframework.http.ContentDisposition.inline().filename(filename).build());
         headers.setContentLength(result.getPdfBytes().length);
         headers.add("X-Print-Count", String.valueOf(result.getPrintCount()));
@@ -470,7 +477,7 @@ public class IiotOperationsController {
         headers.add("X-Batch-No", batchNo);
         headers.add("X-Printed-By", result.getPrintedBy());
         headers.add("X-Printed-At", result.getPrintedAt().toInstant().toString());
-        headers.add("Access-Control-Expose-Headers", "X-Print-Count, X-Batch-Id, X-Batch-No, X-Printed-By, X-Printed-At");
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition, X-Print-Count, X-Batch-Id, X-Batch-No, X-Printed-By, X-Printed-At");
 
         return new ResponseEntity<>(result.getPdfBytes(), headers, HttpStatus.OK);
     }

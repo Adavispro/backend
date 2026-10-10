@@ -25,12 +25,35 @@ class SawcMdbReader:
 
     def __init__(self, base_dir: str = "."):
         self.base_dir = os.path.abspath(base_dir)
-        self.sawc_mdb_path = os.path.join(self.base_dir, "Sawc.mdb")
-        self.sawc_data_mdb_path = os.path.join(self.base_dir, "SawcData.mdb")
+        self.sawc_mdb_path = self._find_mdb_file("Sawc.mdb", self.base_dir)
+        self.sawc_data_mdb_path = self._find_mdb_file("SawcData.mdb", self.base_dir)
         self._alarm_dict: Dict[str, str] = {}
         self._operation_dict: Dict[str, str] = {}
         self._users_dict: Dict[str, Dict[str, Any]] = {}
         self._init_dictionaries()
+
+    def _find_mdb_file(self, filename: str, preferred_dir: str) -> str:
+        candidates = [
+            os.path.join(preferred_dir, filename),
+            os.path.join(preferred_dir, "databases", filename),
+            os.path.join(preferred_dir, "..", filename),
+            os.path.join(preferred_dir, "..", "compression_server", filename),
+            str(Path(__file__).resolve().parent.parent.parent.parent / "sample_data" / "Sample Data - 071026 2139" / "Sejong Data" / "pb1 Compression Backup" / filename),
+            str(Path(__file__).resolve().parent.parent.parent.parent / "sample_data" / "Sample Data - 071026 2139" / "Sejong Data" / "Pb1 Mc comp Backup" / filename),
+            str(Path(__file__).resolve().parent.parent / "staging" / "raw" / "databases" / filename),
+            str(Path(__file__).resolve().parent.parent.parent / "compression_server" / filename),
+        ]
+        best_candidate = candidates[0]
+        max_size = 0
+        for c in candidates:
+            if os.path.exists(c):
+                sz = os.path.getsize(c)
+                if sz > max_size and sz > 1024:
+                    max_size = sz
+                    best_candidate = c
+        if max_size > 0:
+            logger.info(f"Resolved {filename} at {best_candidate} (size: {max_size:,} bytes)")
+        return best_candidate
 
     def _get_connection(self, mdb_path: str):
         if win32com is None:

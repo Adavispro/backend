@@ -3,8 +3,8 @@
   "event_time": "2026-09-02 02:24:50",
   "meta": {
     "batchNo": "ADNC26012",
-    "lotNo": "ADNC26012-LOT-20260902022450",
-    "derivedLotNo": "ADNC26012-LOT-20260902022450",
+    "lotNo": "Lot-02",
+    "derivedLotNo": "Lot-02",
     "productCode": "Amisulpride 200mg",
     "productName": "Amisulpride 200mg",
     "equipmentCode": "MC081",
@@ -20,7 +20,7 @@
   "compression_details": {
     "metadata": {
       "sourceFile": "ProductionReport-2026-09-02-02-24-50.xls",
-      "parsedAt": "2026-10-08T22:25:09.348607+00:00",
+      "parsedAt": "2026-10-09T13:11:41.087334+00:00",
       "softwareVersion": "2.0",
       "reportTimestamp": "2026-09-02T02:24:50",
       "reportDate": "2026-09-02 00:00:00"
@@ -33,7 +33,7 @@
       "stageName": "Compression",
       "productName": "Amisulpride 200mg",
       "batchNo": "ADNC26012",
-      "derivedLotNo": "ADNC26012-LOT-20260902022450",
+      "derivedLotNo": "Lot-02",
       "stationNo": "Station 2",
       "userId": "ts11401",
       "operatorName": "t.sudheer babu",

@@ -47,16 +47,17 @@ class CompressionFileFetcher:
             exts = cfg.get("source", {}).get("include_extensions", None)
             
             p_src = Path(src)
-            if not p_src.exists():
-                candidate = (Path(__file__).resolve().parent.parent / src).resolve()
-                if candidate.exists():
-                    p_src = candidate
-                else:
-                    alt = (Path(__file__).resolve().parent.parent.parent / "compression_server").resolve()
-                    if alt.exists():
-                        p_src = alt
-                    else:
-                        p_src = p_src.resolve()
+            if not p_src.exists() or not any(p_src.glob("2026-*")):
+                candidates = [
+                    (Path(__file__).resolve().parent.parent / src).resolve(),
+                    (Path(__file__).resolve().parent.parent.parent.parent / "sample_data" / "Sample Data - 071026 2139" / "Sejong Data" / "pb1 Compression Backup").resolve(),
+                    (Path(__file__).resolve().parent.parent.parent.parent / "sample_data" / "Sample Data - 071026 2139" / "Sejong Data" / "Pb1 Mc comp Backup").resolve(),
+                    (Path(__file__).resolve().parent.parent.parent / "compression_server").resolve(),
+                ]
+                for c in candidates:
+                    if c.exists() and any(c.glob("2026-*")):
+                        p_src = c
+                        break
             self.source_path = p_src.resolve()
 
             p_stg = Path(stg)
@@ -66,8 +67,16 @@ class CompressionFileFetcher:
             self.include_extensions = set(exts or ALLOWED_EXTENSIONS)
         else:
             p_src = Path(source_path)
-            if not p_src.exists():
-                p_src = (Path(__file__).resolve().parent.parent.parent / "compression_server").resolve()
+            if not p_src.exists() or not any(p_src.glob("2026-*")):
+                candidates = [
+                    (Path(__file__).resolve().parent.parent.parent.parent / "sample_data" / "Sample Data - 071026 2139" / "Sejong Data" / "pb1 Compression Backup").resolve(),
+                    (Path(__file__).resolve().parent.parent.parent.parent / "sample_data" / "Sample Data - 071026 2139" / "Sejong Data" / "Pb1 Mc comp Backup").resolve(),
+                    (Path(__file__).resolve().parent.parent.parent / "compression_server").resolve(),
+                ]
+                for c in candidates:
+                    if c.exists() and any(c.glob("2026-*")):
+                        p_src = c
+                        break
             self.source_path = p_src.resolve()
             p_stg = Path(staging_raw_dir)
             if not p_stg.is_absolute():

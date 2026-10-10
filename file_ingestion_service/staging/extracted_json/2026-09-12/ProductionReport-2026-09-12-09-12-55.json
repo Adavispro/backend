@@ -1,0 +1,249 @@
+{
+  "observedAt": "2026-09-12 09:12:55",
+  "event_time": "2026-09-12 09:12:55",
+  "meta": {
+    "batchNo": "RTC26009",
+    "lotNo": "Lot-01",
+    "derivedLotNo": "Lot-01",
+    "productCode": "Carvedilol 12.5mg",
+    "productName": "Carvedilol 12.5mg",
+    "equipmentCode": "MC081",
+    "equipmentId": "MC081",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "operatorName": "sunil das",
+    "userId": "sd26523",
+    "status": "COMPLETED"
+  },
+  "metrics": {},
+  "compression_details": {
+    "metadata": {
+      "sourceFile": "ProductionReport-2026-09-12-09-12-55.xls",
+      "parsedAt": "2026-10-09T11:17:36.621042+00:00",
+      "softwareVersion": "2.0",
+      "reportTimestamp": "2026-09-12T09:12:55",
+      "reportDate": "2026-09-12 00:00:00"
+    },
+    "batchInfo": {
+      "equipmentId": "MC081",
+      "machineName": "MB040 SEJONG-49D",
+      "equipmentType": "COMP",
+      "stageId": "STAGE-4",
+      "stageName": "Compression",
+      "productName": "Carvedilol 12.5mg",
+      "batchNo": "RTC26009",
+      "derivedLotNo": "Lot-01",
+      "stationNo": "Station 2",
+      "userId": "sd26523",
+      "operatorName": "sunil das",
+      "printInterval": 475000,
+      "runningTime": "02 Hour   28 Min35 Sec",
+      "totalRunningTime": "913 Hour   37 Min"
+    },
+    "recipeSettings": {
+      "feeder": {
+        "autoPercent": 50,
+        "manualRpm": 16
+      },
+      "fillingCam": "Cam B 4.5-10mm",
+      "targetQuantity": 1900000,
+      "airPressureLowLimitKpa": 400,
+      "hydraulicPressureLimits": {
+        "highLimitMpa": 15,
+        "lowLimitMpa": 0.2
+      },
+      "oilLubrication": {
+        "upperPunchS1": {
+          "intervalMin": 130,
+          "supplySec": 3
+        },
+        "lowerPunchS2": {
+          "intervalMin": 130,
+          "supplySec": 3
+        },
+        "lowerHeadS3": {
+          "intervalMin": 0,
+          "supplySec": 0
+        }
+      },
+      "powderSupplyTimeSec": 30,
+      "initialRejectTimeSec": 6,
+      "upperPunchTightnessHigh": null,
+      "lowerPunchTightnessHigh": null,
+      "ejectingForceHigh": null,
+      "controlLimits": {
+        "hsp": {
+          "percent": 45,
+          "kn": 19.17,
+          "stop": "Yes"
+        },
+        "hep": {
+          "percent": 27,
+          "kn": 16.79,
+          "rot": 10,
+          "tabs": 10
+        },
+        "hcp": {
+          "percent": 3,
+          "kn": 13.62,
+          "times": 5
+        },
+        "ref": {
+          "kn": 13.22
+        },
+        "lcp": {
+          "percent": 3,
+          "kn": 12.83,
+          "times": 5
+        },
+        "lep": {
+          "percent": 26,
+          "kn": 9.78,
+          "rot": 10,
+          "tabs": 10
+        },
+        "lsp": {
+          "percent": 45,
+          "kn": 7.27,
+          "stop": "Yes"
+        },
+        "sdLimit": {
+          "percent": 15,
+          "stop": "Yes"
+        },
+        "preHsp": {
+          "kn": 17.97,
+          "stop": "Yes"
+        },
+        "meanCalculationRangeRot": 3,
+        "calculationPassRot": 3,
+        "emptyPunchNo": null
+      }
+    },
+    "pressureData": {
+      "prePressure": {
+        "meanKn": 0,
+        "sdPercent": 0,
+        "minKn": 0,
+        "minPunchNo": 0,
+        "maxKn": 0,
+        "maxPunchNo": 0
+      },
+      "mainPressure": {
+        "meanKn": 13.19,
+        "sdPercent": 2.6,
+        "minKn": 12.15,
+        "minPunchNo": 18,
+        "maxKn": 14.35,
+        "maxPunchNo": 32
+      },
+      "fillingDepthAdjustments": {
+        "increaseTimes": 58,
+        "decreaseTimes": 68
+      }
+    },
+    "operationValues": {
+      "diskSpeedRpm": 22,
+      "capacityTabsPerHour": 192720,
+      "feeder": {
+        "status": "AUTO",
+        "speedRpm": 11
+      },
+      "prePressure": {
+        "thicknessMm": 4.69,
+        "lowerPunchPositionMm": 6.68,
+        "penetrationDepthMm": 1.99
+      },
+      "mainPressure": {
+        "thicknessMm": 2.77,
+        "lowerPunchPositionMm": 5.77,
+        "penetrationDepthMm": 3
+      },
+      "fillingDepthMm": 7.28,
+      "currentCam": "Cam B 4.5-10mm",
+      "mainAirPressureKpa": 643,
+      "hydraulicPressureMpa": 7.5,
+      "lubricationRemainingMin": {
+        "upperPunchS1": 88,
+        "lowerPunchS2": 87,
+        "lowerHeadS3": 0
+      },
+      "auxiliaryStatus": {
+        "powderStatus": "Enable",
+        "dustCollector": "ON",
+        "initialReject": "ON",
+        "buzzer": "ON"
+      }
+    },
+    "tightness": {
+      "upperPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "lowerPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "ejectionForce": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      }
+    },
+    "tabletChecker": {
+      "weightMg": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "thicknessMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "diameterMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "hardnessN": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      }
+    },
+    "tabletCounters": {
+      "totalCounter": 475074,
+      "awcCounter": 471142,
+      "hep": {
+        "raw": "3 (0.0%)",
+        "count": 3
+      },
+      "lep": {
+        "raw": "16 (0.0%)",
+        "count": 16
+      },
+      "good": {
+        "raw": "471123 (100.0%)",
+        "count": 471123
+      }
+    },
+    "signatures": {
+      "operatorName": "sunil das",
+      "reportDate": "2026-09-12 00:00:00"
+    },
+    "operation_history": [],
+    "login_history": [],
+    "alarm_history": []
+  }
+}

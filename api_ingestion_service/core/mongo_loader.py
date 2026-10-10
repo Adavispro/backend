@@ -309,6 +309,76 @@ class MongoIngestionLoader:
             upsert=True,
         )
 
+    def is_batch_stage_ingested(
+        self,
+        batch_no: str,
+        lot_no: str,
+        asset_code: str,
+        equipment_type: str = "",
+    ) -> bool:
+        """Check if batch data for this equipment/stage has already been ingested."""
+        if self.db is None or not batch_no:
+            return False
+
+        # 1. Check idempotency registry
+        dedup_key = f"batch_stage:{asset_code}:{batch_no}:{lot_no or 'NA'}"
+        if self.db.iiot_ingested_events_registry.find_one({"_id": dedup_key}):
+            return True
+
+        # 2. Check batch summary if stage is already completed with records
+        try:
+            summary = self.db.iiot_batch_summary.find_one({
+                "batchNo": batch_no,
+                "lotNo": lot_no,
+                "stages": {
+                    "$elemMatch": {
+                        "$or": [
+                            {"equipmentCode": asset_code},
+                            {"equipmentId": asset_code},
+                            {"equipmentType": equipment_type},
+                        ],
+                        "executionStatus": "COMPLETED",
+                        "recordCount": {"$gt": 0},
+                    }
+                }
+            })
+            if summary:
+                return True
+        except Exception:
+            pass
+
+        return False
+
+    def mark_batch_stage_ingested(
+        self,
+        batch_no: str,
+        lot_no: str,
+        asset_code: str,
+        equipment_type: str = "",
+    ) -> None:
+        """Mark batch data for this equipment/stage as ingested in the idempotency registry."""
+        if self.db is None or not batch_no:
+            return
+
+        dedup_key = f"batch_stage:{asset_code}:{batch_no}:{lot_no or 'NA'}"
+        try:
+            self.db.iiot_ingested_events_registry.update_one(
+                {"_id": dedup_key},
+                {
+                    "$set": {
+                        "batchNo": batch_no,
+                        "lotNo": lot_no,
+                        "assetCode": asset_code,
+                        "equipmentType": equipment_type,
+                        "type": "batch_stage_completed",
+                        "ingestedAt": datetime.now(timezone.utc),
+                    }
+                },
+                upsert=True,
+            )
+        except Exception as exc:
+            logger.debug(f"Could not register batch stage {dedup_key}: {exc}")
+
     def sync_operational_events(
         self,
         asset_code: str,

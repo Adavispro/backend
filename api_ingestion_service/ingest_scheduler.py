@@ -291,7 +291,11 @@ class IngestionSchedulerService:
             if not batch_no:
                 continue
 
-            batches_processed += 1
+            # Ingest ONLY completed batches (require valid start and end timestamps)
+            if not cleaned_b.get("is_completed") or not cleaned_b.get("start_time") or not cleaned_b.get("end_time"):
+                logger.info(f"Skipping in-flight/incomplete batch {batch_no} (Lot: {lot_no}) on asset {asset_id} - requires valid Start Time and End Time.")
+                continue
+
             # Upsert product catalog
             self.loader.upsert_product(product_code, product_name)
 
@@ -306,6 +310,13 @@ class IngestionSchedulerService:
                     if eq_id:
                         current_equipment_code = str(eq_id).strip()
                         break
+
+            # Idempotency check: if data already ingested, no need to reingest
+            if self.loader.is_batch_stage_ingested(batch_no, lot_no, current_equipment_code, equipment_type):
+                logger.info(f"Batch {batch_no} (Lot: {lot_no}, Equipment: {current_equipment_code}) already ingested. Skipping re-ingestion.")
+                continue
+
+            batches_processed += 1
 
             # 3. Fetch Users to identify supervisor and operator
             supervisor_name = ""
@@ -383,7 +394,22 @@ class IngestionSchedulerService:
                         recipe_records=raw_recipe,
                     )
 
-            # 8. Multi-Stage Batch Summary Rollup
+            # 8. Fetch Batch Summary dataset for batch size and recipe name
+            batch_size = None
+            recipe_name = None
+            bs_point_template = datasets_cfg.get("batch_summary") or datasets_cfg.get("batch_summ")
+            if bs_point_template:
+                point = bs_point_template.format(asset_id=asset_id, batch_no=batch_no, lot_no=lot_no)
+                raw_bs = self.api_client.fetch_point(point)
+                for bs_row in clean_record_list(raw_bs):
+                    bs_val = bs_row.get("Batch Size") or bs_row.get("batch_size") or bs_row.get("BatchSize")
+                    if bs_val:
+                        batch_size = str(bs_val).strip()
+                    rn_val = bs_row.get("Recipe Name") or bs_row.get("recipe_name") or bs_row.get("RecipeName")
+                    if rn_val:
+                        recipe_name = str(rn_val).strip()
+
+            # 9. Multi-Stage Batch Summary Rollup
             self.loader.upsert_batch_summary(
                 batch_no=batch_no,
                 lot_no=lot_no,
@@ -397,6 +423,16 @@ class IngestionSchedulerService:
                 stage_status=cleaned_b["status"],
                 operator_name=operator_name,
                 supervisor_name=supervisor_name,
+                batch_size=batch_size,
+                recipe_name=recipe_name,
+            )
+
+            # 10. Register completed batch stage to prevent re-ingestion
+            self.loader.mark_batch_stage_ingested(
+                batch_no=batch_no,
+                lot_no=lot_no,
+                asset_code=current_equipment_code,
+                equipment_type=equipment_type,
             )
 
         self.loader.finish_job_run(job_run_id, status="SUCCESS", processed_batches=batches_processed)
@@ -485,12 +521,24 @@ class IngestionSchedulerService:
         self.running = False
         self._stop_event.set()
         if self.http_server:
-            self.http_server.shutdown()
-            self.http_server.server_close()
-            logger.info("HTTP Control Server stopped.")
+            try:
+                threading.Thread(target=self.http_server.shutdown, daemon=True).start()
+                self.http_server.server_close()
+            except Exception:
+                pass
+            self.http_server = None
         if self.mock_server:
-            self.mock_server.stop()
-        logger.info("IngestionSchedulerService stop signal received.")
+            try:
+                self.mock_server.stop()
+            except Exception:
+                pass
+            self.mock_server = None
+        if hasattr(self, "loader") and self.loader:
+            try:
+                self.loader.client.close()
+            except Exception:
+                pass
+        logger.info("IngestionSchedulerService stop completed.")
 
     def start_scheduler_loop(
         self,
@@ -508,13 +556,20 @@ class IngestionSchedulerService:
             self.start_http_server(port=http_port)
 
         logger.info(f"Starting scheduler cycle (Interval: {interval_minutes}m, Continuous: {continuous})")
+        if continuous:
+            logger.info("Continuous mode active. Press Ctrl+C at any time to exit.")
         self.run_cycle()
 
         if continuous:
             while self.running and not self._stop_event.is_set():
-                if self._stop_event.wait(timeout=interval_minutes * 60):
-                    break
-                if self.running:
+                logger.info(f"Next cycle in {interval_minutes}m. Waiting (Press Ctrl+C to stop)...")
+                wait_seconds = interval_minutes * 60
+                end_wait = time.time() + wait_seconds
+                while self.running and not self._stop_event.is_set() and time.time() < end_wait:
+                    # Small 0.5s timeout slices so Python on Windows can process Ctrl+C / SIGINT immediately
+                    if self._stop_event.wait(timeout=0.5):
+                        break
+                if self.running and not self._stop_event.is_set():
                     self.run_cycle()
 
 
@@ -548,13 +603,16 @@ def main() -> None:
     )
 
     def _sig_handler(sig, frame):
-        logger.info(f"Caught signal {sig}, initiating graceful shutdown...")
+        logger.info("\nCaught shutdown signal (Ctrl+C). Stopping scheduler...")
         scheduler.stop()
         sys.exit(0)
 
-    signal.signal(signal.SIGINT, _sig_handler)
-    if hasattr(signal, "SIGTERM"):
-        signal.signal(signal.SIGTERM, _sig_handler)
+    try:
+        signal.signal(signal.SIGINT, _sig_handler)
+        if hasattr(signal, "SIGTERM"):
+            signal.signal(signal.SIGTERM, _sig_handler)
+    except Exception:
+        pass
 
     continuous_mode = True if args.continuous else (False if args.once else None)
 
@@ -565,9 +623,11 @@ def main() -> None:
             enable_http_server=args.http_server,
             http_port=args.http_port,
         )
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("\nExiting API Ingestion Service...")
         scheduler.stop()
 
 
 if __name__ == "__main__":
     main()
+

@@ -1,0 +1,249 @@
+{
+  "observedAt": "2026-09-16 15:15:23",
+  "event_time": "2026-09-16 15:15:23",
+  "meta": {
+    "batchNo": "PEB26002",
+    "lotNo": "Lot-02",
+    "derivedLotNo": "Lot-02",
+    "productCode": "Paroxetine USP 20mg",
+    "productName": "Paroxetine USP 20mg",
+    "equipmentCode": "MC081",
+    "equipmentId": "MC081",
+    "equipmentType": "COMP",
+    "stageId": "STAGE-4",
+    "stageName": "Compression",
+    "operatorName": "Swapnil Sidram Palapure",
+    "userId": "sp191257",
+    "status": "COMPLETED"
+  },
+  "metrics": {},
+  "compression_details": {
+    "metadata": {
+      "sourceFile": "ProductionReport-2026-09-16-15-15-23.xls",
+      "parsedAt": "2026-10-09T12:52:09.916826+00:00",
+      "softwareVersion": "2.0",
+      "reportTimestamp": "2026-09-16T15:15:23",
+      "reportDate": "2026-09-16 00:00:00"
+    },
+    "batchInfo": {
+      "equipmentId": "MC081",
+      "machineName": "MB040 SEJONG-49D",
+      "equipmentType": "COMP",
+      "stageId": "STAGE-4",
+      "stageName": "Compression",
+      "productName": "Paroxetine USP 20mg",
+      "batchNo": "PEB26002",
+      "derivedLotNo": "Lot-02",
+      "stationNo": "Station 1",
+      "userId": "sp191257",
+      "operatorName": "Swapnil Sidram Palapure",
+      "printInterval": 312500,
+      "runningTime": "00 Hour   04 Min19 Sec",
+      "totalRunningTime": "920 Hour   57 Min"
+    },
+    "recipeSettings": {
+      "feeder": {
+        "autoPercent": 70,
+        "manualRpm": 16
+      },
+      "fillingCam": "Cam B 4.5-10mm",
+      "targetQuantity": 1250000,
+      "airPressureLowLimitKpa": 400,
+      "hydraulicPressureLimits": {
+        "highLimitMpa": 15,
+        "lowLimitMpa": 0.2
+      },
+      "oilLubrication": {
+        "upperPunchS1": {
+          "intervalMin": 130,
+          "supplySec": 3
+        },
+        "lowerPunchS2": {
+          "intervalMin": 130,
+          "supplySec": 3
+        },
+        "lowerHeadS3": {
+          "intervalMin": 0,
+          "supplySec": 0
+        }
+      },
+      "powderSupplyTimeSec": 35,
+      "initialRejectTimeSec": 6,
+      "upperPunchTightnessHigh": null,
+      "lowerPunchTightnessHigh": null,
+      "ejectingForceHigh": null,
+      "controlLimits": {
+        "hsp": {
+          "percent": 45,
+          "kn": 32.15,
+          "stop": "Yes"
+        },
+        "hep": {
+          "percent": 28,
+          "kn": 28.38,
+          "rot": 10,
+          "tabs": 10
+        },
+        "hcp": {
+          "percent": 3,
+          "kn": 22.83,
+          "times": 5
+        },
+        "ref": {
+          "kn": 22.17
+        },
+        "lcp": {
+          "percent": 3,
+          "kn": 21.5,
+          "times": 5
+        },
+        "lep": {
+          "percent": 25,
+          "kn": 16.63,
+          "rot": 10,
+          "tabs": 10
+        },
+        "lsp": {
+          "percent": 45,
+          "kn": 12.19,
+          "stop": "Yes"
+        },
+        "sdLimit": {
+          "percent": 15,
+          "stop": "Yes"
+        },
+        "preHsp": {
+          "kn": 18.28,
+          "stop": "Yes"
+        },
+        "meanCalculationRangeRot": 3,
+        "calculationPassRot": 3,
+        "emptyPunchNo": null
+      }
+    },
+    "pressureData": {
+      "prePressure": {
+        "meanKn": 0,
+        "sdPercent": 0,
+        "minKn": 0,
+        "minPunchNo": 0,
+        "maxKn": 0,
+        "maxPunchNo": 0
+      },
+      "mainPressure": {
+        "meanKn": 0,
+        "sdPercent": 0,
+        "minKn": 0,
+        "minPunchNo": 0,
+        "maxKn": 0,
+        "maxPunchNo": 0
+      },
+      "fillingDepthAdjustments": {
+        "increaseTimes": 0,
+        "decreaseTimes": 0
+      }
+    },
+    "operationValues": {
+      "diskSpeedRpm": 22,
+      "capacityTabsPerHour": 0,
+      "feeder": {
+        "status": "AUTO",
+        "speedRpm": 15
+      },
+      "prePressure": {
+        "thicknessMm": 5.14,
+        "lowerPunchPositionMm": 7.14,
+        "penetrationDepthMm": 2
+      },
+      "mainPressure": {
+        "thicknessMm": 5.34,
+        "lowerPunchPositionMm": 8.34,
+        "penetrationDepthMm": 3
+      },
+      "fillingDepthMm": 8.28,
+      "currentCam": "Cam B 4.5-10mm",
+      "mainAirPressureKpa": 573,
+      "hydraulicPressureMpa": 7.6,
+      "lubricationRemainingMin": {
+        "upperPunchS1": 49,
+        "lowerPunchS2": 48,
+        "lowerHeadS3": 0
+      },
+      "auxiliaryStatus": {
+        "powderStatus": "Enable",
+        "dustCollector": "OFF",
+        "initialReject": "OFF",
+        "buzzer": "ON"
+      }
+    },
+    "tightness": {
+      "upperPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "lowerPunch": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      },
+      "ejectionForce": {
+        "averageKn": null,
+        "sdPercent": null,
+        "maxKn": null,
+        "maxPunch": null
+      }
+    },
+    "tabletChecker": {
+      "weightMg": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "thicknessMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "diameterMm": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      },
+      "hardnessN": {
+        "average": null,
+        "max": null,
+        "min": null,
+        "sdPercent": null
+      }
+    },
+    "tabletCounters": {
+      "totalCounter": 10276,
+      "awcCounter": 0,
+      "hep": {
+        "raw": "0 (0%)",
+        "count": 0
+      },
+      "lep": {
+        "raw": "0 (0%)",
+        "count": 0
+      },
+      "good": {
+        "raw": "0 (0%)",
+        "count": 0
+      }
+    },
+    "signatures": {
+      "operatorName": "Swapnil Sidram Palapure",
+      "reportDate": "2026-09-16 00:00:00"
+    },
+    "operation_history": [],
+    "login_history": [],
+    "alarm_history": []
+  }
+}

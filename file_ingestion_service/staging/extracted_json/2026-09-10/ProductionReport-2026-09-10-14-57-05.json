@@ -3,8 +3,8 @@
   "event_time": "2026-09-10 14:57:05",
   "meta": {
     "batchNo": "MPC26021",
-    "lotNo": "MPC26021-LOT-20260910145705",
-    "derivedLotNo": "MPC26021-LOT-20260910145705",
+    "lotNo": "Lot-03",
+    "derivedLotNo": "Lot-03",
     "productCode": "Mirtazapine OD 45mg",
     "productName": "Mirtazapine OD 45mg",
     "equipmentCode": "MC081",
@@ -20,7 +20,7 @@
   "compression_details": {
     "metadata": {
       "sourceFile": "ProductionReport-2026-09-10-14-57-05.xls",
-      "parsedAt": "2026-10-08T22:25:10.092027+00:00",
+      "parsedAt": "2026-10-09T13:11:42.205604+00:00",
       "softwareVersion": "2.0",
       "reportTimestamp": "2026-09-10T14:57:05",
       "reportDate": "2026-09-10 00:00:00"
@@ -33,7 +33,7 @@
       "stageName": "Compression",
       "productName": "Mirtazapine OD 45mg",
       "batchNo": "MPC26021",
-      "derivedLotNo": "MPC26021-LOT-20260910145705",
+      "derivedLotNo": "Lot-03",
       "stationNo": "Station 2",
       "userId": "ts11401",
       "operatorName": "t.sudheer babu",

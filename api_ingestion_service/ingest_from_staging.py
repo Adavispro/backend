@@ -150,6 +150,11 @@ def run_staging_ingestion(config_path: str | None = None) -> Dict[str, Any]:
             if not batch_no:
                 continue
 
+            # Ingest ONLY completed batches (require valid start and end timestamps)
+            if not cleaned_b.get("is_completed") or not cleaned_b.get("start_time") or not cleaned_b.get("end_time"):
+                logger.info(f"Skipping in-flight/incomplete batch {batch_no} (Lot: {lot_no}) on asset {asset_id} - requires valid Start Time and End Time.")
+                continue
+
             # 1. Upsert Product Master
             loader.upsert_product(product_code, product_name)
 
@@ -158,8 +163,19 @@ def run_staging_ingestion(config_path: str | None = None) -> Dict[str, Any]:
             if not datasets:
                 continue
 
-            asset_batch_count += 1
-            op_event_docs: List[Dict[str, Any]] = []
+            # Validate batch_summary dataset end time if present
+            bs_key_check = next((k for k in datasets.keys() if "batch_summary" in k or "batch_summ" in k), None)
+            if bs_key_check and datasets[bs_key_check]:
+                bs_records_check = clean_record_list(datasets[bs_key_check])
+                has_incomplete_bs = False
+                for bs_row in bs_records_check:
+                    bs_et = bs_row.get("End Time") or bs_row.get("End_Time") or bs_row.get("BatchEndDate")
+                    if bs_et is None or str(bs_et).strip() in ("", "-", "null", "None", "NULL"):
+                        has_incomplete_bs = True
+                        break
+                if has_incomplete_bs:
+                    logger.info(f"Skipping batch {batch_no} (Lot: {lot_no}) on asset {asset_id} - batch_summary dataset has null/missing End Time.")
+                    continue
 
             # Resolve dynamic Equipment ID from machine_summary dataset if present
             current_equipment_code = equipment_code
@@ -171,6 +187,14 @@ def run_staging_ingestion(config_path: str | None = None) -> Dict[str, Any]:
                     if eq_id:
                         current_equipment_code = str(eq_id).strip()
                         break
+
+            # Idempotency check: if data already ingested, no need to reingest
+            if loader.is_batch_stage_ingested(batch_no, lot_no, current_equipment_code, asset_info.get("equipment_type", "RMG")):
+                logger.info(f"Batch {batch_no} (Lot: {lot_no}, Equipment: {current_equipment_code}) already ingested. Skipping re-ingestion.")
+                continue
+
+            asset_batch_count += 1
+            op_event_docs: List[Dict[str, Any]] = []
 
             # Extract users and audit trail to identify supervisor and operator
             supervisor_name = ""
@@ -268,6 +292,14 @@ def run_staging_ingestion(config_path: str | None = None) -> Dict[str, Any]:
                 supervisor_name=supervisor_name,
                 batch_size=batch_size,
                 recipe_name=recipe_name,
+            )
+
+            # 7. Register completed batch stage to prevent re-ingestion
+            loader.mark_batch_stage_ingested(
+                batch_no=batch_no,
+                lot_no=lot_no,
+                asset_code=current_equipment_code,
+                equipment_type=asset_info.get("equipment_type", "RMG"),
             )
 
         loader.finish_job_run(job_run_id, status="SUCCESS", processed_batches=asset_batch_count)

@@ -3,8 +3,8 @@
   "event_time": "2026-09-22 12:36:53",
   "meta": {
     "batchNo": "MPA26062",
-    "lotNo": "MPA26062-LOT-20260922123653",
-    "derivedLotNo": "MPA26062-LOT-20260922123653",
+    "lotNo": "Lot-02",
+    "derivedLotNo": "Lot-02",
     "productCode": "Mirtazapine OD 15mg",
     "productName": "Mirtazapine OD 15mg",
     "equipmentCode": "MC081",
@@ -20,7 +20,7 @@
   "compression_details": {
     "metadata": {
       "sourceFile": "ProductionReport-2026-09-22-12-36-53.xls",
-      "parsedAt": "2026-10-08T22:25:11.798076+00:00",
+      "parsedAt": "2026-10-09T13:11:44.446192+00:00",
       "softwareVersion": "2.0",
       "reportTimestamp": "2026-09-22T12:36:53",
       "reportDate": "2026-09-22 00:00:00"
@@ -33,7 +33,7 @@
       "stageName": "Compression",
       "productName": "Mirtazapine OD 15mg",
       "batchNo": "MPA26062",
-      "derivedLotNo": "MPA26062-LOT-20260922123653",
+      "derivedLotNo": "Lot-02",
       "stationNo": "Station 1",
       "userId": "pk8943",
       "operatorName": "p.s.krishna murthy",
