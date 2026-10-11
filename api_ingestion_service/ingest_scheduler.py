@@ -97,7 +97,8 @@ class PlantAPIClient:
         self.session.mount("https://", adapter)
 
     def fetch_point(self, point_name: str) -> List[Dict[str, Any]]:
-        url = f"{self.base_url}{self.dataset_path}?pointName={quote(point_name, safe=':@=<>,\'')}"
+        encoded_point_name = quote(point_name, safe=":@=<>,'")
+        url = f"{self.base_url}{self.dataset_path}?pointName={encoded_point_name}"
 
         def _do_request(token: Optional[str]) -> requests.Response:
             headers = {
@@ -630,4 +631,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

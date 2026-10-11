@@ -85,7 +85,8 @@ def ingest_single_date(
     file_fetcher: FileFetcher,
     mdb_reader: SawcMdbReader,
     mongo_loader: MongoCompressionLoader,
-    batch_limit: Optional[int] = None
+    batch_limit: Optional[int] = None,
+    events_only: bool = False,
 ) -> Dict[str, Any]:
     """
     Ingests production reports and SawcData events for a single date (YYYY-MM-DD).
@@ -96,8 +97,11 @@ def ingest_single_date(
     logger.info(f"============================================================")
 
     # 1. Fetch / Sync files for the date into staging
-    copied_files = file_fetcher.fetch_date_files(target_date)
-    date_staging_dir = os.path.join(file_fetcher.staged_raw_dir, target_date)
+    if events_only:
+        date_staging_dir = os.path.join(str(file_fetcher.source_path), target_date)
+    else:
+        file_fetcher.fetch_date_files(target_date)
+        date_staging_dir = os.path.join(file_fetcher.staged_raw_dir, target_date)
     
     # Check source directly if staging is same as source or check both
     xls_files = glob.glob(os.path.join(date_staging_dir, "ProductionReport-*.xls"))
@@ -122,6 +126,11 @@ def ingest_single_date(
     alarms = sawc_events.get("alarms", [])
     operations = sawc_events.get("operations", [])
     logins = sawc_events.get("logins", [])
+    if events_only:
+        counts = mongo_loader.repair_event_histories(
+            {"alarms": alarms, "operations": operations, "logins": logins},
+            [os.path.basename(path) for path in xls_files],
+        )
 
     # Export separate JSON files for Alarms, Operations, and Login/Logout
     alarm_json_path = os.path.join(out_json_dir, f"AlarmHistory-{target_date}.json")
@@ -140,6 +149,9 @@ def ingest_single_date(
     logger.info(f"    Exported LogInOutHistory JSON: {login_json_path}")
 
     # Ingest alarms, audits, and logins into MongoDB
+    if events_only:
+        logger.info("Events-only repair completed for %s; production data/checkpoint unchanged", target_date)
+        return {"date": target_date, "reportsProcessed": 0, **counts}
     alms_count = mongo_loader.load_alarms(alarms)
     auds_count = mongo_loader.load_audits(operations)
     logins_count = mongo_loader.load_logins(logins)
@@ -264,7 +276,21 @@ def main():
     parser.add_argument("--all-dates", action="store_true", help="Ingest all discovered date folders")
     parser.add_argument("--limit", type=int, help="Override maximum batches per date")
     parser.add_argument("--truncate-and-load", action="store_true", help="Reset transactional data before ingestion")
+    parser.add_argument(
+        "--events-only", action="store_true",
+        help="Repair MC081 alarm, operation and login histories without reloading production reports",
+    )
     args = parser.parse_args()
+    truncate_requested = args.truncate_and_load or os.getenv("INGESTION_MODE", "").upper() == "TRUNCATE_AND_LOAD"
+    if args.events_only:
+        if truncate_requested:
+            parser.error("--events-only cannot be combined with truncation; set INGESTION_MODE=APPEND")
+        if not (args.date or args.all_dates):
+            parser.error("--events-only requires --date or --all-dates")
+        if args.limit is not None:
+            parser.error("--limit is not supported with --events-only")
+    if args.date and args.all_dates:
+        parser.error("Choose either --date or --all-dates")
 
     # Load configuration
     config = load_config(args.config)
@@ -277,9 +303,11 @@ def main():
     # Initialize core modules
     file_fetcher = FileFetcher(config)
     mdb_reader = SawcMdbReader(base_dir=source_dir)
-    mongo_loader = MongoCompressionLoader(mongo_uri=mongo_uri, db_name=db_name)
+    mongo_loader = MongoCompressionLoader(
+        mongo_uri=mongo_uri, db_name=db_name, initialize_master=not args.events_only,
+    )
 
-    if args.truncate_and_load or os.getenv("INGESTION_MODE", "").upper() == "TRUNCATE_AND_LOAD":
+    if truncate_requested:
         mongo_loader.prepare_database_for_ingestion(ingestion_mode="TRUNCATE_AND_LOAD")
 
     dates_to_run: List[str] = []
@@ -301,10 +329,15 @@ def main():
             dates_to_run = all_dates
 
     logger.info(f"Target Ingestion Dates: {dates_to_run}")
+    if args.events_only and not dates_to_run:
+        raise RuntimeError("No source date folders discovered for events-only repair")
 
     all_summaries = []
     for dt in dates_to_run:
-        summary = ingest_single_date(dt, config, file_fetcher, mdb_reader, mongo_loader, batch_limit=batch_limit)
+        summary = ingest_single_date(
+            dt, config, file_fetcher, mdb_reader, mongo_loader,
+            batch_limit=batch_limit, events_only=args.events_only,
+        )
         all_summaries.append(summary)
 
     logger.info("============================================================")

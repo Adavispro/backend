@@ -61,7 +61,10 @@ logger = logging.getLogger("compression.mongo_loader")
 class MongoCompressionLoader:
     """Handles all MongoDB writes for the Sejong Compression Ingestion Service."""
 
-    def __init__(self, mongo_uri: str, db_name: str = "adavis_platform") -> None:
+    def __init__(
+        self, mongo_uri: str, db_name: str = "adavis_platform",
+        initialize_master: bool = True,
+    ) -> None:
         self.mongo_uri = mongo_uri
         self.db_name = db_name
         if MongoClient is None:
@@ -74,7 +77,8 @@ class MongoCompressionLoader:
         else:
             self.master_sync = None
 
-        self._ensure_indexes_and_master()
+        if initialize_master:
+            self._ensure_indexes_and_master()
 
     def _ensure_indexes_and_master(self) -> None:
         """Creates necessary indexes and ensures MC081 is present in equipment master."""
@@ -586,10 +590,7 @@ class MongoCompressionLoader:
             res = self.db["iiot_ts_alarm_MC081"].bulk_write(ops, ordered=False)
             count = (res.upserted_count or 0) + (res.modified_count or 0)
         if event_ops:
-            try:
-                self.db["iiot_alarm_events"].bulk_write(event_ops, ordered=False)
-            except Exception:
-                pass
+            self.db["iiot_alarm_events"].bulk_write(event_ops, ordered=False)
         return count
 
     def load_audits(self, audits: List[Dict[str, Any]]) -> int:
@@ -690,10 +691,7 @@ class MongoCompressionLoader:
             res = self.db["iiot_ts_audit_MC081"].bulk_write(ops, ordered=False)
             count = (res.upserted_count or 0) + (res.modified_count or 0)
         if batch_audit_ops:
-            try:
-                self.db["iiot_batch_audit_trail"].bulk_write(batch_audit_ops, ordered=False)
-            except Exception:
-                pass
+            self.db["iiot_batch_audit_trail"].bulk_write(batch_audit_ops, ordered=False)
         return count
 
     def load_logins(self, logins: List[Dict[str, Any]]) -> int:
@@ -792,8 +790,62 @@ class MongoCompressionLoader:
             res = self.db["iiot_ts_login_MC081"].bulk_write(ops, ordered=False)
             count = (res.upserted_count or 0) + (res.modified_count or 0)
         if hist_ops:
-            try:
-                self.db["login_history"].bulk_write(hist_ops, ordered=False)
-            except Exception:
-                pass
+            self.db["login_history"].bulk_write(hist_ops, ordered=False)
         return count
+
+    def repair_event_histories(
+        self, events: Dict[str, List[Dict[str, Any]]], source_files: List[str],
+    ) -> Dict[str, int]:
+        """Upsert MC081 histories and verify primary and shared event records."""
+        if not any(events.values()):
+            logger.warning(
+                "No MC081 events for this date; skipping database repair and "
+                "preserving existing embedded histories"
+            )
+            return {"alarmsIngested": 0, "auditsIngested": 0, "loginsIngested": 0}
+        specifications = [
+            ("alarms", "alarmId", "ALM-MC081-", "iiot_ts_alarm_MC081", "iiot_alarm_events"),
+            ("operations", "auditId", "AUD-MC081-", "iiot_ts_audit_MC081", "iiot_batch_audit_trail"),
+            ("logins", "loginId", "LOG-MC081-", "iiot_ts_login_MC081", "login_history"),
+        ]
+        for category, key, prefix, _, _ in specifications:
+            for event in events[category]:
+                if not str(event.get(key, "")).startswith(prefix):
+                    raise ValueError(f"Invalid MC081 {category} identity: {event.get(key)!r}")
+
+        counts = {
+            "alarmsIngested": self.load_alarms(events["alarms"]),
+            "auditsIngested": self.load_audits(events["operations"]),
+            "loginsIngested": self.load_logins(events["logins"]),
+        }
+        for category, key, _, primary, shared in specifications:
+            for collection in (primary, shared):
+                records = events[category]
+                if collection == "iiot_batch_audit_trail":
+                    records = [
+                        event for event in records
+                        if event.get("batchNo") or event.get("batchNumber") or event.get("batch_no")
+                    ]
+                identities = list({event[key] for event in records})
+                query = {key: {"$in": identities}, "equipmentCode": "MC081"}
+                actual = self.db[collection].count_documents(query) if identities else 0
+                if actual != len(identities):
+                    raise RuntimeError(
+                        f"History verification failed for {collection}: "
+                        f"expected {len(identities)}, found {actual}"
+                    )
+                logger.info("Verified %s: %d MC081 event identities", collection, actual)
+
+        updated = 0
+        if source_files:
+            result = self.db["iiot_ts_batch_MC081"].update_many(
+                {"compression_details.metadata.sourceFile": {"$in": source_files}},
+                {"$set": {
+                    "compression_details.alarm_history": events["alarms"],
+                    "compression_details.operation_history": events["operations"],
+                    "compression_details.login_history": events["logins"],
+                }},
+            )
+            updated = result.matched_count
+        logger.info("Refreshed embedded histories in %d existing MC081 reports", updated)
+        return counts

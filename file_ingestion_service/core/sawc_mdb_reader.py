@@ -25,6 +25,11 @@ class SawcMdbReader:
 
     def __init__(self, base_dir: str = "."):
         self.base_dir = os.path.abspath(base_dir)
+        self.mdb_provider = os.getenv("MDB_OLEDB_PROVIDER", "Microsoft.ACE.OLEDB.16.0").strip()
+        if self.mdb_provider not in ("Microsoft.ACE.OLEDB.16.0", "Microsoft.ACE.OLEDB.12.0"):
+            raise ValueError(
+                "MDB_OLEDB_PROVIDER must be Microsoft.ACE.OLEDB.16.0 or Microsoft.ACE.OLEDB.12.0"
+            )
         self.sawc_mdb_path = self._find_mdb_file("Sawc.mdb", self.base_dir)
         self.sawc_data_mdb_path = self._find_mdb_file("SawcData.mdb", self.base_dir)
         self._alarm_dict: Dict[str, str] = {}
@@ -62,11 +67,11 @@ class SawcMdbReader:
             return None
         try:
             conn = win32com.client.Dispatch("ADODB.Connection")
-            conn_str = f"Provider=Microsoft.ACE.OLEDB.16.0;Data Source={mdb_path};"
+            conn_str = f"Provider={self.mdb_provider};Data Source={mdb_path};"
             conn.Open(conn_str)
             return conn
         except Exception as e:
-            logger.warning(f"Could not open MDB via COM: {e}")
+            logger.warning(f"Could not open MDB via COM using {self.mdb_provider}: {e}")
             return None
 
     def _init_dictionaries(self):
@@ -207,11 +212,7 @@ class SawcMdbReader:
         operations: List[Dict[str, Any]] = []
         logins: List[Dict[str, Any]] = []
 
-        if not os.path.exists(self.sawc_data_mdb_path):
-            logger.warning(f"SawcData.mdb not found at {self.sawc_data_mdb_path}")
-            return {"alarms": alarms, "operations": operations, "logins": logins}
-
-        # Check staged extracted JSON fallback first if COM is unavailable or MDB not present
+        direct_mdb_available = win32com is not None and os.path.isfile(self.sawc_data_mdb_path)
         staged_candidates = [
             os.path.join("staging", "extracted_json", target_date_str),
             os.path.join(self.base_dir, "..", "file_ingestion_service", "staging", "extracted_json", target_date_str),
@@ -219,6 +220,8 @@ class SawcMdbReader:
             os.path.join(Path(__file__).resolve().parent.parent / "staging" / "extracted_json" / target_date_str),
         ]
         for sdir in staged_candidates:
+            if direct_mdb_available:
+                break
             if os.path.isdir(str(sdir)):
                 sawc_json = os.path.join(sdir, f"SawcEvents-{target_date_str}.json")
                 if os.path.isfile(sawc_json):
@@ -236,7 +239,7 @@ class SawcMdbReader:
                 alm_json = os.path.join(sdir, f"AlarmHistory-{target_date_str}.json")
                 ops_json = os.path.join(sdir, f"OperatingHistory-{target_date_str}.json")
                 log_json = os.path.join(sdir, f"LogInOutHistory-{target_date_str}.json")
-                if os.path.isfile(alm_json) or os.path.isfile(ops_json):
+                if os.path.isfile(alm_json) or os.path.isfile(ops_json) or os.path.isfile(log_json):
                     loaded_alms = []
                     loaded_ops = []
                     loaded_logs = []
@@ -253,13 +256,26 @@ class SawcMdbReader:
                     return {"alarms": loaded_alms, "operations": loaded_ops, "logins": loaded_logs}
 
         if win32com is None or not os.path.exists(self.sawc_data_mdb_path):
-            logger.info(f"COM unavailable or SawcData.mdb not found; checked staging directories for {target_date_str}.")
-            return {"alarms": alarms, "operations": operations, "logins": logins}
+            message = (
+                f"Cannot extract MDB events for {target_date_str}: pywin32/COM unavailable "
+                f"or MDB missing at {self.sawc_data_mdb_path}, and no staged history was found."
+            )
+            logger.error(message)
+            raise RuntimeError(message)
 
+        conn = None
         try:
+            logger.info(
+                "Reading %s from %s using %s (bypassing cached history JSON)",
+                table_name, self.sawc_data_mdb_path, self.mdb_provider,
+            )
             conn = self._get_connection(self.sawc_data_mdb_path)
             if conn is None:
-                return {"alarms": alarms, "operations": operations, "logins": logins}
+                raise RuntimeError(
+                    f"Cannot open {self.sawc_data_mdb_path} using {self.mdb_provider}. "
+                    "Check the preceding COM error, installed ACE provider, Python/driver "
+                    "architecture, and file permissions."
+                )
             
             # Check if table exists
             rs_schema = conn.OpenSchema(20)
@@ -272,8 +288,7 @@ class SawcMdbReader:
             rs_schema.Close()
 
             if not table_exists:
-                logger.info(f"Table {table_name} does not exist in SawcData.mdb")
-                conn.Close()
+                logger.warning(f"Table {table_name} does not exist in {self.sawc_data_mdb_path}")
                 return {"alarms": alarms, "operations": operations, "logins": logins}
 
             query = f"SELECT id, WriteDate, Product_Name, Batch_NO, GroupNO, UserID, ClassA, ClassB, ValuePre, ValueNew FROM [{table_name}] ORDER BY id ASC"
@@ -369,10 +384,17 @@ class SawcMdbReader:
                 rs.MoveNext()
 
             rs.Close()
-            conn.Close()
         except Exception as e:
             logger.error(f"Error reading {table_name} from SawcData.mdb: {e}", exc_info=True)
+            raise
+        finally:
+            if conn is not None:
+                conn.Close()
 
+        logger.info(
+            "Extracted MDB events for %s: alarms=%d, operations=%d, logins=%d",
+            target_date_str, len(alarms), len(operations), len(logins),
+        )
         return {
             "alarms": alarms,
             "operations": operations,
