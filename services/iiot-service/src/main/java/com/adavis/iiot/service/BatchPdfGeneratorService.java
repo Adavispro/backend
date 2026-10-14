@@ -42,6 +42,9 @@ public class BatchPdfGeneratorService {
     private static final String GENERATED_DOCUMENTS_COLLECTION = "iiot_generated_documents";
     private static final String DMS_DOCUMENTS_COLLECTION = "dms_documents";
 
+    public static final ZoneId PLANT_ZONE = ZoneId.of("Asia/Kolkata");
+    public static final TimeZone PLANT_TIME_ZONE = TimeZone.getTimeZone(PLANT_ZONE);
+
     private final MongoTemplate mongoTemplate;
 
     private volatile byte[] cachedLogoBytes;
@@ -1477,7 +1480,9 @@ public class BatchPdfGeneratorService {
             String qaApprovedBy = signoffs.stream()
                     .filter(e -> e.role != null && e.role.toUpperCase(Locale.ROOT).contains("QA"))
                     .map(e -> e.performedBy).filter(Objects::nonNull).reduce((first, second) -> second).orElse("Not available");
-            String printedAt = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date());
+            SimpleDateFormat printSdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            printSdf.setTimeZone(PLANT_TIME_ZONE);
+            String printedAt = printSdf.format(new Date());
             addSejongTableRow(tPrint, "Copy #1", "Controlled PDF", qaApprovedBy, printedAt + " [OFFICIAL]");
             addSejongTableRow(tPrint, "QA Approved Print Time", qaApprovedAt, "Batch approval timestamp", "Audit-derived");
             doc.add(tPrint);
@@ -1812,7 +1817,7 @@ public class BatchPdfGeneratorService {
         statusBadge.setLeading(13f);
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        sdf.setTimeZone(PLANT_TIME_ZONE);
         Paragraph genDate = new Paragraph("Printed On: " + sdf.format(new Date()), FontFactory.getFont(FontFactory.HELVETICA, 7.5f, Color.DARK_GRAY));
         genDate.setAlignment(Element.ALIGN_RIGHT);
         genDate.setLeading(11f);
@@ -3529,11 +3534,20 @@ public class BatchPdfGeneratorService {
         if (val instanceof Instant inst) return Date.from(inst);
         try {
             String s = String.valueOf(val).trim();
+            if (s.endsWith("Z")) {
+                return Date.from(Instant.parse(s));
+            }
+            if (s.contains("+") || (s.contains("-") && s.lastIndexOf('-') > 10)) {
+                try {
+                    return Date.from(java.time.OffsetDateTime.parse(s).toInstant());
+                } catch (Exception ignored) {
+                }
+            }
             if (s.contains("T")) {
-                String clean = s.replace("Z", "");
+                String clean = s;
                 if (clean.contains(".")) clean = clean.substring(0, clean.indexOf("."));
                 LocalDateTime ldt = LocalDateTime.parse(clean);
-                return Date.from(ldt.atZone(ZoneId.of("UTC")).toInstant());
+                return Date.from(ldt.atZone(PLANT_ZONE).toInstant());
             }
         } catch (Exception ignored) {
         }
@@ -3565,8 +3579,12 @@ public class BatchPdfGeneratorService {
         if (val == null) return "-";
         if (val instanceof Date d) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
-            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            sdf.setTimeZone(PLANT_TIME_ZONE);
             return sdf.format(d);
+        }
+        if (val instanceof Instant inst) {
+            return DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm:ss")
+                    .format(inst.atZone(PLANT_ZONE));
         }
         String s = String.valueOf(val).trim();
         return s.isBlank() ? "-" : s;
@@ -3634,14 +3652,30 @@ public class BatchPdfGeneratorService {
         if (val == null) return "-";
         if (val instanceof Date d) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            sdf.setTimeZone(PLANT_TIME_ZONE);
             return sdf.format(d);
+        }
+        if (val instanceof Instant inst) {
+            return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+                    .format(inst.atZone(PLANT_ZONE));
         }
         String s = String.valueOf(val).trim();
         if (s.isBlank() || "null".equalsIgnoreCase(s)) return "-";
         try {
+            if (s.endsWith("Z")) {
+                Instant inst = Instant.parse(s);
+                return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+                        .format(inst.atZone(PLANT_ZONE));
+            }
+            if (s.contains("+") || (s.contains("-") && s.lastIndexOf('-') > 10)) {
+                try {
+                    java.time.OffsetDateTime odt = java.time.OffsetDateTime.parse(s);
+                    return odt.atZoneSameInstant(PLANT_ZONE).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+                } catch (Exception ignored) {
+                }
+            }
             if (s.contains("T")) {
-                String clean = s.replace("Z", "");
+                String clean = s;
                 if (clean.contains(".")) clean = clean.substring(0, clean.indexOf("."));
                 LocalDateTime ldt = LocalDateTime.parse(clean);
                 return ldt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
