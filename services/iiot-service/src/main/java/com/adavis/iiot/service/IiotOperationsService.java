@@ -91,6 +91,13 @@ public class IiotOperationsService {
     private final BatchPdfGeneratorService batchPdfGeneratorService;
     private final DynamicWorkflowEngine dynamicWorkflowEngine;
 
+    @Autowired(required = false)
+    private PrintAuthorizationEvaluator printAuthorizationEvaluator;
+
+    public void setPrintAuthorizationEvaluator(PrintAuthorizationEvaluator evaluator) {
+        this.printAuthorizationEvaluator = evaluator;
+    }
+
     @Autowired
     public IiotOperationsService(
             MongoTemplate mongoTemplate,
@@ -1801,6 +1808,15 @@ public class IiotOperationsService {
             effectivePlantId = "PLNT-0001";
         }
 
+        // Authoritative Print Permission Check (VIEW)
+        if (printAuthorizationEvaluator != null) {
+            PrintAuthorizationEvaluator.AuthorizationResult auth = printAuthorizationEvaluator.checkAndAuditAccess(
+                    effectiveTenantId, effectivePlantId, userId, userRole, "IIOT", "BATCH_DOSSIER", "VIEW", batchNo, null, "View/Download Batch Dossier PDF");
+            if (!auth.isAllowed()) {
+                throw new BusinessException(auth.getMessage(), "FORBIDDEN");
+            }
+        }
+
         // 1. Check if a valid stored PDF already exists in DMS (Authoritative storage, no regeneration)
         BatchPdfGeneratorService.PdfGenerationResult existing = batchPdfGeneratorService.findStoredBatchPdf(
                 batchNo, effectiveLot, effectiveEq, effectiveTenantId, effectivePlantId);
@@ -2037,6 +2053,37 @@ public class IiotOperationsService {
         String canonicalBatchNo = summary != null && summary.getString("batchNo") != null
                 ? summary.getString("batchNo")
                 : batchNo.trim();
+
+        // Determine prior print count to enforce separate PRINT vs REPRINT permissions
+        int priorPrintCount = 0;
+        if (summary != null) {
+            if (summary.get("stages") instanceof List<?> stagesList) {
+                for (Object obj : stagesList) {
+                    if (obj instanceof Document st) {
+                        String eq = st.getString("equipmentCode");
+                        String eqId = st.getString("equipmentId");
+                        if ((eq != null && eq.equalsIgnoreCase(effectiveEq)) || (eqId != null && eqId.equalsIgnoreCase(effectiveEq))) {
+                            if (st.get("printCount") instanceof Number n) {
+                                priorPrintCount = n.intValue();
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            if (priorPrintCount == 0 && summary.get("printCount") instanceof Number n) {
+                priorPrintCount = n.intValue();
+            }
+        }
+
+        String requiredAction = (priorPrintCount == 0) ? "PRINT" : "REPRINT";
+        if (printAuthorizationEvaluator != null) {
+            PrintAuthorizationEvaluator.AuthorizationResult auth = printAuthorizationEvaluator.checkAndAuditAccess(
+                    effectiveTenantId, effectivePlantId, effectiveUserId, userRole, "IIOT", "BATCH_DOSSIER", requiredAction, canonicalBatchNo, priorPrintCount + 1, trimmedReason);
+            if (!auth.isAllowed()) {
+                throw new BusinessException(auth.getMessage(), "FORBIDDEN");
+            }
+        }
 
         boolean hasMatchingStage = false;
         if (summary != null && summary.get("stages") instanceof List<?> stagesList) {

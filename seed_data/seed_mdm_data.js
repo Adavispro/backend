@@ -1001,6 +1001,11 @@ ensureIndex('mdm_role_permissions', { roleId: 1 });
 ensureIndex('mdm_role_permissions', { moduleId: 1 });
 ensureIndex('mdm_role_permissions', { roleId: 1, moduleId: 1, version: 1 }, { unique: true });
 
+ensureIndex('mdm_print_permissions', { tenantId: 1, targetType: 1, targetId: 1, module: 1, reportType: 1 });
+ensureIndex('mdm_print_delegations', { tenantId: 1, delegateeId: 1, isActive: 1 });
+ensureIndex('mdm_print_audit_logs', { tenantId: 1, timestamp: -1 });
+ensureIndex('mdm_print_audit_logs', { userId: 1, timestamp: -1 });
+
 ensureIndex('iiot_assets', { tenantId: 1, assetCode: 1 }, { unique: true });
 ensureIndex('iiot_asset_tags', { tenantId: 1, assetCode: 1, tagCode: 1 }, { unique: true });
 ensureIndex('iiot_tag_thresholds', { tenantId: 1, plantId: 1, thresholdId: 1 }, { unique: true });
@@ -2031,7 +2036,8 @@ var screenSeed = [
     { screenId: 'SCR-0009', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenCode: 'SCR-IIOT-MONITORING-CONSOLE', screenName: 'Monitoring Console', displayOrder: 2, isActive: true },
     { screenId: 'SCR-0010', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenCode: 'SCR-IIOT-ANALYTICS-OEE', screenName: 'Analytics OEE', displayOrder: 3, isActive: true },
     { screenId: 'SCR-0011', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenCode: 'SCR-IIOT-PENDING-BATCHES', screenName: 'Pending Batches', displayOrder: 4, isActive: true },
-    { screenId: 'SCR-0012', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenCode: 'SCR-IIOT-APPROVED-BATCHES', screenName: 'Approved Batches', displayOrder: 5, isActive: true }
+    { screenId: 'SCR-0012', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenCode: 'SCR-IIOT-APPROVED-BATCHES', screenName: 'Approved Batches', displayOrder: 5, isActive: true },
+    { screenId: 'SCR-0013', moduleId: 'MOD-0001', moduleCode: 'MOD-MDM', screenCode: 'SCR-MDM-PRINT-MANAGEMENT', screenName: 'Print Management', displayOrder: 8, isActive: true }
 ];
 upsertManyWithAutoId('mdm_screens', screenSeed, 'screenId', { sequenceName: 'screenId', prefix: 'SCR', padLength: 4 });
 
@@ -2057,7 +2063,9 @@ var featureSeed = [
     { featureId: 'FEAT-0020', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenId: 'SCR-0009', screenCode: 'SCR-IIOT-MONITORING-CONSOLE', featureCode: 'FEAT-IIOT-EQUIPMENT-MONITORING', featureName: 'Equipment Monitoring', displayOrder: 1, isActive: true },
     { featureId: 'FEAT-0021', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenId: 'SCR-0010', screenCode: 'SCR-IIOT-ANALYTICS-OEE', featureCode: 'FEAT-IIOT-OVERALL-EQUIPMENT-EFFICIENCY', featureName: 'Overall Equipment Efficiency', displayOrder: 1, isActive: true },
     { featureId: 'FEAT-0022', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenId: 'SCR-0011', screenCode: 'SCR-IIOT-PENDING-BATCHES', featureCode: 'FEAT-IIOT-SEND-BATCH-FOR-APPROVAL', featureName: 'Send Batch For Approval', displayOrder: 1, isActive: true },
-    { featureId: 'FEAT-0023', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenId: 'SCR-0012', screenCode: 'SCR-IIOT-APPROVED-BATCHES', featureCode: 'FEAT-IIOT-APPROVE-OR-REJECT-BATCH', featureName: 'Approve or Reject Batch', displayOrder: 1, isActive: true }
+    { featureId: 'FEAT-0023', moduleId: 'MOD-0002', moduleCode: 'MOD-IIOT', screenId: 'SCR-0012', screenCode: 'SCR-IIOT-APPROVED-BATCHES', featureCode: 'FEAT-IIOT-APPROVE-OR-REJECT-BATCH', featureName: 'Approve or Reject Batch', displayOrder: 1, isActive: true },
+    { featureId: 'FEAT-0024', moduleId: 'MOD-0001', moduleCode: 'MOD-MDM', screenId: 'SCR-0013', screenCode: 'SCR-MDM-PRINT-MANAGEMENT', featureCode: 'FEAT-MDM-PRINT-PERMISSIONS', featureName: 'Manage Print Permissions', displayOrder: 1, isActive: true },
+    { featureId: 'FEAT-0025', moduleId: 'MOD-0001', moduleCode: 'MOD-MDM', screenId: 'SCR-0013', screenCode: 'SCR-MDM-PRINT-MANAGEMENT', featureCode: 'FEAT-MDM-PRINT-AUDIT', featureName: 'Print Audit Trail', displayOrder: 2, isActive: true }
 ];
 upsertManyWithAutoId('mdm_features', featureSeed, 'featureId', { sequenceName: 'featureId', prefix: 'FEAT', padLength: 4 });
 
@@ -2889,6 +2897,159 @@ var workflowAssignments = [
 for (var asg = 0; asg < workflowAssignments.length; asg++) {
     upsertOne('mdm_workflow_assignments', { workflowCode: workflowAssignments[asg].workflowCode, stageCode: workflowAssignments[asg].stageCode }, workflowAssignments[asg]);
 }
+
+logInfo('Seeding MDM Print Management permissions and delegations...');
+var printPermissionsSeed = [
+    {
+        tenantId: 'TNT-0001',
+        targetType: 'ROLE',
+        targetId: 'ROLE-0001',
+        targetName: 'Super Admin',
+        targetCode: 'SUPER_ADMIN',
+        module: '*',
+        reportType: 'ALL',
+        allowedActions: ['VIEW', 'PRINT', 'REPRINT', 'MANAGE_PERMISSIONS', 'PRINT_AUDIT'],
+        deniedActions: [],
+        isActive: true,
+        createdBy: 'SYSTEM',
+        createdAt: now(),
+        updatedBy: 'SYSTEM',
+        updatedAt: now(),
+        remarks: 'Universal Super Admin print and delegation authority'
+    },
+    {
+        tenantId: 'TNT-0001',
+        targetType: 'ROLE',
+        targetId: 'ROLE-0017',
+        targetName: 'QA Approver',
+        targetCode: 'QA_APPROVER',
+        module: 'IIOT',
+        reportType: 'BATCH_DOSSIER',
+        allowedActions: ['VIEW', 'PRINT', 'REPRINT', 'PRINT_AUDIT'],
+        deniedActions: [],
+        isActive: true,
+        createdBy: 'SYSTEM',
+        createdAt: now(),
+        updatedBy: 'SYSTEM',
+        updatedAt: now(),
+        remarks: 'QA Approver full print authorization on IIOT Batch Dossier'
+    },
+    {
+        tenantId: 'TNT-0001',
+        targetType: 'ROLE',
+        targetId: 'ROLE-0017',
+        targetName: 'QA Approver',
+        targetCode: 'QA_APPROVER',
+        module: 'L2_INTEGRATION',
+        reportType: 'ALL',
+        allowedActions: ['VIEW', 'PRINT', 'REPRINT', 'PRINT_AUDIT'],
+        deniedActions: [],
+        isActive: true,
+        createdBy: 'SYSTEM',
+        createdAt: now(),
+        updatedBy: 'SYSTEM',
+        updatedAt: now(),
+        remarks: 'QA Approver full print authorization on L2 Integration Reports'
+    },
+    {
+        tenantId: 'TNT-0001',
+        targetType: 'ROLE',
+        targetId: 'ROLE-0016',
+        targetName: 'Production Reviewer',
+        targetCode: 'PRODUCTION_REVIEWER',
+        module: 'IIOT',
+        reportType: 'BATCH_DOSSIER',
+        allowedActions: ['VIEW'],
+        deniedActions: [],
+        isActive: true,
+        createdBy: 'SYSTEM',
+        createdAt: now(),
+        updatedBy: 'SYSTEM',
+        updatedAt: now(),
+        remarks: 'Production Reviewer read-only view authorization'
+    },
+    {
+        tenantId: 'TNT-0001',
+        targetType: 'ROLE',
+        targetId: 'ROLE-0009',
+        targetName: 'Shift Supervisor',
+        targetCode: 'SHIFT_SUPERVISOR',
+        module: 'IIOT',
+        reportType: 'BATCH_DOSSIER',
+        allowedActions: ['VIEW', 'PRINT'],
+        deniedActions: [],
+        isActive: true,
+        createdBy: 'SYSTEM',
+        createdAt: now(),
+        updatedBy: 'SYSTEM',
+        updatedAt: now(),
+        remarks: 'Shift Supervisor initial print authorization (no reprint)'
+    },
+    {
+        tenantId: 'TNT-0001',
+        targetType: 'ROLE',
+        targetId: 'ROLE-0008',
+        targetName: 'Production Operator',
+        targetCode: 'PRODUCTION_OPERATOR',
+        module: 'IIOT',
+        reportType: 'BATCH_DOSSIER',
+        allowedActions: ['VIEW'],
+        deniedActions: [],
+        isActive: true,
+        createdBy: 'SYSTEM',
+        createdAt: now(),
+        updatedBy: 'SYSTEM',
+        updatedAt: now(),
+        remarks: 'Production Operator view-only authorization'
+    },
+    {
+        tenantId: 'TNT-0001',
+        targetType: 'ROLE',
+        targetId: 'ROLE-0014',
+        targetName: 'Document Controller',
+        targetCode: 'DOCUMENT_CONTROLLER',
+        module: '*',
+        reportType: 'ALL',
+        allowedActions: ['VIEW', 'PRINT', 'REPRINT', 'PRINT_AUDIT'],
+        deniedActions: [],
+        isActive: true,
+        createdBy: 'SYSTEM',
+        createdAt: now(),
+        updatedBy: 'SYSTEM',
+        updatedAt: now(),
+        remarks: 'Document Controller archival and controlled print privileges'
+    }
+];
+
+for (var pIdx = 0; pIdx < printPermissionsSeed.length; pIdx++) {
+    var pItem = printPermissionsSeed[pIdx];
+    upsertOne('mdm_print_permissions', {
+        tenantId: pItem.tenantId,
+        targetType: pItem.targetType,
+        targetId: pItem.targetId,
+        module: pItem.module,
+        reportType: pItem.reportType
+    }, pItem);
+}
+
+// Seed initial delegation from Super Admin to IT Admin for IIOT module
+upsertOne('mdm_print_delegations', {
+    tenantId: 'TNT-0001',
+    delegateeType: 'ROLE',
+    delegateeId: 'ROLE-0002'
+}, {
+    tenantId: 'TNT-0001',
+    delegateeType: 'ROLE',
+    delegateeId: 'ROLE-0002',
+    delegateeName: 'IT Admin',
+    allowedModules: ['IIOT'],
+    canSubDelegate: false,
+    delegatedBy: 'SUPER_ADMIN',
+    delegatedAt: now(),
+    expiresAt: null,
+    isActive: true,
+    remarks: 'Initial delegation of IIOT print management authority to IT Admin role'
+});
 
 logInfo('Loading IIOT seed data...');
 runIiotSeedScript();

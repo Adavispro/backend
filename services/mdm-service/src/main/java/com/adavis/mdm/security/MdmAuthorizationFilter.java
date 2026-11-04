@@ -104,6 +104,12 @@ public class MdmAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Allow users to check their own effective print permissions and verify access
+        if (isSelfPrintPermissionQuery(path, request.getMethod(), userId, request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // 6. Dynamic Authoritative Admin Verification
         if (isUserAuthorizedAdmin(userId)) {
             filterChain.doFilter(request, response);
@@ -136,6 +142,17 @@ public class MdmAuthorizationFilter extends OncePerRequestFilter {
     private boolean isReadOnlyTopologyQuery(String path, String method) {
         if (!"GET".equalsIgnoreCase(method)) return false;
         return path.matches("^/api/v1/mdm/(plants|blocks|areas|rooms)$");
+    }
+
+    private boolean isSelfPrintPermissionQuery(String path, String method, String userId, HttpServletRequest request) {
+        if ("GET".equalsIgnoreCase(method) && path.equals("/api/v1/mdm/print-permissions/effective")) {
+            String qUserId = request.getParameter("userId");
+            return qUserId != null && qUserId.trim().equalsIgnoreCase(userId != null ? userId.trim() : "");
+        }
+        if ("POST".equalsIgnoreCase(method) && path.equals("/api/v1/mdm/print-permissions/check")) {
+            return true;
+        }
+        return false;
     }
 
     private String resolveUserId(HttpServletRequest request) {
